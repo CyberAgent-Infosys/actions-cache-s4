@@ -1,11 +1,56 @@
-name: 'Your name here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Cache S4'
+description: '@actions/cache for S4.'
+author: 'Junya Nakazato'
 inputs:
-  milliseconds: # change this
+  path:
+    description: 'A list of files, directories, and wildcard patterns to cache and restore'
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+  key:
+    description: 'An explicit key for restoring and saving the cache'
+    required: true
+  restore-keys:
+    description: 'An ordered list of keys to use for restoring the cache if no cache hit occurred for key'
+    required: false
+  upload-chunk-size:
+    description: 'The chunk size used to split up large files during upload, in bytes'
+    required: false
+  aws-s3-bucket:
+    description: 'An AWS S3 bucket to save cache'
+    required: true
+  aws-access-key-id:
+    description: 'An AWS access key id to access the bucket'
+    required: true
+  aws-secret-access-key:
+    description: 'An AWS secret access key to access the bucket'
+    required: true
+  aws-region:
+    description: 'An AWS region where the bucket is located'
+    required: false
+  aws-endpoint:
+    description: 'An endpoint of AWS S3 (for compatible software)'
+    required: false
+  aws-s3-bucket-endpoint:
+    description: 'Whether to use the bucket name as the endpoint for this request.'
+    required: false
+    default: 'true'
+  aws-s3-force-path-style:
+    description: 'Whether to force path style URLs for S3 objects.'
+    required: false
+    default: 'false'
+outputs:
+  cache-hit:
+    description: 'A boolean value to indicate an exact match was found for the primary key'
 runs:
   using: 'node16'
   main: 'dist/index.js'
+
+        # restore-keys: |
+        #   ${{ runner.os }}-nodejs-
+        #   ${{ runner.os }}-
+        # aws-s3-bucket: ${{ secrets.S3_BUCKET_NAME }}
+        # aws-access-key-id: ${{ secrets.S3_ACCESS_KEY_ID }}
+        # aws-secret-access-key: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+        # aws-region: us-east-1
+        # aws-endpoint: https://s4.cycloud.io
+        # aws-s3-bucket-endpoint: false
+        # aws-s3-force-path-style: true

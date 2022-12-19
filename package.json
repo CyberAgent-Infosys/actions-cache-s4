@@ -1,5 +1,6 @@
 {
   "name": "typescript-action",
+  "packageManager": "npm@8.11.0",
   "version": "0.0.0",
   "private": true,
   "description": "TypeScript template action",

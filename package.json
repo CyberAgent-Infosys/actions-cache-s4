@@ -7,11 +7,15 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
-    "format": "prettier --write '**/*.ts'",
-    "format-check": "prettier --check '**/*.ts'",
     "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint --fix src/**/*.ts",
+    "prettier": "prettier --write --ignore-path .gitignore './**/*.ts'",
+    "prettier-check": "prettier --check --ignore-path .gitignore './**/*.ts'",
+    "format": "npm run lint:fix && npm run prettier",
     "package": "ncc build --source-map --license licenses.txt",
-    "test": "jest",
+    "jest": "jest",
+    "test": "npm-run-all -p lint prettier-check jest",
+    "ci": "npm-run-all -s build test",
     "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
   },
   "repository": {
@@ -33,10 +37,12 @@
     "@typescript-eslint/parser": "^4.33.0",
     "@vercel/ncc": "^0.31.1",
     "eslint": "^7.32.0",
+    "eslint-import-resolver-typescript": "^3.5.2",
     "eslint-plugin-github": "^4.3.2",
     "eslint-plugin-jest": "^25.3.2",
     "jest": "^27.2.5",
     "js-yaml": "^4.1.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "2.5.1",
     "ts-jest": "^27.1.2",
     "typescript": "^4.4.4"

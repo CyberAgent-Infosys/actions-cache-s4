@@ -61,5 +61,11 @@
     "node": true,
     "es6": true,
     "jest/globals": true
+  },
+  "settings": {
+    "ecmascript": 6,
+    "import/resolver": {
+      "typescript": {}
+    }
   }
 }

@@ -15,8 +15,7 @@
     "package": "ncc build --source-map --license licenses.txt",
     "jest": "jest",
     "test": "npm-run-all -p lint prettier-check jest",
-    "ci": "npm-run-all -s build test",
-    "all": "npm run build && npm run format && npm run lint && npm run package && npm test"
+    "all": "npm-run-all -s build format package test"
   },
   "repository": {
     "type": "git",

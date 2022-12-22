@@ -2887,10 +2887,13 @@ const wait_1 = __nccwpck_require__(259);
 const parseArgv_1 = __nccwpck_require__(734);
 async function run() {
     try {
-        const option = (0, parseArgv_1.parseArgv)(process.argv);
-        console.log({ option });
-        const path = option?.path ?? (0, core_1.getInput)('path');
-        console.log({ path });
+        const inputArgv = (0, parseArgv_1.parseArgv)(process.argv);
+        console.log({ inputArgv });
+        const path = inputArgv?.path ?? (0, core_1.getInput)('path');
+        const key = inputArgv?.key ?? (0, core_1.getInput)('key');
+        const restoreKeys = inputArgv?.['restore-keys'] ?? (0, core_1.getInput)('restore-keys');
+        const uploadChunkSize = inputArgv?.['upload-chunk-size'] ?? (0, core_1.getInput)('upload-chunk-size');
+        console.log({ path, key, restoreKeys, uploadChunkSize });
         (0, core_1.debug)(new Date().toTimeString());
         const ms = 1000;
         await (0, wait_1.wait)({ milliseconds: ms });

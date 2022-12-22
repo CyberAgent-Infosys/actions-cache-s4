@@ -4,11 +4,14 @@ import { parseArgv } from '@/lib/parseArgv';
 
 async function run(): Promise<void> {
   try {
-    const option = parseArgv(process.argv);
-    console.log({ option });
+    const inputArgv = parseArgv(process.argv);
+    console.log({ inputArgv });
 
-    const path = option?.path ?? getInput('path');
-    console.log({ path });
+    const path = inputArgv?.path ?? getInput('path');
+    const key = inputArgv?.key ?? getInput('key');
+    const restoreKeys = inputArgv?.['restore-keys'] ?? getInput('restore-keys');
+    const uploadChunkSize = inputArgv?.['upload-chunk-size'] ?? getInput('upload-chunk-size');
+    console.log({ path, key, restoreKeys, uploadChunkSize });
 
     debug(new Date().toTimeString());
 

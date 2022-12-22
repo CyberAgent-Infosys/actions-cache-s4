@@ -1,5 +1,3 @@
-export type ArgValue = string | boolean | null | undefined;
-
 export type InputParams = {
   path: string;
   key: string;

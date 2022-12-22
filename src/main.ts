@@ -1,10 +1,14 @@
 import { debug, getInput, setFailed, setOutput } from '@actions/core';
 import { wait } from '@/wait';
+import { parseArgv } from '@/lib/parseArgv';
 
 async function run(): Promise<void> {
   try {
-    const path: string = getInput('path');
-    debug(`path: ${path}`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    const option = parseArgv(process.argv);
+    console.log({ option });
+
+    const path = option?.path ?? getInput('path');
+    console.log({ path });
 
     debug(new Date().toTimeString());
 

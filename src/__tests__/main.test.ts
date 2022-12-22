@@ -26,5 +26,5 @@ test('test runs', () => {
     env: process.env,
   };
 
-  console.log(cp.execFileSync(np, [ip], options).toString()); // eslint-disable-line no-console
+  console.log(cp.execFileSync(np, [ip], options).toString());
 });

@@ -2688,6 +2688,47 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 734:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.parseArgv = void 0;
+const parseArgv = (argv) => {
+    const optionArray = argv
+        .filter(v => /(^--)/.test(v))
+        .map(v => v.replace(/^--/, ''))
+        .map((v) => {
+        const [key = '', value = ''] = v.split('=');
+        return { [key]: value };
+    })
+        .filter((v) => !('' in v));
+    const option = Object.assign({}, ...optionArray);
+    // TODO: 型変換
+    // TODO: 意図的にundefined返すか初期値入れるかは実装してから考える
+    if (option['upload-chunk-size'])
+        option['upload-chunk-size'] = Number(option['upload-chunk-size']);
+    // TODO: validationと初期値があれば考える
+    return {
+        path: option.path,
+        key: option.key,
+        'restore-keys': option['restore-keys'],
+        'upload-chunk-size': option['upload-chunk-size'],
+        'aws-s3-bucket': option['aws-s3-bucket'],
+        'aws-access-key-id': option['aws-access-key-id'],
+        'aws-secret-access-key': option['aws-secret-access-key'],
+        'aws-region': option['aws-region'],
+        'aws-endpoint': option['aws-endpoint'],
+        'aws-s3-bucket-endpoint': option['aws-s3-bucket-endpoint'] ?? true,
+        'aws-s3-force-path-style': option['aws-s3-force-path-style'] ?? false,
+    };
+};
+exports.parseArgv = parseArgv;
+
+
+/***/ }),
+
 /***/ 259:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -2843,10 +2884,13 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __nccwpck_require__(186);
 const wait_1 = __nccwpck_require__(259);
+const parseArgv_1 = __nccwpck_require__(734);
 async function run() {
     try {
-        const path = (0, core_1.getInput)('path');
-        (0, core_1.debug)(`path: ${path}`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+        const option = (0, parseArgv_1.parseArgv)(process.argv);
+        console.log({ option });
+        const path = option?.path ?? (0, core_1.getInput)('path');
+        console.log({ path });
         (0, core_1.debug)(new Date().toTimeString());
         const ms = 1000;
         await (0, wait_1.wait)({ milliseconds: ms });

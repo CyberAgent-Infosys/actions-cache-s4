@@ -1,8 +1,8 @@
-import { wait } from '@/wait';
-import * as process from 'process';
 import * as cp from 'child_process';
 import * as path from 'path';
+import * as process from 'process';
 import { expect, test } from '@jest/globals';
+import { wait } from '@/wait';
 
 test('throws invalid number', async () => {
   const input = parseInt('foo', 10);
@@ -21,11 +21,10 @@ test('wait 500 ms', async () => {
 test('test runs', () => {
   process.env['INPUT_MILLISECONDS'] = '500';
   const np = process.execPath;
-  // FIXME: JSにmoduleNameMapperは通用しない
-  // const ip = path.join(__dirname, '..', 'lib', 'main.js');
-  const ip = path.join(__dirname, '..', 'dist', 'index.js');
+  const ip = path.join(__dirname, '../..', 'dist', 'index.js');
   const options: cp.ExecFileSyncOptions = {
     env: process.env,
   };
-  console.log(cp.execFileSync(np, [ip], options).toString());
+
+  console.log(cp.execFileSync(np, [ip], options).toString()); // eslint-disable-line no-console
 });

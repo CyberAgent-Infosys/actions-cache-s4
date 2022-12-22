@@ -17,7 +17,11 @@
     "eslint-comments/no-use": "off",
     "import/no-namespace": "off",
     "no-unused-vars": "off",
-    "filenames/match-regex": "off",
+    "filenames/match-regex": [
+      2,
+      "^[a-z_.]+$",
+      true
+    ],
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/explicit-member-accessibility": [
       "error",

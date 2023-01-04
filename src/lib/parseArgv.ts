@@ -1,22 +1,22 @@
 import { InputName, InputValue, InputParams } from '@/@types/argv';
+import { strToBool } from '@/lib/strToBool';
 
 export const parseArgv = (argv: string[]): Record<InputName, InputValue> => {
   const optionArray = argv
     .filter(v => /(^--)/.test(v))
     .map(v => v.replace(/^--/, ''))
     .map((v: string): Partial<InputParams> => {
-      const [key = '', value = '']: string[] = v.split('=');
+      const [key = '' as InputName, value = '']: string[] = v.split('=');
+
+      // 型変換
+      if (['upload-chunk-size'].includes(key)) return { [key]: Number(value) };
+      if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(key)) return { [key]: strToBool(value) };
       return { [key]: value };
     })
     .filter((v: Partial<InputParams>) => !('' in v));
 
   const option: Partial<InputParams> = Object.assign({}, ...optionArray);
 
-  // TODO: 型変換
-  // TODO: 意図的にundefined返すか初期値入れるかは実装してから考える
-  if (option['upload-chunk-size']) option['upload-chunk-size'] = Number(option['upload-chunk-size']);
-
-  // TODO: validationと初期値があれば考える
   return {
     path: option.path,
     key: option.key,
@@ -27,7 +27,7 @@ export const parseArgv = (argv: string[]): Record<InputName, InputValue> => {
     'aws-secret-access-key': option['aws-secret-access-key'],
     'aws-region': option['aws-region'],
     'aws-endpoint': option['aws-endpoint'],
-    'aws-s3-bucket-endpoint': option['aws-s3-bucket-endpoint'] ?? true,
-    'aws-s3-force-path-style': option['aws-s3-force-path-style'] ?? false,
+    'aws-s3-bucket-endpoint': option['aws-s3-bucket-endpoint'],
+    'aws-s3-force-path-style': option['aws-s3-force-path-style'],
   };
 };

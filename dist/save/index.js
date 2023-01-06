@@ -2694,13 +2694,26 @@ exports["default"] = _default;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getInput = void 0;
+exports.customGetInput = exports.getInput = void 0;
+const strToBool_1 = __nccwpck_require__(874);
 const core_1 = __nccwpck_require__(186);
-const getInput = (k) => {
+const getInput = (k, initialValue = null) => {
     const v = (0, core_1.getInput)(k);
-    return v === '' ? null : v;
+    return v === '' ? initialValue : v;
 };
 exports.getInput = getInput;
+const customGetInput = (k) => {
+    const v = (0, exports.getInput)(k);
+    console.log('customGetInput', k, v);
+    if (v === null)
+        return null;
+    if (['upload-chunk-size'].includes(k))
+        return Number(v);
+    if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(k))
+        return (0, strToBool_1.strToBool)(v);
+    return v;
+};
+exports.customGetInput = customGetInput;
 
 
 /***/ }),
@@ -2718,7 +2731,7 @@ const parseArgv = (argv) => {
         .filter(v => /(^--)/.test(v))
         .map(v => v.replace(/^--/, ''))
         .map((v) => {
-        const [key = '', value = ''] = v.split('=');
+        const [key, value] = v.split('=');
         // 型変換
         if (['upload-chunk-size'].includes(key))
             return { [key]: Number(value) };
@@ -2905,13 +2918,24 @@ async function run() {
         const inputArgv = (0, parseArgv_1.parseArgv)(process.argv);
         console.log({ inputArgv });
         // TODO: 初期化
-        const path = inputArgv.path ?? (0, actions_1.getInput)('path');
-        const key = inputArgv.key ?? (0, actions_1.getInput)('key');
-        const restoreKeys = inputArgv['restore-keys'] ?? (0, actions_1.getInput)('restore-keys');
-        const uploadChunkSize = inputArgv['upload-chunk-size'] ?? (0, actions_1.getInput)('upload-chunk-size');
-        const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? (0, actions_1.getInput)('aws-s3-bucket-endpoint') ?? true;
-        const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? (0, actions_1.getInput)('aws-s3-force-path-style') ?? false;
-        console.log({ path, key, restoreKeys, uploadChunkSize, s3BucketEndpoint, s3ForcePathStyle });
+        const path = inputArgv.path ?? (0, actions_1.customGetInput)('path');
+        const key = inputArgv.key ?? (0, actions_1.customGetInput)('key');
+        const restoreKeys = inputArgv['restore-keys'] ?? (0, actions_1.customGetInput)('restore-keys');
+        const uploadChunkSize = inputArgv['upload-chunk-size'] ?? (0, actions_1.customGetInput)('upload-chunk-size');
+        const awsEndpoint = inputArgv['aws-endpoint'] ?? (0, actions_1.customGetInput)('aws-endpoint') ?? true;
+        const awsRegion = inputArgv['aws-region'] ?? (0, actions_1.customGetInput)('aws-region') ?? true;
+        const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? (0, actions_1.customGetInput)('aws-s3-bucket-endpoint') ?? true;
+        const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? (0, actions_1.customGetInput)('aws-s3-force-path-style') ?? false;
+        console.log({
+            path,
+            key,
+            restoreKeys,
+            uploadChunkSize,
+            awsRegion,
+            awsEndpoint,
+            s3BucketEndpoint,
+            s3ForcePathStyle,
+        });
         (0, core_1.setOutput)('time', new Date().toTimeString());
     }
     catch (error) {

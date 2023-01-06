@@ -13,5 +13,4 @@ export type InputParams = {
 };
 
 export type InputName = keyof InputParams;
-
-export type InputValue = string | number | boolean | undefined;
+export type InputValue = string | number | boolean | null;

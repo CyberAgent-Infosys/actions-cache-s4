@@ -2694,13 +2694,26 @@ exports["default"] = _default;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getInput = void 0;
+exports.customGetInput = exports.getInput = void 0;
+const strToBool_1 = __nccwpck_require__(874);
 const core_1 = __nccwpck_require__(186);
-const getInput = (k) => {
+const getInput = (k, initialValue = null) => {
     const v = (0, core_1.getInput)(k);
-    return v === '' ? null : v;
+    return v === '' ? initialValue : v;
 };
 exports.getInput = getInput;
+const customGetInput = (k) => {
+    const v = (0, exports.getInput)(k);
+    console.log('customGetInput', k, v);
+    if (v === null)
+        return null;
+    if (['upload-chunk-size'].includes(k))
+        return Number(v);
+    if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(k))
+        return (0, strToBool_1.strToBool)(v);
+    return v;
+};
+exports.customGetInput = customGetInput;
 
 
 /***/ }),
@@ -2718,7 +2731,7 @@ const parseArgv = (argv) => {
         .filter(v => /(^--)/.test(v))
         .map(v => v.replace(/^--/, ''))
         .map((v) => {
-        const [key = '', value = ''] = v.split('=');
+        const [key, value] = v.split('=');
         // 型変換
         if (['upload-chunk-size'].includes(key))
             return { [key]: Number(value) };

@@ -1,6 +1,6 @@
 import { setFailed, setOutput } from '@actions/core';
 import { parseArgv } from '@/lib/parseArgv';
-import { getInput } from '@/lib/actions';
+import { customGetInput } from '@/lib/actions';
 
 async function run(): Promise<void> {
   try {
@@ -8,14 +8,26 @@ async function run(): Promise<void> {
     console.log({ inputArgv });
 
     // TODO: 初期化
-    const path = inputArgv.path ?? getInput('path');
-    const key = inputArgv.key ?? getInput('key');
-    const restoreKeys = inputArgv['restore-keys'] ?? getInput('restore-keys');
-    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? getInput('upload-chunk-size');
-    const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? getInput('aws-s3-bucket-endpoint') ?? true;
-    const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? getInput('aws-s3-force-path-style') ?? false;
+    const path = inputArgv.path ?? customGetInput('path');
+    const key = inputArgv.key ?? customGetInput('key');
+    const restoreKeys = inputArgv['restore-keys'] ?? customGetInput('restore-keys');
+    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? customGetInput('upload-chunk-size');
+    const awsEndpoint = inputArgv['aws-endpoint'] ?? customGetInput('aws-endpoint') ?? true;
+    const awsRegion = inputArgv['aws-region'] ?? customGetInput('aws-region') ?? true;
 
-    console.log({ path, key, restoreKeys, uploadChunkSize, s3BucketEndpoint, s3ForcePathStyle });
+    const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? customGetInput('aws-s3-bucket-endpoint') ?? true;
+    const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? customGetInput('aws-s3-force-path-style') ?? false;
+
+    console.log({
+      path,
+      key,
+      restoreKeys,
+      uploadChunkSize,
+      awsRegion,
+      awsEndpoint,
+      s3BucketEndpoint,
+      s3ForcePathStyle,
+    });
 
     setOutput('time', new Date().toTimeString());
   } catch (error) {

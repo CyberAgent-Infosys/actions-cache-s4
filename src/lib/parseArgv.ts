@@ -1,16 +1,17 @@
 import { InputName, InputValue, InputParams } from '@/@types/argv';
 import { strToBool } from '@/lib/strToBool';
 
-export const parseArgv = (argv: string[]): Record<InputName, InputValue> => {
+export const parseArgv = (argv: string[]): Record<InputName, InputValue | undefined> => {
   const optionArray = argv
     .filter(v => /(^--)/.test(v))
     .map(v => v.replace(/^--/, ''))
     .map((v: string): Partial<InputParams> => {
-      const [key = '' as InputName, value = '']: string[] = v.split('=');
+      const [key, value] = v.split('=') as [InputName, string];
 
       // 型変換
-      if (['upload-chunk-size'].includes(key)) return { [key]: Number(value) };
-      if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(key)) return { [key]: strToBool(value) };
+      if ((['upload-chunk-size'] as InputName[]).includes(key)) return { [key]: Number(value) };
+      if ((['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'] as InputName[]).includes(key))
+        return { [key]: strToBool(value) };
       return { [key]: value };
     })
     .filter((v: Partial<InputParams>) => !('' in v));

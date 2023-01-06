@@ -3,7 +3,7 @@ import { parseArgv } from '@/lib/parseArgv';
 
 const input = [
   '/bin/node',
-  'src/main.ts',
+  'src/save.ts',
   '--path=./node_modules\\n./package-lock.json',
   '--key=LINUX-nodejs-ABRACADABRA',
   '--restore-keys=LINUX-nodejs-\\nLINUX-',

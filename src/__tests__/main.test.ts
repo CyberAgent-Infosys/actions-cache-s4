@@ -1,30 +1,20 @@
 import * as cp from 'child_process';
 import * as path from 'path';
 import * as process from 'process';
-import { expect, test } from '@jest/globals';
-import { wait } from '@/wait';
-
-test('throws invalid number', async () => {
-  const input = parseInt('foo', 10);
-  await expect(wait({ milliseconds: input })).rejects.toThrow('milliseconds not a number');
-});
-
-test('wait 500 ms', async () => {
-  const start = new Date();
-  await wait({ milliseconds: 500 });
-  const end = new Date();
-  const delta = Math.abs(end.getTime() - start.getTime());
-  expect(delta).toBeGreaterThan(450);
-});
+import { describe, test } from '@jest/globals';
 
 // shows how the runner will run a javascript action with env / stdout protocol
-test('test runs', () => {
-  process.env['INPUT_MILLISECONDS'] = '500';
+describe('test runs', () => {
   const np = process.execPath;
-  const ip = path.join(__dirname, '../..', 'dist', 'index.js');
-  const options: cp.ExecFileSyncOptions = {
-    env: process.env,
-  };
+  const options: cp.ExecFileSyncOptions = { env: process.env };
 
-  console.log(cp.execFileSync(np, [ip], options).toString());
+  test('save.js', () => {
+    const ip = path.join(__dirname, '../..', 'dist', 'save', 'index.js');
+    console.log(cp.execFileSync(np, [ip], options).toString());
+  });
+
+  test('restore.js', () => {
+    const ip = path.join(__dirname, '../..', 'dist', 'restore', 'index.js');
+    console.log(cp.execFileSync(np, [ip], options).toString());
+  });
 });

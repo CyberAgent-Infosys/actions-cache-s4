@@ -2688,28 +2688,46 @@ exports["default"] = _default;
 
 /***/ }),
 
+/***/ 346:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getInput = void 0;
+const core_1 = __nccwpck_require__(186);
+const getInput = (k) => {
+    const v = (0, core_1.getInput)(k);
+    return v === '' ? null : v;
+};
+exports.getInput = getInput;
+
+
+/***/ }),
+
 /***/ 734:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseArgv = void 0;
+const strToBool_1 = __nccwpck_require__(874);
 const parseArgv = (argv) => {
     const optionArray = argv
         .filter(v => /(^--)/.test(v))
         .map(v => v.replace(/^--/, ''))
         .map((v) => {
         const [key = '', value = ''] = v.split('=');
+        // 型変換
+        if (['upload-chunk-size'].includes(key))
+            return { [key]: Number(value) };
+        if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(key))
+            return { [key]: (0, strToBool_1.strToBool)(value) };
         return { [key]: value };
     })
         .filter((v) => !('' in v));
     const option = Object.assign({}, ...optionArray);
-    // TODO: 型変換
-    // TODO: 意図的にundefined返すか初期値入れるかは実装してから考える
-    if (option['upload-chunk-size'])
-        option['upload-chunk-size'] = Number(option['upload-chunk-size']);
-    // TODO: validationと初期値があれば考える
     return {
         path: option.path,
         key: option.key,
@@ -2720,8 +2738,8 @@ const parseArgv = (argv) => {
         'aws-secret-access-key': option['aws-secret-access-key'],
         'aws-region': option['aws-region'],
         'aws-endpoint': option['aws-endpoint'],
-        'aws-s3-bucket-endpoint': option['aws-s3-bucket-endpoint'] ?? true,
-        'aws-s3-force-path-style': option['aws-s3-force-path-style'] ?? false,
+        'aws-s3-bucket-endpoint': option['aws-s3-bucket-endpoint'],
+        'aws-s3-force-path-style': option['aws-s3-force-path-style'],
     };
 };
 exports.parseArgv = parseArgv;
@@ -2729,22 +2747,19 @@ exports.parseArgv = parseArgv;
 
 /***/ }),
 
-/***/ 259:
+/***/ 874:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.wait = void 0;
-async function wait({ milliseconds }) {
-    return new Promise(resolve => {
-        if (isNaN(milliseconds)) {
-            throw new Error('milliseconds not a number');
-        }
-        setTimeout(() => resolve('done!'), milliseconds);
-    });
-}
-exports.wait = wait;
+exports.strToBool = void 0;
+const strToBool = (v) => {
+    if (typeof v !== 'string')
+        throw new Error('detected invalid value.');
+    return v === 'true';
+};
+exports.strToBool = strToBool;
 
 
 /***/ }),
@@ -2883,18 +2898,20 @@ var exports = __webpack_exports__;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __nccwpck_require__(186);
-const wait_1 = __nccwpck_require__(259);
 const parseArgv_1 = __nccwpck_require__(734);
+const actions_1 = __nccwpck_require__(346);
 async function run() {
     try {
-        const option = (0, parseArgv_1.parseArgv)(process.argv);
-        console.log({ option });
-        const path = option?.path ?? (0, core_1.getInput)('path');
-        console.log({ path });
-        (0, core_1.debug)(new Date().toTimeString());
-        const ms = 1000;
-        await (0, wait_1.wait)({ milliseconds: ms });
-        (0, core_1.debug)(new Date().toTimeString());
+        const inputArgv = (0, parseArgv_1.parseArgv)(process.argv);
+        console.log({ inputArgv });
+        // TODO: 初期化
+        const path = inputArgv.path ?? (0, actions_1.getInput)('path');
+        const key = inputArgv.key ?? (0, actions_1.getInput)('key');
+        const restoreKeys = inputArgv['restore-keys'] ?? (0, actions_1.getInput)('restore-keys');
+        const uploadChunkSize = inputArgv['upload-chunk-size'] ?? (0, actions_1.getInput)('upload-chunk-size');
+        const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? (0, actions_1.getInput)('aws-s3-bucket-endpoint') ?? true;
+        const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? (0, actions_1.getInput)('aws-s3-force-path-style') ?? false;
+        console.log({ path, key, restoreKeys, uploadChunkSize, s3BucketEndpoint, s3ForcePathStyle });
         (0, core_1.setOutput)('time', new Date().toTimeString());
     }
     catch (error) {

@@ -1,32 +1,36 @@
 import { setFailed, setOutput } from '@actions/core';
 import { parseArgv } from '@/lib/parseArgv';
-import { customGetInput } from '@/lib/actions';
+import { customGetInput as getInput } from '@/lib/actions';
 
 async function run(): Promise<void> {
   try {
     const inputArgv = parseArgv(process.argv);
     console.log({ inputArgv });
 
-    // TODO: 初期化
-    const path = inputArgv.path ?? customGetInput('path');
-    const key = inputArgv.key ?? customGetInput('key');
-    const restoreKeys = inputArgv['restore-keys'] ?? customGetInput('restore-keys');
-    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? customGetInput('upload-chunk-size');
-    const awsEndpoint = inputArgv['aws-endpoint'] ?? customGetInput('aws-endpoint') ?? true;
-    const awsRegion = inputArgv['aws-region'] ?? customGetInput('aws-region') ?? true;
-
-    const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? customGetInput('aws-s3-bucket-endpoint') ?? true;
-    const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? customGetInput('aws-s3-force-path-style') ?? false;
+    const path = inputArgv.path ?? getInput('path');
+    const key = inputArgv.key ?? getInput('key');
+    const restoreKeys = inputArgv['restore-keys'] ?? getInput('restore-keys');
+    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? getInput('upload-chunk-size');
+    const awsS3Bucket = inputArgv['aws-s3-bucket'] ?? getInput('aws-s3-bucket') ?? true;
+    const awsAccessKeyId = inputArgv['aws-access-key-id'] ?? getInput('aws-access-key-id');
+    const awsSecretAccessKey = inputArgv['aws-secret-access-key'] ?? getInput('aws-secret-access-key');
+    const awsRegion = inputArgv['aws-region'] ?? getInput('aws-region') ?? 'us-east-1';
+    const awsEndpoint = inputArgv['aws-endpoint'] ?? getInput('aws-endpoint') ?? true;
+    const awsS3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? getInput('aws-s3-bucket-endpoint') ?? true;
+    const awsS3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? getInput('aws-s3-force-path-style') ?? false;
 
     console.log({
       path,
       key,
       restoreKeys,
       uploadChunkSize,
+      awsS3Bucket,
+      awsAccessKeyId,
+      awsSecretAccessKey,
       awsRegion,
       awsEndpoint,
-      s3BucketEndpoint,
-      s3ForcePathStyle,
+      awsS3BucketEndpoint,
+      awsS3ForcePathStyle,
     });
 
     setOutput('time', new Date().toTimeString());

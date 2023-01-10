@@ -2916,24 +2916,29 @@ async function run() {
     try {
         const inputArgv = (0, parseArgv_1.parseArgv)(process.argv);
         console.log({ inputArgv });
-        // TODO: 初期化
         const path = inputArgv.path ?? (0, actions_1.customGetInput)('path');
         const key = inputArgv.key ?? (0, actions_1.customGetInput)('key');
         const restoreKeys = inputArgv['restore-keys'] ?? (0, actions_1.customGetInput)('restore-keys');
         const uploadChunkSize = inputArgv['upload-chunk-size'] ?? (0, actions_1.customGetInput)('upload-chunk-size');
+        const awsS3Bucket = inputArgv['aws-s3-bucket'] ?? (0, actions_1.customGetInput)('aws-s3-bucket') ?? true;
+        const awsAccessKeyId = inputArgv['aws-access-key-id'] ?? (0, actions_1.customGetInput)('aws-access-key-id');
+        const awsSecretAccessKey = inputArgv['aws-secret-access-key'] ?? (0, actions_1.customGetInput)('aws-secret-access-key');
+        const awsRegion = inputArgv['aws-region'] ?? (0, actions_1.customGetInput)('aws-region') ?? 'us-east-1';
         const awsEndpoint = inputArgv['aws-endpoint'] ?? (0, actions_1.customGetInput)('aws-endpoint') ?? true;
-        const awsRegion = inputArgv['aws-region'] ?? (0, actions_1.customGetInput)('aws-region') ?? true;
-        const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? (0, actions_1.customGetInput)('aws-s3-bucket-endpoint') ?? true;
-        const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? (0, actions_1.customGetInput)('aws-s3-force-path-style') ?? false;
+        const awsS3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? (0, actions_1.customGetInput)('aws-s3-bucket-endpoint') ?? true;
+        const awsS3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? (0, actions_1.customGetInput)('aws-s3-force-path-style') ?? false;
         console.log({
             path,
             key,
             restoreKeys,
             uploadChunkSize,
+            awsS3Bucket,
+            awsAccessKeyId,
+            awsSecretAccessKey,
             awsRegion,
             awsEndpoint,
-            s3BucketEndpoint,
-            s3ForcePathStyle,
+            awsS3BucketEndpoint,
+            awsS3ForcePathStyle,
         });
         (0, core_1.setOutput)('time', new Date().toTimeString());
     }

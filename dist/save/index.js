@@ -2704,7 +2704,6 @@ const getInput = (k, initialValue = null) => {
 exports.getInput = getInput;
 const customGetInput = (k) => {
     const v = (0, exports.getInput)(k);
-    console.log('customGetInput', k, v);
     if (v === null)
         return null;
     if (['upload-chunk-size'].includes(k))

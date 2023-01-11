@@ -10,7 +10,7 @@
     "package": "npm-run-all -p package:save package:restore",
     "package:save": "ncc build --source-map --license licenses.txt -o dist/save src/save.ts",
     "package:restore": "ncc build --source-map --license licenses.txt -o dist/restore src/restore.ts",
-    "dev": "ts-node-dev --respawn -r tsconfig-paths/register src/save.ts",
+    "dev:save": "ts-node-dev --respawn -r tsconfig-paths/register src/save.ts",
     "dev:restore": "ts-node-dev --respawn -r tsconfig-paths/register src/restore.ts",
     "start": "npm dev",
     "lint": "eslint --cache src/**/*.ts",

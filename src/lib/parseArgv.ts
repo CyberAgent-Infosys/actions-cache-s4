@@ -31,4 +31,4 @@ export function parseArgv(argv: string[]): Record<InputName, InputValue | undefi
     'aws-s3-bucket-endpoint': option['aws-s3-bucket-endpoint'],
     'aws-s3-force-path-style': option['aws-s3-force-path-style'],
   };
-};
+}

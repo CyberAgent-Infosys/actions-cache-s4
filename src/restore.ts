@@ -1,21 +1,16 @@
 import { setFailed, setOutput } from '@actions/core';
-import { parseArgv } from '@/lib/parseArgv';
-import { getInput } from '@/lib/actions';
+import { isValidEvent } from '@/lib/utils';
+import { getInputs } from '@/lib/inputs';
 
 async function run(): Promise<void> {
   try {
-    const inputArgv = parseArgv(process.argv);
-    console.log({ inputArgv });
+    // TODO: パターン未確認
+    if (!isValidEvent()) return;
+    const inputs = getInputs(process.argv);
+    console.log({ inputs });
 
-    // TODO: 初期化
-    const path = inputArgv.path ?? getInput('path');
-    const key = inputArgv.key ?? getInput('key');
-    const restoreKeys = inputArgv['restore-keys'] ?? getInput('restore-keys');
-    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? getInput('upload-chunk-size');
-    const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? getInput('aws-s3-bucket-endpoint') ?? true;
-    const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? getInput('aws-s3-force-path-style') ?? false;
-
-    console.log({ path, key, restoreKeys, uploadChunkSize, s3BucketEndpoint, s3ForcePathStyle });
+    // TODO: getCache
+    // const state = utils.getCacheState();
 
     setOutput('time', new Date().toTimeString());
   } catch (error) {

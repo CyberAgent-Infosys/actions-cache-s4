@@ -2694,25 +2694,45 @@ exports["default"] = _default;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.customGetInput = exports.getInput = void 0;
+exports.getInputAsBool = exports.getInputAsInt = exports.getInput = void 0;
 const strToBool_1 = __nccwpck_require__(874);
 const core_1 = __nccwpck_require__(186);
-const getInput = (k, initialValue = null) => {
-    const v = (0, core_1.getInput)(k);
-    return v === '' ? initialValue : v;
-};
+const isNumber_1 = __nccwpck_require__(206);
+function getInput(k, options) {
+    const v = (0, core_1.getInput)(k, options);
+    return v !== '' ? v : undefined;
+}
 exports.getInput = getInput;
-const customGetInput = (k) => {
-    const v = (0, exports.getInput)(k);
-    if (v === null)
-        return null;
-    if (['upload-chunk-size'].includes(k))
-        return Number(v);
-    if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(k))
-        return (0, strToBool_1.strToBool)(v);
-    return v;
-};
-exports.customGetInput = customGetInput;
+function getInputAsInt(k, options) {
+    const v = getInput(k, options);
+    return (0, isNumber_1.isNumber)(v) ? Number(v) : undefined;
+}
+exports.getInputAsInt = getInputAsInt;
+function getInputAsBool(k, options) {
+    const v = getInput(k, options);
+    return (0, strToBool_1.strToBool)(v);
+}
+exports.getInputAsBool = getInputAsBool;
+
+
+/***/ }),
+
+/***/ 206:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isNumber = void 0;
+// 不要な文字がなく、parseIntできたらtrue
+function isNumber(v) {
+    if (typeof v !== 'string')
+        return false;
+    if (/\+|:|-|\//g.test(v))
+        return false;
+    return !Number.isNaN(parseInt(v, 10));
+}
+exports.isNumber = isNumber;
 
 
 /***/ }),
@@ -2725,7 +2745,7 @@ exports.customGetInput = customGetInput;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.parseArgv = void 0;
 const strToBool_1 = __nccwpck_require__(874);
-const parseArgv = (argv) => {
+function parseArgv(argv) {
     const optionArray = argv
         .filter(v => /(^--)/.test(v))
         .map(v => v.replace(/^--/, ''))
@@ -2753,7 +2773,7 @@ const parseArgv = (argv) => {
         'aws-s3-bucket-endpoint': option['aws-s3-bucket-endpoint'],
         'aws-s3-force-path-style': option['aws-s3-force-path-style'],
     };
-};
+}
 exports.parseArgv = parseArgv;
 
 
@@ -2766,11 +2786,11 @@ exports.parseArgv = parseArgv;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.strToBool = void 0;
-const strToBool = (v) => {
+function strToBool(v) {
     if (typeof v !== 'string')
         throw new Error('detected invalid value.');
     return v === 'true';
-};
+}
 exports.strToBool = strToBool;
 
 

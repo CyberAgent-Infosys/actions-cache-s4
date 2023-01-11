@@ -1,4 +1,4 @@
-export function strToBool(v: string | unknown): boolean {
-  if (typeof v !== 'string') throw new Error('detected invalid value.');
+export function strToBool(v: string | unknown): boolean | undefined {
+  if (typeof v !== 'string') return undefined;
   return v === 'true';
-};
+}

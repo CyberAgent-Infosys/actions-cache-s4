@@ -1,17 +1,19 @@
-import { InputName, InputValue } from '@/@types/argv';
+import { InputName } from '@/@types/argv';
 import { strToBool } from '@/lib/strToBool';
-import { getInput as _getInput } from '@actions/core';
+import { getInput as _getInput, InputOptions } from '@actions/core';
+import { isNumber } from '@/lib/isNumber';
 
-export const getInput = (k: string, initialValue: unknown = null): string | unknown => {
-  const v = _getInput(k);
-  return v === '' ? initialValue : v;
-};
+export function getInput(k: string, options?: InputOptions): string | unknown {
+  const v = _getInput(k, options);
+  return v !== '' ? v : undefined;
+}
 
-export const customGetInput = (k: InputName): InputValue | unknown => {
-  const v = getInput(k);
-  if (v === null) return null;
+export function getInputAsInt(k: InputName, options?: InputOptions): number | unknown {
+  const v = getInput(k, options);
+  return isNumber(v) ? Number(v) : undefined;
+}
 
-  if ((['upload-chunk-size'] as InputName[]).includes(k)) return Number(v);
-  if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(k)) return strToBool(v);
-  return v;
-};
+export function getInputAsBool(k: InputName, options?: InputOptions): boolean | unknown {
+  const v = getInput(k, options);
+  return strToBool(v);
+}

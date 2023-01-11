@@ -1,7 +1,7 @@
 import { InputName, InputValue, InputParams } from '@/@types/argv';
 import { strToBool } from '@/lib/strToBool';
 
-export const parseArgv = (argv: string[]): Record<InputName, InputValue | undefined> => {
+export function parseArgv(argv: string[]): Record<InputName, InputValue | undefined> {
   const optionArray = argv
     .filter(v => /(^--)/.test(v))
     .map(v => v.replace(/^--/, ''))

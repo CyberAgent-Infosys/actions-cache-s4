@@ -2694,7 +2694,7 @@ exports["default"] = _default;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getInputAsBool = exports.getInputAsInt = exports.getInput = void 0;
+exports.getCacheState = exports.getState = exports.getInputAsBool = exports.getInputAsInt = exports.getInput = void 0;
 const strToBool_1 = __nccwpck_require__(874);
 const core_1 = __nccwpck_require__(186);
 const isNumber_1 = __nccwpck_require__(206);
@@ -2705,7 +2705,7 @@ function getInput(k, options) {
 exports.getInput = getInput;
 function getInputAsInt(k, options) {
     const v = getInput(k, options);
-    return (0, isNumber_1.isNumber)(v) ? Number(v) : undefined;
+    return typeof v === 'string' && (0, isNumber_1.isNumber)(v) ? parseInt(v, 10) : undefined;
 }
 exports.getInputAsInt = getInputAsInt;
 function getInputAsBool(k, options) {
@@ -2713,6 +2713,84 @@ function getInputAsBool(k, options) {
     return (0, strToBool_1.strToBool)(v);
 }
 exports.getInputAsBool = getInputAsBool;
+function getState(k) {
+    return (0, core_1.getState)(k);
+}
+exports.getState = getState;
+function getCacheState() {
+    const cacheKey = getState('CACHE_KEY');
+    if (cacheKey) {
+        (0, core_1.debug)(`Cache state/key: ${cacheKey}`);
+        return cacheKey;
+    }
+    return undefined;
+}
+exports.getCacheState = getCacheState;
+
+
+/***/ }),
+
+/***/ 479:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getEnv = void 0;
+function getEnv(key) {
+    return process.env?.[key] ?? undefined;
+}
+exports.getEnv = getEnv;
+
+
+/***/ }),
+
+/***/ 163:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getInputs = void 0;
+const parseArgv_1 = __nccwpck_require__(734);
+const actions_1 = __nccwpck_require__(346);
+const strToArray_1 = __nccwpck_require__(602);
+// TODO: 初期値見直し
+const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';
+const DEFAULT_AWS_REGION = 'us-east-1';
+const DEFAULT_S3_BUCKET_ENDPOINT = true;
+const DEFAULT_S3_FORCE_PATH_STYLE = false;
+const DEFAULT_UPLOAD_CHUNK_SIZE = 0;
+function getInputs(argv) {
+    const inputArgv = (0, parseArgv_1.parseArgv)(argv);
+    // CLIからだと引数、Github Actions経由ではgetInputからパラメータを用意
+    const _path = inputArgv.path ?? (0, actions_1.getInput)('path');
+    const path = typeof _path === 'string' ? (0, strToArray_1.strToArray)(_path ?? '') : [];
+    const key = inputArgv.key ?? (0, actions_1.getInput)('key');
+    const restoreKeys = inputArgv['restore-keys'] ?? (0, actions_1.getInput)('restore-keys');
+    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? (0, actions_1.getInputAsInt)('upload-chunk-size') ?? DEFAULT_UPLOAD_CHUNK_SIZE;
+    const awsS3Bucket = inputArgv['aws-s3-bucket'] ?? (0, actions_1.getInput)('aws-s3-bucket');
+    const awsAccessKeyId = inputArgv['aws-access-key-id'] ?? (0, actions_1.getInput)('aws-access-key-id');
+    const awsSecretAccessKey = inputArgv['aws-secret-access-key'] ?? (0, actions_1.getInput)('aws-secret-access-key');
+    const awsRegion = inputArgv['aws-region'] ?? (0, actions_1.getInput)('aws-region') ?? DEFAULT_AWS_REGION;
+    const awsEndpoint = inputArgv['aws-endpoint'] ?? (0, actions_1.getInput)('aws-endpoint') ?? DEFAULT_AWS_ENDPOINT;
+    const awsS3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? (0, actions_1.getInputAsBool)('aws-s3-bucket-endpoint') ?? DEFAULT_S3_BUCKET_ENDPOINT;
+    const awsS3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? (0, actions_1.getInputAsBool)('aws-s3-force-path-style') ?? DEFAULT_S3_FORCE_PATH_STYLE;
+    return {
+        path,
+        key,
+        restoreKeys,
+        uploadChunkSize,
+        awsS3Bucket,
+        awsAccessKeyId,
+        awsSecretAccessKey,
+        awsRegion,
+        awsEndpoint,
+        awsS3BucketEndpoint,
+        awsS3ForcePathStyle,
+    };
+}
+exports.getInputs = getInputs;
 
 
 /***/ }),
@@ -2753,7 +2831,7 @@ function parseArgv(argv) {
         const [key, value] = v.split('=');
         // 型変換
         if (['upload-chunk-size'].includes(key))
-            return { [key]: Number(value) };
+            return { [key]: parseInt(value, 10) };
         if (['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'].includes(key))
             return { [key]: (0, strToBool_1.strToBool)(value) };
         return { [key]: value };
@@ -2779,6 +2857,25 @@ exports.parseArgv = parseArgv;
 
 /***/ }),
 
+/***/ 602:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.strToArray = void 0;
+function strToArray(v) {
+    return v
+        .replace('\\n', '\n')
+        .split('\n')
+        .map((s) => s.trim())
+        .filter((x) => x !== '');
+}
+exports.strToArray = strToArray;
+
+
+/***/ }),
+
 /***/ 874:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -2788,10 +2885,47 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.strToBool = void 0;
 function strToBool(v) {
     if (typeof v !== 'string')
-        throw new Error('detected invalid value.');
+        return undefined;
     return v === 'true';
 }
 exports.strToBool = strToBool;
+
+
+/***/ }),
+
+/***/ 977:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isGhes = exports.isValidEvent = exports.logWarning = void 0;
+const core_1 = __nccwpck_require__(186);
+const env_1 = __nccwpck_require__(479);
+function logWarning(v) {
+    const prefix = '[warning]';
+    (0, core_1.info)(`${prefix}${v}`);
+}
+exports.logWarning = logWarning;
+function isValidEvent() {
+    // TODO: CLI実行だったらスルーさせたい
+    const isDebug = (0, env_1.getEnv)('DEBUG_MODE') ?? false;
+    if (isDebug)
+        return true;
+    const isValid = Boolean((0, env_1.getEnv)('GITHUB_REF') ?? false);
+    const eventName = (0, env_1.getEnv)('GITHUB_EVENT_NAME');
+    if (!isValid) {
+        logWarning(`Event Validation Error: The event type ${eventName}
+      } is not supported because it's not tied to a branch or tag ref.`);
+    }
+    return isValid;
+}
+exports.isValidEvent = isValidEvent;
+function isGhes() {
+    const ghUrl = new URL((0, env_1.getEnv)('GITHUB_SERVER_URL') ?? 'https://github.com');
+    return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
+}
+exports.isGhes = isGhes;
 
 
 /***/ }),
@@ -2930,20 +3064,21 @@ var exports = __webpack_exports__;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __nccwpck_require__(186);
-const parseArgv_1 = __nccwpck_require__(734);
 const actions_1 = __nccwpck_require__(346);
+const utils_1 = __nccwpck_require__(977);
+const inputs_1 = __nccwpck_require__(163);
 async function run() {
+    console.log('called save proc.');
     try {
-        const inputArgv = (0, parseArgv_1.parseArgv)(process.argv);
-        console.log({ inputArgv });
-        // TODO: 初期化
-        const path = inputArgv.path ?? (0, actions_1.getInput)('path');
-        const key = inputArgv.key ?? (0, actions_1.getInput)('key');
-        const restoreKeys = inputArgv['restore-keys'] ?? (0, actions_1.getInput)('restore-keys');
-        const uploadChunkSize = inputArgv['upload-chunk-size'] ?? (0, actions_1.getInput)('upload-chunk-size');
-        const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? (0, actions_1.getInput)('aws-s3-bucket-endpoint') ?? true;
-        const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? (0, actions_1.getInput)('aws-s3-force-path-style') ?? false;
-        console.log({ path, key, restoreKeys, uploadChunkSize, s3BucketEndpoint, s3ForcePathStyle });
+        // TODO: パターン未確認
+        if (!(0, utils_1.isValidEvent)())
+            return;
+        const inputs = (0, inputs_1.getInputs)(process.argv);
+        console.log({ inputs });
+        // TODO: getCache
+        const state = (0, actions_1.getCacheState)();
+        const primaryKey = (0, actions_1.getState)('CACHE_KEY');
+        console.log({ state, primaryKey });
         (0, core_1.setOutput)('time', new Date().toTimeString());
     }
     catch (error) {

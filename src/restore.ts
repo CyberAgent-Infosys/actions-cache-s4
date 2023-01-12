@@ -3,6 +3,8 @@ import { isValidEvent } from '@/lib/utils';
 import { getInputs } from '@/lib/inputs';
 
 async function run(): Promise<void> {
+  console.log('called restore proc.');
+
   try {
     // TODO: パターン未確認
     if (!isValidEvent()) return;

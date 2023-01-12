@@ -10,7 +10,7 @@ export function getInput(k: string, options?: InputOptions): string | unknown {
 
 export function getInputAsInt(k: InputName, options?: InputOptions): number | unknown {
   const v = getInput(k, options);
-  return isNumber(v) ? Number(v) : undefined;
+  return typeof v === 'string' && isNumber(v) ? parseInt(v, 10) : undefined;
 }
 
 export function getInputAsBool(k: InputName, options?: InputOptions): boolean | unknown {

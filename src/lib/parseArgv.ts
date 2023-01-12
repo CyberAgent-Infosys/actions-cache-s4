@@ -9,7 +9,7 @@ export function parseArgv(argv: string[]): Record<InputName, InputValue | undefi
       const [key, value] = v.split('=') as [InputName, string];
 
       // 型変換
-      if ((['upload-chunk-size'] as InputName[]).includes(key)) return { [key]: Number(value) };
+      if ((['upload-chunk-size'] as InputName[]).includes(key)) return { [key]: parseInt(value, 10) };
       if ((['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'] as InputName[]).includes(key))
         return { [key]: strToBool(value) };
       return { [key]: value };

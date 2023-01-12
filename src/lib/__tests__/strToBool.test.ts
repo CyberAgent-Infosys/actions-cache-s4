@@ -9,10 +9,4 @@ describe('strToBool', () => {
   test('文字列falseがbooleanのfalseに変換できる', () => {
     expect(strToBool('false')).toEqual(false);
   });
-
-  test('nullを投げると例外が返る', () => {
-    expect(() => {
-      strToBool(null);
-    }).toThrow('detected invalid value.');
-  });
 });

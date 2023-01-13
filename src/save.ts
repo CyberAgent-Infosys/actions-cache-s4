@@ -26,6 +26,8 @@ async function run(): Promise<void> {
       logWarning('Error retrieving key from state.');
       return;
     }
+
+    // TODO: delete me
     console.log({ primaryKey, state });
 
     if (isExactKeyMatch(primaryKey, state)) {

@@ -17,15 +17,16 @@ async function run(): Promise<void> {
     // キャッシュの検証
     const state = getCacheState();
 
-    // TODO: throw
-    const primaryKey = getState('CACHE_KEY');
-    console.log({ primaryKey, state });
+    // TODO: stateからキーをとってくる理由を調べる
+    // const primaryKey = getState('CACHE_KEY');
+    const { key: primaryKey } = inputs;
 
     // Inputs are re-evaluted before the post action, so we want the original key used for restore
     if (!primaryKey) {
       logWarning('Error retrieving key from state.');
       return;
     }
+    console.log({ primaryKey, state });
 
     if (isExactKeyMatch(primaryKey, state)) {
       logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);

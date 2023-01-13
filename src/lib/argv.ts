@@ -15,13 +15,13 @@ export function parseArgv(argv: string[]): Record<InputKey, string | undefined> 
   return Object.assign({}, ...optionArray);
 }
 
-export function getArgv(argv: string[]): Inputs {
+export function getArgv(argv: string[]): Partial<Inputs> {
   const inputs = parseArgv(argv);
   return {
-    path: strToArray(inputs?.path ?? ''),
+    path: inputs.path ? strToArray(inputs?.path ?? '') : undefined,
     key: inputs.key,
-    restoreKeys: strToArray(inputs['restore-keys'] ?? ''),
-    uploadChunkSize: parseInt(inputs?.['upload-chunk-size'] ?? '', 10),
+    restoreKeys: inputs['restore-keys'] ? strToArray(inputs['restore-keys'] ?? '') : undefined,
+    uploadChunkSize: inputs['upload-chunk-size'] ? parseInt(inputs?.['upload-chunk-size'] ?? '', 10) : undefined,
     awsS3Bucket: inputs['aws-s3-bucket'],
     awsAccessKeyId: inputs['aws-access-key-id'],
     awsSecretAccessKey: inputs['aws-secret-access-key'],

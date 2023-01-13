@@ -17,7 +17,7 @@ export function getInputs(argv: string[]): Inputs {
   // CLIからだと引数、Github Actions経由ではgetInputからパラメータを用意
   const path = inputArgv.path ?? getInputAsArray('path', requiredOption);
   const key = inputArgv.key ?? getInput('key', requiredOption);
-  const restoreKeys = inputArgv.restoreKeys ?? getInput('restore-keys');
+  const restoreKeys = inputArgv.restoreKeys ?? getInputAsArray('restore-keys');
   const uploadChunkSize = inputArgv.uploadChunkSize ?? getInputAsInt('upload-chunk-size') ?? DEFAULT_UPLOAD_CHUNK_SIZE;
   const awsS3Bucket = inputArgv.awsS3Bucket ?? getInput('aws-s3-bucket');
   const awsAccessKeyId = inputArgv.awsAccessKeyId ?? getInput('aws-access-key-id');

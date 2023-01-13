@@ -17,7 +17,7 @@ export type InputKey = keyof InputParams;
 export type Inputs = {
   path: string[] | undefined;
   key: string | undefined;
-  restoreKeys: string | undefined;
+  restoreKeys: string[] | undefined;
   uploadChunkSize: number | undefined;
   awsS3Bucket: string | undefined;
   awsAccessKeyId: string | undefined;

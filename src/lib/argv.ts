@@ -20,7 +20,7 @@ export function getArgv(argv: string[]): Inputs {
   return {
     path: strToArray(inputs?.path ?? ''),
     key: inputs.key,
-    restoreKeys: inputs['restore-keys'],
+    restoreKeys: strToArray(inputs['restore-keys'] ?? ''),
     uploadChunkSize: parseInt(inputs?.['upload-chunk-size'] ?? '', 10),
     awsS3Bucket: inputs['aws-s3-bucket'],
     awsAccessKeyId: inputs['aws-access-key-id'],

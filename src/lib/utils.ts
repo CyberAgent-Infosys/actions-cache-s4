@@ -2,7 +2,7 @@ import { getEnv } from '@/lib/env';
 import { logWarning } from '@/lib/actions';
 
 export function isValidEvent(): boolean {
-  // TODO: CLI実行だったらスルーさせたい
+  // CLI実行だったらスルー
   const isDebug = getEnv('DEBUG_MODE') ?? false;
   if (isDebug) return true;
 
@@ -22,4 +22,13 @@ export function isValidEvent(): boolean {
 export function isGhes(): boolean {
   const ghUrl = new URL(getEnv('GITHUB_SERVER_URL') ?? 'https://github.com');
   return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
+}
+
+export function isExactKeyMatch(key: string, cacheKey?: string): boolean {
+  return !!(
+    cacheKey &&
+    cacheKey.localeCompare(key, undefined, {
+      sensitivity: 'accent',
+    }) === 0
+  );
 }

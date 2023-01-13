@@ -1,7 +1,8 @@
+import { saveCache, ValidationError, ReserveCacheError } from '@actions/cache';
 import { setFailed, setOutput } from '@actions/core';
-import { getCacheState, getState } from '@/lib/actions';
-import { isValidEvent } from '@/lib/utils';
-import { getInputs } from '@/lib/inputs';
+import { getCacheState, getState, logInfo, logWarning } from '@/lib/actions';
+import { isExactKeyMatch, isValidEvent } from '@/lib/utils';
+import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 
 async function run(): Promise<void> {
   console.log('called save proc.');
@@ -11,13 +12,49 @@ async function run(): Promise<void> {
     if (!isValidEvent()) return;
 
     const inputs = getInputs(process.argv);
-    console.log({ inputs });
+    if (!inputs.path) return;
 
-    // TODO: getCache
+    // キャッシュの検証
     const state = getCacheState();
-    const primaryKey = getState('CACHE_KEY');
-    console.log({ state, primaryKey });
 
+    // TODO: 正しそうなキーに変更
+    const primaryKey = getState('CACHE_KEY') ?? '';
+    console.log({ primaryKey, state });
+
+    if (!primaryKey && isExactKeyMatch(primaryKey, state)) {
+      logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
+      return;
+    }
+
+    const s3config = getS3ClientConfigByInputs(inputs);
+    if (typeof s3config === 'undefined') {
+      logInfo('Please setup S3 config.');
+      return;
+    }
+
+    try {
+      await saveCache(
+        inputs.path,
+        primaryKey,
+        {
+          uploadChunkSize: inputs.uploadChunkSize,
+        },
+        s3config,
+        inputs.awsS3Bucket,
+      );
+      logInfo(`Cache saved with key: ${primaryKey}`);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        if (e.name === ValidationError.name) {
+          throw e;
+        } else if (e.name === ReserveCacheError.name) {
+          logInfo(e.message);
+        } else {
+          logWarning(e.message);
+        }
+      }
+      throw e;
+    }
     setOutput('time', new Date().toTimeString());
   } catch (error) {
     if (error instanceof Error) setFailed(error.message);

@@ -2774,7 +2774,7 @@ function getArgv(argv) {
     return {
         path: (0, strToArray_1.strToArray)(inputs?.path ?? ''),
         key: inputs.key,
-        restoreKeys: inputs['restore-keys'],
+        restoreKeys: (0, strToArray_1.strToArray)(inputs['restore-keys'] ?? ''),
         uploadChunkSize: parseInt(inputs?.['upload-chunk-size'] ?? '', 10),
         awsS3Bucket: inputs['aws-s3-bucket'],
         awsAccessKeyId: inputs['aws-access-key-id'],
@@ -2826,7 +2826,7 @@ function getInputs(argv) {
     // CLIからだと引数、Github Actions経由ではgetInputからパラメータを用意
     const path = inputArgv.path ?? (0, actions_1.getInputAsArray)('path', requiredOption);
     const key = inputArgv.key ?? (0, actions_1.getInput)('key', requiredOption);
-    const restoreKeys = inputArgv.restoreKeys ?? (0, actions_1.getInput)('restore-keys');
+    const restoreKeys = inputArgv.restoreKeys ?? (0, actions_1.getInputAsArray)('restore-keys');
     const uploadChunkSize = inputArgv.uploadChunkSize ?? (0, actions_1.getInputAsInt)('upload-chunk-size') ?? DEFAULT_UPLOAD_CHUNK_SIZE;
     const awsS3Bucket = inputArgv.awsS3Bucket ?? (0, actions_1.getInput)('aws-s3-bucket');
     const awsAccessKeyId = inputArgv.awsAccessKeyId ?? (0, actions_1.getInput)('aws-access-key-id');

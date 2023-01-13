@@ -45,7 +45,7 @@ describe('parseArgv', () => {
       awsSecretAccessKey: 'ABRACADABRA',
       key: 'LINUX-nodejs-ABRACADABRA',
       path: ['./node_modules', './package-lock.json'],
-      restoreKeys: 'LINUX-nodejs-\\nLINUX-',
+      restoreKeys: ['LINUX-nodejs-', 'LINUX-'],
       uploadChunkSize: 9999,
     });
   });

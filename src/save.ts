@@ -28,7 +28,8 @@ async function run(): Promise<void> {
     }
 
     // TODO: delete me
-    console.log({ inputs, primaryKey, state });
+    console.log({ inputs });
+    console.log({ primaryKey, state });
 
     if (isExactKeyMatch(primaryKey, state)) {
       logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);

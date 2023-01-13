@@ -1,6 +1,5 @@
 import { parseArgv } from '@/lib/parseArgv';
-import { getInput, getInputAsInt, getInputAsBool } from '@/lib/actions';
-import { strToArray } from './strToArray';
+import { getInput, getInputAsInt, getInputAsBool, logDebug, getInputAsArray } from '@/lib/actions';
 
 // TODO: 初期値見直し
 const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';
@@ -10,27 +9,26 @@ const DEFAULT_S3_FORCE_PATH_STYLE = false;
 const DEFAULT_UPLOAD_CHUNK_SIZE = 0;
 
 export type Inputs = {
-  path: string | unknown;
-  key: string | unknown;
-  restoreKeys: string | unknown;
-  uploadChunkSize: number | unknown;
-  awsS3Bucket: string | unknown;
-  awsAccessKeyId: string | unknown;
-  awsSecretAccessKey: string | unknown;
-  awsRegion: string | unknown;
-  awsEndpoint: string | unknown;
-  awsS3BucketEndpoint: boolean | unknown;
-  awsS3ForcePathStyle: boolean | unknown;
+  path: string[] | undefined;
+  key: string | undefined;
+  restoreKeys: string | undefined;
+  uploadChunkSize: number | undefined;
+  awsS3Bucket: string | undefined;
+  awsAccessKeyId: string | undefined;
+  awsSecretAccessKey: string | undefined;
+  awsRegion: string | undefined;
+  awsEndpoint: string | undefined;
+  awsS3BucketEndpoint: boolean | undefined;
+  awsS3ForcePathStyle: boolean | undefined;
 };
 
-export function getInputs(argv: string[]): Inputs | unknown {
+export function getInputs(argv: string[]): Inputs {
   const inputArgv = parseArgv(argv);
+  const requiredOption = { required: true };
 
   // CLIからだと引数、Github Actions経由ではgetInputからパラメータを用意
-  const _path = inputArgv.path ?? getInput('path');
-  const path = typeof _path === 'string' ? strToArray(_path ?? '') : [];
-
-  const key = inputArgv.key ?? getInput('key');
+  const path = inputArgv.path ?? getInputAsArray('path', requiredOption);
+  const key = inputArgv.key ?? getInput('key', requiredOption);
   const restoreKeys = inputArgv['restore-keys'] ?? getInput('restore-keys');
   const uploadChunkSize =
     inputArgv['upload-chunk-size'] ?? getInputAsInt('upload-chunk-size') ?? DEFAULT_UPLOAD_CHUNK_SIZE;

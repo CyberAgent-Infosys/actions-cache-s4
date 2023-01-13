@@ -1,7 +1,22 @@
-import { InputName, InputValue, InputParams } from '@/@types/argv';
+import { InputName } from '@/@types/argv';
 import { strToBool } from '@/lib/strToBool';
+import { strToArray } from '@/lib/strToArray';
 
-export function parseArgv(argv: string[]): Record<InputName, InputValue | undefined> {
+type InputParams = {
+  path: string[];
+  key: string;
+  'restore-keys'?: string;
+  'upload-chunk-size'?: number;
+  'aws-s3-bucket': string;
+  'aws-access-key-id': string;
+  'aws-secret-access-key': string;
+  'aws-region'?: string;
+  'aws-endpoint'?: string;
+  'aws-s3-bucket-endpoint'?: boolean;
+  'aws-s3-force-path-style'?: boolean;
+};
+
+export function parseArgv(argv: string[]): Partial<InputParams> {
   const optionArray = argv
     .filter(v => /(^--)/.test(v))
     .map(v => v.replace(/^--/, ''))
@@ -9,6 +24,7 @@ export function parseArgv(argv: string[]): Record<InputName, InputValue | undefi
       const [key, value] = v.split('=') as [InputName, string];
 
       // 型変換
+      if ((['path'] as InputName[]).includes(key)) return { [key]: strToArray(value ?? '') };
       if ((['upload-chunk-size'] as InputName[]).includes(key)) return { [key]: parseInt(value, 10) };
       if ((['aws-s3-bucket-endpoint', 'aws-s3-force-path-style'] as InputName[]).includes(key))
         return { [key]: strToBool(value) };

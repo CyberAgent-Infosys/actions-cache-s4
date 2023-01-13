@@ -1,10 +1,5 @@
-import { info } from '@actions/core';
 import { getEnv } from '@/lib/env';
-
-export function logWarning(v: string): void {
-  const prefix = '[warning]';
-  info(`${prefix}${v}`);
-}
+import { logWarning } from '@/lib/actions';
 
 export function isValidEvent(): boolean {
   // TODO: CLI実行だったらスルーさせたい

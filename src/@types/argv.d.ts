@@ -1,5 +1,5 @@
 export type InputParams = {
-  path: string;
+  path: string[];
   key: string;
   'restore-keys'?: string;
   'upload-chunk-size'?: number;
@@ -13,4 +13,3 @@ export type InputParams = {
 };
 
 export type InputName = keyof InputParams;
-export type InputValue = string | number | boolean | null;

@@ -2772,10 +2772,10 @@ exports.parseArgv = parseArgv;
 function getArgv(argv) {
     const inputs = parseArgv(argv);
     return {
-        path: (0, strToArray_1.strToArray)(inputs?.path ?? ''),
+        path: inputs.path ? (0, strToArray_1.strToArray)(inputs?.path ?? '') : undefined,
         key: inputs.key,
-        restoreKeys: (0, strToArray_1.strToArray)(inputs['restore-keys'] ?? ''),
-        uploadChunkSize: parseInt(inputs?.['upload-chunk-size'] ?? '', 10),
+        restoreKeys: inputs['restore-keys'] ? (0, strToArray_1.strToArray)(inputs['restore-keys'] ?? '') : undefined,
+        uploadChunkSize: inputs['upload-chunk-size'] ? parseInt(inputs?.['upload-chunk-size'] ?? '', 10) : undefined,
         awsS3Bucket: inputs['aws-s3-bucket'],
         awsAccessKeyId: inputs['aws-access-key-id'],
         awsSecretAccessKey: inputs['aws-secret-access-key'],

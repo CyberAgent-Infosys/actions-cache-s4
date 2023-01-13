@@ -7,7 +7,7 @@ import { describe, test } from '@jest/globals';
 describe('test runs', () => {
   const np = process.execPath;
   const options: cp.ExecFileSyncOptions = { env: process.env };
-  const argv = ['--path="node_modules"', '--key="HOGE"'];
+  const argv = ['--path=node_modules', '--key=HOGE'];
 
   test('save.js', () => {
     const ip = path.join(__dirname, '../..', 'dist', 'save', 'index.js');

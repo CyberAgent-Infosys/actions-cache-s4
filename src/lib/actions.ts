@@ -38,17 +38,14 @@ export function getInputAsArray(k: InputKey, options?: InputOptions): string[] |
 }
 
 type STATE_KEY = 'CACHE_KEY' | 'CACHE_RESULT';
-export function getState(k: STATE_KEY): string | undefined {
+
+export function getState(k: STATE_KEY): string {
   const v = _getState(k);
-  return v !== '' ? v : undefined;
+  return v;
 }
 
-export function getCacheState(): string | undefined {
-  const cacheKey = getState('CACHE_KEY');
-  if (cacheKey) {
-    logDebug(`Cache state/key: ${cacheKey}`);
-    return cacheKey;
-  }
-
-  return undefined;
+export function getCacheState(): string {
+  const cacheKey = getState('CACHE_RESULT');
+  if (cacheKey) logDebug(`Cache state/key: ${cacheKey}`);
+  return cacheKey;
 }

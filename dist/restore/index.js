@@ -2734,16 +2734,14 @@ function getInputAsArray(k, options) {
 exports.getInputAsArray = getInputAsArray;
 function getState(k) {
     const v = (0, core_1.getState)(k);
-    return v !== '' ? v : undefined;
+    return v;
 }
 exports.getState = getState;
 function getCacheState() {
-    const cacheKey = getState('CACHE_KEY');
-    if (cacheKey) {
+    const cacheKey = getState('CACHE_RESULT');
+    if (cacheKey)
         logDebug(`Cache state/key: ${cacheKey}`);
-        return cacheKey;
-    }
-    return undefined;
+    return cacheKey;
 }
 exports.getCacheState = getCacheState;
 

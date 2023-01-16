@@ -1,8 +1,12 @@
+import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { InputKey } from '@/@types/input';
 import { strToBool } from '@/lib/strToBool';
 import { info, debug, getInput as _getInput, getState as _getState, InputOptions } from '@actions/core';
+import { saveCache as _saveCache } from '@actions/cache';
 import { isNumber } from '@/lib/isNumber';
-import { strToArray } from './strToArray';
+import { isDebug } from '@/lib/utils';
+import { strToArray } from '@/lib/strToArray';
+import { UploadOptions } from '@actions/cache/lib/options';
 
 export function logInfo(v: string): void {
   info(v);
@@ -44,8 +48,30 @@ export function getState(k: STATE_KEY): string {
   return v;
 }
 
+export function getCacheKey(key: string | undefined): string | undefined {
+  const cacheKey = isDebug ? key : getState('CACHE_KEY');
+  if (cacheKey) logDebug(`Cache key: ${cacheKey}`);
+  return cacheKey;
+}
+
 export function getCacheState(): string {
   const cacheKey = getState('CACHE_RESULT');
-  if (cacheKey) logDebug(`Cache state/key: ${cacheKey}`);
+  if (cacheKey) logDebug(`Cache state: ${cacheKey}`);
   return cacheKey;
+}
+
+export async function saveCache(
+  paths: string[],
+  primaryKey: string,
+  options: UploadOptions,
+  s3Options: S3ClientConfig,
+  s3BucketName: string | undefined,
+): Promise<number | void> {
+  if (isDebug) {
+    logDebug('Skip save process.');
+    return;
+  }
+
+  logInfo(`Cache saved with key: ${primaryKey}`);
+  return _saveCache(paths, primaryKey, options, s3Options, s3BucketName);
 }

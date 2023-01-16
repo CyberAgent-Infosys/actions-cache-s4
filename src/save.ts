@@ -1,6 +1,6 @@
-import { saveCache, ValidationError, ReserveCacheError } from '@actions/cache';
+import { ValidationError, ReserveCacheError } from '@actions/cache';
 import { setFailed, setOutput } from '@actions/core';
-import { getCacheState, getState, logInfo, logWarning } from '@/lib/actions';
+import { getCacheState, getCacheKey, saveCache, logInfo, logWarning } from '@/lib/actions';
 import { isExactKeyMatch, isValidEvent } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 
@@ -18,8 +18,7 @@ async function run(): Promise<void> {
     const state = getCacheState();
 
     // TODO: stateからキーをとってくる理由を調べる
-    // const primaryKey = getState('CACHE_KEY');
-    const { key: primaryKey } = inputs;
+    const primaryKey = getCacheKey(inputs?.key);
 
     // Inputs are re-evaluted before the post action, so we want the original key used for restore
     if (!primaryKey) {
@@ -29,7 +28,6 @@ async function run(): Promise<void> {
 
     // TODO: delete me
     console.log({ inputs });
-    console.log({ primaryKey, state });
 
     if (isExactKeyMatch(primaryKey, state)) {
       logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);

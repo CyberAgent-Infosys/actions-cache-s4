@@ -1,9 +1,10 @@
 import { getEnv } from '@/lib/env';
 import { logWarning } from '@/lib/actions';
 
+export const isDebug = getEnv('DEBUG_MODE') ?? false;
+
 export function isValidEvent(): boolean {
   // CLI実行だったらスルー
-  const isDebug = getEnv('DEBUG_MODE') ?? false;
   if (isDebug) return true;
 
   const isValid = Boolean(getEnv('GITHUB_REF') ?? false);

@@ -5,7 +5,7 @@ import { isExactKeyMatch, isValidEvent } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 
 async function run(): Promise<void> {
-  console.log('called save proc.');
+  logInfo('called save proc.');
 
   try {
     // TODO: パターン未確認
@@ -25,9 +25,6 @@ async function run(): Promise<void> {
       logWarning('Error retrieving key from state.');
       return;
     }
-
-    // TODO: delete me
-    console.log({ inputs });
 
     if (isExactKeyMatch(primaryKey, state)) {
       logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);

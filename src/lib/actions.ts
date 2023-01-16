@@ -1,7 +1,15 @@
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { InputKey } from '@/@types/input';
 import { strToBool } from '@/lib/strToBool';
-import { info, debug, getInput as _getInput, getState as _getState, InputOptions } from '@actions/core';
+import {
+  info,
+  debug,
+  getInput as _getInput,
+  getState as _getState,
+  saveState as _saveState,
+  setOutput,
+  InputOptions,
+} from '@actions/core';
 import { saveCache as _saveCache } from '@actions/cache';
 import { isNumber } from '@/lib/isNumber';
 import { isDebug } from '@/lib/utils';
@@ -60,6 +68,18 @@ export function getCacheState(): string {
   return cacheKey;
 }
 
+export function saveState(k: STATE_KEY, v: string): void {
+  _saveState(k, v);
+}
+
+export function saveCacheKey(v: string): void {
+  saveState('CACHE_KEY', v);
+}
+
+export function saveCacheState(v: string): void {
+  saveState('CACHE_RESULT', v);
+}
+
 export async function saveCache(
   paths: string[],
   primaryKey: string,
@@ -74,4 +94,9 @@ export async function saveCache(
 
   logInfo(`Cache saved with key: ${primaryKey}`);
   return _saveCache(paths, primaryKey, options, s3Options, s3BucketName);
+}
+
+// type OutputKey = 'cache-hit';
+export function setCacheHitOutput(isCacheHit: boolean): void {
+  setOutput('cache-hit', isCacheHit.toString());
 }

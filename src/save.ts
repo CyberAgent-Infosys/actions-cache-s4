@@ -5,10 +5,7 @@ import { isExactKeyMatch, isValidEvent } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 
 async function run(): Promise<void> {
-  logInfo('called save proc.');
-
   try {
-    // TODO: パターン未確認
     if (!isValidEvent()) return;
 
     const inputs = getInputs(process.argv);

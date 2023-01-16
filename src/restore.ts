@@ -6,10 +6,7 @@ import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 import { setCacheHitOutput, saveCacheKey, saveCacheState, logInfo, logWarning } from '@/lib/actions';
 
 async function run(): Promise<void> {
-  logInfo('called restore proc.');
-
   try {
-    // TODO: パターン未確認
     if (!isValidEvent()) return;
 
     const inputs = getInputs(process.argv);
@@ -27,7 +24,6 @@ async function run(): Promise<void> {
     saveCacheKey(inputs.key);
 
     try {
-      // TODO: 確認
       const cacheKey = await cache.restoreCache(
         inputs.path,
         inputs.key,

@@ -62,8 +62,8 @@ export async function saveCache(
   paths: string[],
   primaryKey: string,
   options: UploadOptions,
-  s3Options: S3ClientConfig,
-  s3BucketName: string | undefined,
+  s3Options?: S3ClientConfig,
+  s3BucketName?: string | undefined,
 ): Promise<number | void> {
   if (isDebug) {
     logDebug('Skip save process.');

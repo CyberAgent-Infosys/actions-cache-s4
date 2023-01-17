@@ -13,12 +13,7 @@ async function run(): Promise<void> {
       logInfo('Please input required key.');
       return;
     }
-
     const s3config = getS3ClientConfigByInputs(inputs);
-    if (typeof s3config === 'undefined') {
-      logInfo('Please setup S3 config.');
-      return;
-    }
 
     // キャッシュの検証
     const state = getState('CACHE_RESULT');

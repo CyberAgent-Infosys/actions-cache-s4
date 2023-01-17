@@ -46,10 +46,9 @@ export function getInputs(argv: string[]): Inputs {
 
 // TODO: S3向けのパラメータの初期化を考える
 export function getS3ClientConfigByInputs(inputs: Inputs): S3ClientConfig | undefined {
-  const { awsS3Bucket } = inputs;
-  if (!awsS3Bucket) return undefined;
-  logDebug('Enable S3 backend mode.');
+  if (!inputs.awsS3Bucket) return undefined;
 
+  logDebug('Enable S3 backend mode.');
   return {
     credentials: {
       accessKeyId: inputs.awsAccessKeyId,

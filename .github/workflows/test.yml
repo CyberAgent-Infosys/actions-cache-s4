@@ -21,4 +21,10 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./
         with:
-          milliseconds: 1000
+          path: node_modules
+          key: XXXX
+          aws-s3-bucket: XXXX
+          aws-access-key-id: XXXX
+          aws-secret-access-key: XXXX
+          aws-s3-bucket-endpoint: true
+          aws-s3-force-path-style: true

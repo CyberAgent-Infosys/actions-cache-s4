@@ -9,12 +9,19 @@ async function run(): Promise<void> {
     if (!isValidEvent()) return;
 
     const inputs = getInputs(process.argv);
-    if (!inputs.path) return;
+    if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
+      logInfo('Please input required key.');
+      return;
+    }
+
+    const s3config = getS3ClientConfigByInputs(inputs);
+    if (typeof s3config === 'undefined') {
+      logInfo('Please setup S3 config.');
+      return;
+    }
 
     // キャッシュの検証
     const state = getCacheState();
-
-    // TODO: stateからキーをとってくる理由を調べる
     const primaryKey = getCacheKey(inputs?.key);
 
     // Inputs are re-evaluted before the post action, so we want the original key used for restore
@@ -28,19 +35,11 @@ async function run(): Promise<void> {
       return;
     }
 
-    const s3config = getS3ClientConfigByInputs(inputs);
-    if (typeof s3config === 'undefined') {
-      logInfo('Please setup S3 config.');
-      return;
-    }
-
     try {
       await saveCache(
         inputs.path,
         primaryKey,
-        {
-          uploadChunkSize: inputs.uploadChunkSize,
-        },
+        { uploadChunkSize: inputs.uploadChunkSize },
         s3config,
         inputs.awsS3Bucket,
       );

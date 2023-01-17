@@ -1,5 +1,6 @@
 import { S3ClientConfig } from '@aws-sdk/client-s3';
-import { InputKey } from '@/@types/input';
+import { InputParamsKey } from '@/@types/input';
+import { StateKey, OutputKey } from '@/@types/action';
 import { strToBool } from '@/lib/strToBool';
 import {
   info,
@@ -7,7 +8,7 @@ import {
   getInput as _getInput,
   getState as _getState,
   saveState as _saveState,
-  setOutput,
+  setOutput as _setOutput,
   InputOptions,
 } from '@actions/core';
 import { saveCache as _saveCache } from '@actions/cache';
@@ -29,29 +30,27 @@ export function logDebug(v: string): void {
   debug(v);
 }
 
-export function getInput(k: InputKey, options?: InputOptions): string | undefined {
+export function getInput(k: InputParamsKey, options?: InputOptions): string | undefined {
   const v = _getInput(k, options);
   return v !== '' ? v : undefined;
 }
 
-export function getInputAsInt(k: InputKey, options?: InputOptions): number | undefined {
+export function getInputAsInt(k: InputParamsKey, options?: InputOptions): number | undefined {
   const v = getInput(k, options);
   return typeof v === 'string' && isNumber(v) ? parseInt(v, 10) : undefined;
 }
 
-export function getInputAsBool(k: InputKey, options?: InputOptions): boolean | undefined {
+export function getInputAsBool(k: InputParamsKey, options?: InputOptions): boolean | undefined {
   const v = getInput(k, options);
   return strToBool(v);
 }
 
-export function getInputAsArray(k: InputKey, options?: InputOptions): string[] | undefined {
+export function getInputAsArray(k: InputParamsKey, options?: InputOptions): string[] | undefined {
   const v = getInput(k, options);
   return typeof v === 'string' ? strToArray(v ?? '') : undefined;
 }
 
-type STATE_KEY = 'CACHE_KEY' | 'CACHE_RESULT';
-
-export function getState(k: STATE_KEY): string {
+export function getState(k: StateKey): string {
   const v = _getState(k);
   return v;
 }
@@ -68,7 +67,7 @@ export function getCacheState(): string {
   return cacheKey;
 }
 
-export function saveState(k: STATE_KEY, v: string): void {
+export function saveState(k: StateKey, v: string): void {
   _saveState(k, v);
 }
 
@@ -96,7 +95,9 @@ export async function saveCache(
   return _saveCache(paths, primaryKey, options, s3Options, s3BucketName);
 }
 
-// type OutputKey = 'cache-hit';
+export function setOutput(k: OutputKey, v: string): void {
+  _setOutput(k, v);
+}
 export function setCacheHitOutput(isCacheHit: boolean): void {
   setOutput('cache-hit', isCacheHit.toString());
 }

@@ -1,13 +1,13 @@
-import { InputParams, InputKey, Inputs } from '@/@types/input';
+import { InputParams, InputParamsKey, Inputs } from '@/@types/input';
 import { strToBool } from '@/lib/strToBool';
 import { strToArray } from '@/lib/strToArray';
 
-export function parseArgv(argv: string[]): Record<InputKey, string | undefined> {
+export function parseArgv(argv: string[]): Record<InputParamsKey, string | undefined> {
   const optionArray = argv
     .filter(v => /(^--)/.test(v))
     .map(v => v.replace(/^--/, ''))
     .map((v: string): Partial<InputParams> => {
-      const [key, value] = v.split('=') as [InputKey, string];
+      const [key, value] = v.split('=') as [InputParamsKey, string];
       return { [key]: value };
     })
     .filter((v: Partial<InputParams>) => !('' in v));

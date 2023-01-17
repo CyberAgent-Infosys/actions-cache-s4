@@ -12,7 +12,7 @@ export type InputParams = {
   'aws-s3-force-path-style'?: boolean;
 };
 
-export type InputKey = keyof InputParams;
+export type InputParamsKey = keyof InputParams;
 
 export type Inputs = {
   path: string[] | undefined;

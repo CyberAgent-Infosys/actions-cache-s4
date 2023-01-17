@@ -1,38 +1,56 @@
+import { ValidationError, ReserveCacheError } from '@actions/cache';
 import { setFailed, setOutput } from '@actions/core';
-import { parseArgv } from '@/lib/parseArgv';
-import { customGetInput as getInput } from '@/lib/actions';
+import { getState, saveCache, logInfo, logWarning } from '@/lib/actions';
+import { isExactKeyMatch, isValidEvent, isDebug } from '@/lib/utils';
+import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 
 async function run(): Promise<void> {
   try {
-    const inputArgv = parseArgv(process.argv);
-    console.log({ inputArgv });
+    if (!isValidEvent()) return;
 
-    const path = inputArgv.path ?? getInput('path');
-    const key = inputArgv.key ?? getInput('key');
-    const restoreKeys = inputArgv['restore-keys'] ?? getInput('restore-keys');
-    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? getInput('upload-chunk-size');
-    const awsS3Bucket = inputArgv['aws-s3-bucket'] ?? getInput('aws-s3-bucket') ?? true;
-    const awsAccessKeyId = inputArgv['aws-access-key-id'] ?? getInput('aws-access-key-id');
-    const awsSecretAccessKey = inputArgv['aws-secret-access-key'] ?? getInput('aws-secret-access-key');
-    const awsRegion = inputArgv['aws-region'] ?? getInput('aws-region') ?? 'us-east-1';
-    const awsEndpoint = inputArgv['aws-endpoint'] ?? getInput('aws-endpoint') ?? true;
-    const awsS3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? getInput('aws-s3-bucket-endpoint') ?? true;
-    const awsS3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? getInput('aws-s3-force-path-style') ?? false;
+    const inputs = getInputs(process.argv);
+    if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
+      logInfo('Please input required key.');
+      return;
+    }
+    const s3config = getS3ClientConfigByInputs(inputs);
 
-    console.log({
-      path,
-      key,
-      restoreKeys,
-      uploadChunkSize,
-      awsS3Bucket,
-      awsAccessKeyId,
-      awsSecretAccessKey,
-      awsRegion,
-      awsEndpoint,
-      awsS3BucketEndpoint,
-      awsS3ForcePathStyle,
-    });
+    // キャッシュの検証
+    const state = getState('CACHE_RESULT');
+    const primaryKey = isDebug ? inputs.key : getState('CACHE_KEY');
 
+    // Inputs are re-evaluted before the post action, so we want the original key used for restore
+    if (!primaryKey) {
+      logWarning('Error retrieving key from state.');
+      return;
+    }
+
+    if (isExactKeyMatch(primaryKey, state)) {
+      logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
+      return;
+    }
+
+    try {
+      await saveCache(
+        inputs.path,
+        primaryKey,
+        { uploadChunkSize: inputs.uploadChunkSize },
+        s3config,
+        inputs.awsS3Bucket,
+      );
+      logInfo(`Cache saved with key: ${primaryKey}`);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        if (e.name === ValidationError.name) {
+          throw e;
+        } else if (e.name === ReserveCacheError.name) {
+          logInfo(e.message);
+        } else {
+          logWarning(e.message);
+        }
+      }
+      throw e;
+    }
     setOutput('time', new Date().toTimeString());
   } catch (error) {
     if (error instanceof Error) setFailed(error.message);

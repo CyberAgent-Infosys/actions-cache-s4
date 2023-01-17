@@ -1,21 +1,50 @@
+import { restoreCache, ValidationError } from '@actions/cache';
 import { setFailed, setOutput } from '@actions/core';
-import { parseArgv } from '@/lib/parseArgv';
-import { getInput } from '@/lib/actions';
+import { isValidEvent, isExactKeyMatch } from '@/lib/utils';
+import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
+import { setCacheHitOutput, saveState, logInfo, logWarning } from '@/lib/actions';
 
 async function run(): Promise<void> {
   try {
-    const inputArgv = parseArgv(process.argv);
-    console.log({ inputArgv });
+    if (!isValidEvent()) return;
 
-    // TODO: 初期化
-    const path = inputArgv.path ?? getInput('path');
-    const key = inputArgv.key ?? getInput('key');
-    const restoreKeys = inputArgv['restore-keys'] ?? getInput('restore-keys');
-    const uploadChunkSize = inputArgv['upload-chunk-size'] ?? getInput('upload-chunk-size');
-    const s3BucketEndpoint = inputArgv['aws-s3-bucket-endpoint'] ?? getInput('aws-s3-bucket-endpoint') ?? true;
-    const s3ForcePathStyle = inputArgv['aws-s3-force-path-style'] ?? getInput('aws-s3-force-path-style') ?? false;
+    const inputs = getInputs(process.argv);
+    if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
+      logInfo('Please input required key.');
+      return;
+    }
+    const s3config = getS3ClientConfigByInputs(inputs);
 
-    console.log({ path, key, restoreKeys, uploadChunkSize, s3BucketEndpoint, s3ForcePathStyle });
+    saveState('CACHE_KEY', inputs.key);
+
+    try {
+      const cacheKey = await restoreCache(
+        inputs.path,
+        inputs.key,
+        inputs.restoreKeys,
+        undefined,
+        s3config,
+        inputs.awsS3Bucket,
+      );
+
+      if (!cacheKey) {
+        logInfo(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);
+        return;
+      }
+
+      saveState('CACHE_RESULT', cacheKey);
+      setCacheHitOutput(isExactKeyMatch(inputs.key, cacheKey));
+      logInfo(`Cache restored from key: ${cacheKey}`);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        if (e.name === ValidationError.name) {
+          throw e;
+        } else {
+          logWarning(e.message);
+          setCacheHitOutput(false);
+        }
+      }
+    }
 
     setOutput('time', new Date().toTimeString());
   } catch (error) {

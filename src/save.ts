@@ -1,7 +1,7 @@
 import { ValidationError, ReserveCacheError } from '@actions/cache';
 import { setFailed, setOutput } from '@actions/core';
-import { getCacheState, getCacheKey, saveCache, logInfo, logWarning } from '@/lib/actions';
-import { isExactKeyMatch, isValidEvent } from '@/lib/utils';
+import { getState, saveCache, logInfo, logWarning } from '@/lib/actions';
+import { isExactKeyMatch, isValidEvent, isDebug } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 
 async function run(): Promise<void> {
@@ -21,8 +21,8 @@ async function run(): Promise<void> {
     }
 
     // キャッシュの検証
-    const state = getCacheState();
-    const primaryKey = getCacheKey(inputs?.key);
+    const state = getState('CACHE_RESULT');
+    const primaryKey = isDebug ? inputs.key : getState('CACHE_KEY');
 
     // Inputs are re-evaluted before the post action, so we want the original key used for restore
     if (!primaryKey) {

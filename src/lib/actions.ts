@@ -1,8 +1,5 @@
-import { S3ClientConfig } from '@aws-sdk/client-s3';
-import { InputParamsKey } from '@/@types/input';
-import { StateKey, OutputKey } from '@/@types/action';
-import { strToBool } from '@/lib/strToBool';
 import {
+  getBooleanInput as _getBooleanInput,
   info,
   debug,
   getInput as _getInput,
@@ -11,6 +8,9 @@ import {
   setOutput as _setOutput,
   InputOptions,
 } from '@actions/core';
+import { S3ClientConfig } from '@aws-sdk/client-s3';
+import { InputParamsKey } from '@/@types/input';
+import { StateKey, OutputKey } from '@/@types/action';
 import { saveCache as _saveCache } from '@actions/cache';
 import { isNumber } from '@/lib/isNumber';
 import { isDebug } from '@/lib/utils';
@@ -40,9 +40,8 @@ export function getInputAsInt(k: InputParamsKey, options?: InputOptions): number
   return typeof v === 'string' && isNumber(v) ? parseInt(v, 10) : undefined;
 }
 
-export function getInputAsBool(k: InputParamsKey, options?: InputOptions): boolean | undefined {
-  const v = getInput(k, options);
-  return strToBool(v);
+export function getBooleanInput(k: InputParamsKey, options?: InputOptions): boolean | undefined {
+  return _getBooleanInput(k, options);
 }
 
 export function getInputAsArray(k: InputParamsKey, options?: InputOptions): string[] | undefined {
@@ -55,28 +54,8 @@ export function getState(k: StateKey): string {
   return v;
 }
 
-export function getCacheKey(key: string | undefined): string | undefined {
-  const cacheKey = isDebug ? key : getState('CACHE_KEY');
-  if (cacheKey) logDebug(`Cache key: ${cacheKey}`);
-  return cacheKey;
-}
-
-export function getCacheState(): string {
-  const cacheKey = getState('CACHE_RESULT');
-  if (cacheKey) logDebug(`Cache state: ${cacheKey}`);
-  return cacheKey;
-}
-
 export function saveState(k: StateKey, v: string): void {
   _saveState(k, v);
-}
-
-export function saveCacheKey(v: string): void {
-  saveState('CACHE_KEY', v);
-}
-
-export function saveCacheState(v: string): void {
-  saveState('CACHE_RESULT', v);
 }
 
 export async function saveCache(

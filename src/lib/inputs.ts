@@ -1,7 +1,7 @@
 import { Inputs } from '@/@types/input';
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { getArgv } from '@/lib/argv';
-import { getInput, getInputAsInt, getInputAsBool, logDebug, getInputAsArray } from '@/lib/actions';
+import { getInput, getInputAsInt, getBooleanInput, logDebug, getInputAsArray } from '@/lib/actions';
 
 // TODO: 初期値見直し
 const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';
@@ -25,9 +25,9 @@ export function getInputs(argv: string[]): Inputs {
   const awsRegion = inputArgv.awsRegion ?? getInput('aws-region') ?? DEFAULT_AWS_REGION;
   const awsEndpoint = inputArgv.awsEndpoint ?? getInput('aws-endpoint') ?? DEFAULT_AWS_ENDPOINT;
   const awsS3BucketEndpoint =
-    inputArgv.awsS3BucketEndpoint ?? getInputAsBool('aws-s3-bucket-endpoint') ?? DEFAULT_S3_BUCKET_ENDPOINT;
+    inputArgv.awsS3BucketEndpoint ?? getBooleanInput('aws-s3-bucket-endpoint') ?? DEFAULT_S3_BUCKET_ENDPOINT;
   const awsS3ForcePathStyle =
-    inputArgv.awsS3ForcePathStyle ?? getInputAsBool('aws-s3-force-path-style') ?? DEFAULT_S3_FORCE_PATH_STYLE;
+    inputArgv.awsS3ForcePathStyle ?? getBooleanInput('aws-s3-force-path-style') ?? DEFAULT_S3_FORCE_PATH_STYLE;
 
   return {
     path,
@@ -44,6 +44,7 @@ export function getInputs(argv: string[]): Inputs {
   };
 }
 
+// TODO: S3向けのパラメータの初期化を考える
 export function getS3ClientConfigByInputs(inputs: Inputs): S3ClientConfig | undefined {
   const { awsS3Bucket } = inputs;
   if (!awsS3Bucket) return undefined;

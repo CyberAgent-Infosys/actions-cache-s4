@@ -18,6 +18,7 @@ async function run(): Promise<void> {
     saveState('CACHE_KEY', inputs.key);
 
     try {
+      // TODO: mock
       const cacheKey = await restoreCache(
         inputs.path,
         inputs.key,
@@ -32,6 +33,7 @@ async function run(): Promise<void> {
         return;
       }
 
+      // TODO: jest-mock
       saveState('CACHE_RESULT', cacheKey);
       setCacheHitOutput(isExactKeyMatch(inputs.key, cacheKey));
       logInfo(`Cache restored from key: ${cacheKey}`);

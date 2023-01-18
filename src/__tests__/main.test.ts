@@ -17,7 +17,7 @@ describe('test runs', () => {
     '--aws-s3-force-path-style=true',
   ];
 
-  // TODO: mock入れるまではskip
+  // TODO: 迂回処理が必要
   test('save.js', () => {
     const ip = path.join(__dirname, '../..', 'dist', 'save', 'index.js');
     console.log(cp.execFileSync(np, [ip, ...argv], options).toString());

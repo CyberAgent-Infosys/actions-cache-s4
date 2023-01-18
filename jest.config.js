@@ -1,3 +1,5 @@
+require('nock').disableNetConnect();
+
 const { compilerOptions } = require('./tsconfig');
 
 module.exports = {

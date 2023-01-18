@@ -1,10 +1,10 @@
 import { restoreCache, ValidationError } from '@actions/cache';
-import { setFailed, setOutput } from '@actions/core';
+import { setFailed } from '@actions/core';
 import { isValidEvent, isExactKeyMatch } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 import { setCacheHitOutput, saveState, logInfo, logWarning } from '@/lib/actions';
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     if (!isValidEvent()) return;
 
@@ -18,7 +18,6 @@ async function run(): Promise<void> {
     saveState('CACHE_KEY', inputs.key);
 
     try {
-      // TODO: mock
       const cacheKey = await restoreCache(
         inputs.path,
         inputs.key,
@@ -33,7 +32,6 @@ async function run(): Promise<void> {
         return;
       }
 
-      // TODO: jest-mock
       saveState('CACHE_RESULT', cacheKey);
       setCacheHitOutput(isExactKeyMatch(inputs.key, cacheKey));
       logInfo(`Cache restored from key: ${cacheKey}`);
@@ -47,8 +45,6 @@ async function run(): Promise<void> {
         }
       }
     }
-
-    setOutput('time', new Date().toTimeString());
   } catch (error) {
     if (error instanceof Error) setFailed(error.message);
   }

@@ -1,10 +1,10 @@
 import { ValidationError, ReserveCacheError } from '@actions/cache';
-import { setFailed, setOutput } from '@actions/core';
+import { setFailed } from '@actions/core';
 import { getState, saveCache, logInfo, logWarning } from '@/lib/actions';
 import { isExactKeyMatch, isValidEvent, isDebug } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
   try {
     if (!isValidEvent()) return;
 
@@ -51,7 +51,6 @@ async function run(): Promise<void> {
       }
       throw e;
     }
-    setOutput('time', new Date().toTimeString());
   } catch (error) {
     if (error instanceof Error) setFailed(error.message);
   }

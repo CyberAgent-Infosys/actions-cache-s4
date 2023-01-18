@@ -41,7 +41,11 @@ export function getInputAsInt(k: InputParamsKey, options?: InputOptions): number
 }
 
 export function getBooleanInput(k: InputParamsKey, options?: InputOptions): boolean | undefined {
-  return _getBooleanInput(k, options);
+  try {
+    return _getBooleanInput(k, options);
+  } catch (error) {
+    return undefined;
+  }
 }
 
 export function getInputAsArray(k: InputParamsKey, options?: InputOptions): string[] | undefined {

@@ -1,16 +1,23 @@
 name: 'build-test'
-on: # rebuild any PRs and main branch changes
+on:
   pull_request:
+    branches:
+      - main
+      - 'releases/*'
+    paths-ignore:
+      - '**.md'
   push:
     branches:
       - main
       - 'releases/*'
+    paths-ignore:
+      - '**.md'
 
 jobs:
   build: # make sure build/ci work properly
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: |
           npm install
       - run: |
@@ -18,7 +25,7 @@ jobs:
   test: # make sure the action works on a clean machine without building
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./
         with:
           path: node_modules

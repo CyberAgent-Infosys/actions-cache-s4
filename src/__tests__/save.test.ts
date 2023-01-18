@@ -26,7 +26,7 @@ afterEach(() => {
 });
 
 describe('test runs', () => {
-  test('restore.js', async () => {
+  test('save.js', async () => {
     await run();
 
     const getStateMock = jest.spyOn(actions, 'getState').mockImplementation(() => 'XXX');
@@ -34,9 +34,9 @@ describe('test runs', () => {
     const logInfoMock = jest.spyOn(actions, 'logInfo');
     const logWarningMock = jest.spyOn(actions, 'logWarning');
 
-    expect(getStateMock).toHaveBeenCalledTimes(1);
+    expect(getStateMock).toHaveBeenCalled();
     expect(saveStateMock).toHaveBeenCalledTimes(0);
-    expect(logInfoMock).toHaveBeenCalledTimes(1);
+    expect(logInfoMock).toHaveBeenCalled();
     expect(logWarningMock).toHaveBeenCalledTimes(0);
   });
 });

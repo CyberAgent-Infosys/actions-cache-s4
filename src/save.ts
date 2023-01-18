@@ -7,7 +7,6 @@ import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 export async function run(): Promise<void> {
   try {
     if (!isValidEvent()) return;
-
     const inputs = getInputs(process.argv);
     if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
       logInfo('Please input required key.');
@@ -52,7 +51,11 @@ export async function run(): Promise<void> {
       throw e;
     }
   } catch (error) {
-    if (error instanceof Error) setFailed(error.message);
+    console.error(error);
+
+    if (error instanceof Error) {
+      setFailed(error.message);
+    }
   }
 }
 

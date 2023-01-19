@@ -1,7 +1,8 @@
 import { getEnv } from '@/lib/env';
 import { logWarning } from '@/lib/actions';
+import { strToBool } from '@/lib/strToBool';
 
-export const isDebug = getEnv('DEBUG_MODE') ?? false;
+export const isDebug = strToBool(getEnv('DEBUG_MODE')) ?? false;
 
 export function isValidEvent(): boolean {
   // CLI実行だったらスキップ

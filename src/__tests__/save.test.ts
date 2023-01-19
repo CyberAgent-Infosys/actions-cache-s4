@@ -12,6 +12,7 @@ jest.mock('@/lib/actions');
 beforeEach(() => {
   process.env['GITHUB_EVENT_NAME'] = 'push';
   process.env['GITHUB_REF'] = 'refs/heads/feature-branch';
+  process.env['DEBUG_MODE'] = 'true';
   jest.spyOn(utils, 'isValidEvent').mockImplementation(() => true);
   jest.spyOn(utils, 'isGhes').mockImplementation(() => false);
   jest.spyOn(actions, 'getInput').mockImplementation(() => 'XXX');
@@ -23,6 +24,7 @@ beforeEach(() => {
 afterEach(() => {
   delete process.env['GITHUB_EVENT_NAME'];
   delete process.env['GITHUB_REF'];
+  delete process.env['DEBUG_MODE'];
 });
 
 describe('test runs', () => {

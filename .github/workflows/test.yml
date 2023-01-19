@@ -30,8 +30,3 @@ jobs:
         with:
           path: node_modules
           key: XXXX
-          aws-s3-bucket: XXXX
-          aws-access-key-id: XXXX
-          aws-secret-access-key: XXXX
-          aws-s3-bucket-endpoint: true
-          aws-s3-force-path-style: true

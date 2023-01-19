@@ -11,7 +11,7 @@ import {
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { InputParamsKey } from '@/@types/input';
 import { StateKey, OutputKey } from '@/@types/action';
-import { saveCache as _saveCache } from '@actions/cache';
+import { saveCache as _saveCache, restoreCache as _restoreCache } from '@actions/cache';
 import { isNumber } from '@/lib/isNumber';
 import { isDebug } from '@/lib/utils';
 import { strToArray } from '@/lib/strToArray';
@@ -75,7 +75,23 @@ export async function saveCache(
   }
 
   logInfo(`Cache saved with key: ${primaryKey}`);
-  return _saveCache(paths, primaryKey, options, s3Options, s3BucketName);
+  return _saveCache(paths, primaryKey, options, s3ClientConfig, s3BucketName);
+}
+
+export async function restoreCache(
+  path: string[],
+  primaryKey: string,
+  restoreKeys: string[] | undefined,
+  options: object | undefined,
+  s3ClientConfig?: S3ClientConfig,
+  s3BucketName?: string | undefined,
+): Promise<string | void> {
+  if (isDebug) {
+    logDebug('Skip restore cache process.');
+    return;
+  }
+
+  return _restoreCache(path, primaryKey, restoreKeys, options, s3ClientConfig, s3BucketName);
 }
 
 export function setOutput(k: OutputKey, v: string): void {

@@ -13,7 +13,7 @@ export async function run(): Promise<void> {
       logInfo('Please input required key.');
       return;
     }
-    const s3config = getS3ClientConfigByInputs(inputs);
+    const s3ClientConfig = getS3ClientConfigByInputs(inputs);
 
     saveState('CACHE_KEY', inputs.key);
 
@@ -23,7 +23,7 @@ export async function run(): Promise<void> {
         inputs.key,
         inputs.restoreKeys,
         undefined,
-        s3config,
+        s3ClientConfig,
         inputs.awsS3Bucket,
       );
 

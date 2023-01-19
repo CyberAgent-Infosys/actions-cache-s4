@@ -12,7 +12,7 @@ export async function run(): Promise<void> {
       logInfo('Please input required key.');
       return;
     }
-    const s3config = getS3ClientConfigByInputs(inputs);
+    const s3ClientConfig = getS3ClientConfigByInputs(inputs);
 
     // キャッシュの検証
     const state = getState('CACHE_RESULT');
@@ -34,7 +34,7 @@ export async function run(): Promise<void> {
         inputs.path,
         primaryKey,
         { uploadChunkSize: inputs.uploadChunkSize },
-        s3config,
+        s3ClientConfig,
         inputs.awsS3Bucket,
       );
       logInfo(`Cache saved with key: ${primaryKey}`);

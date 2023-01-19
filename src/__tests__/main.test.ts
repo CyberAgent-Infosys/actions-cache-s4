@@ -25,7 +25,6 @@ describe('test runs', () => {
     '--aws-secret-access-key=XXXX',
   ];
 
-  // TODO: 迂回処理が必要
   test('save.js', () => {
     const ip = path.join(__dirname, '../..', 'dist', 'save', 'index.js');
     console.log(cp.execFileSync(np, [ip, ...argv], options).toString());

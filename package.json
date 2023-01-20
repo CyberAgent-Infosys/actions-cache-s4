@@ -39,7 +39,7 @@
     "@actions/cache": "https://gitpkg.now.sh/whywaita/toolkit/packages/cache?64211f2f7962ad17f664b009a22cf187c6ce157f",
     "@actions/core": "^1.10.0",
     "@aws-sdk/client-s3": "^3.252.0",
-    "@aws-sdk/types": "^3.226.0"
+    "@aws-sdk/types": "^3.254.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

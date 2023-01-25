@@ -1,6 +1,6 @@
-import { ValidationError, ReserveCacheError } from '@actions/cache';
 import { setFailed } from '@actions/core';
-import { getState, saveCache, logInfo, logWarning } from '@/lib/actions';
+import { getState, logInfo, logWarning } from '@/lib/actions/core';
+import { saveCache, ValidationError, ReserveCacheError } from '@/lib/actions/cache';
 import { isExactKeyMatch, isValidEvent, isDebug } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
 

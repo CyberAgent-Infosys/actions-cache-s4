@@ -1,13 +1,11 @@
 import * as process from 'process';
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import * as utils from '@/lib/utils';
-import * as actions from '@/lib/actions';
+import * as actions from '@/lib/actions/core';
 import { run } from '@/restore';
 
-jest.mock('@actions/core');
-jest.mock('@actions/cache');
 jest.mock('@/lib/utils');
-jest.mock('@/lib/actions');
+jest.mock('@/lib/actions/core');
 
 beforeEach(() => {
   process.env['GITHUB_EVENT_NAME'] = 'push';

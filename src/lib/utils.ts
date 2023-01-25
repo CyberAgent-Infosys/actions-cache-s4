@@ -1,5 +1,5 @@
 import { getEnv } from '@/lib/env';
-import { logWarning } from '@/lib/actions';
+import { logWarning } from '@/lib/actions/core';
 import { strToBool } from '@/lib/strToBool';
 
 export const isDebug = strToBool(getEnv('DEBUG_MODE')) ?? false;

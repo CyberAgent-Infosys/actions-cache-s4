@@ -3,12 +3,10 @@
     "target": "esnext",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "src/*"
-      ]
+      "@/*": ["src/*"]
     },
     "module": "commonjs",
-    "outDir": "./lib",
+    "outDir": "./.cache",
     "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
@@ -16,7 +14,5 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "exclude": [
-    "node_modules"
-  ]
+  "exclude": ["node_modules"]
 }

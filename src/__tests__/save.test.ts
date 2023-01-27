@@ -3,6 +3,7 @@ import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globa
 import * as utils from '@/lib/utils';
 import * as actions from '@/lib/actions/core';
 import * as cache from '@/lib/actions/cache';
+import * as inputs from '@/lib/inputs';
 import { run } from '@/save';
 
 jest.mock('@/lib/utils');
@@ -20,6 +21,19 @@ beforeEach(() => {
   jest.spyOn(actions, 'getInputAsArray').mockImplementation(() => ['XXX']);
   jest.spyOn(cache, 'saveCache').mockImplementation(async () => -1);
   jest.spyOn(cache, 'restoreCache');
+  jest.spyOn(inputs, 'getInputs').mockImplementation(() => ({
+    awsAccessKeyId: 'ABRACADABRA',
+    awsEndpoint: 'example.com',
+    awsRegion: 'ap-xxxxxxxxx-1',
+    awsS3Bucket: 'mybucket',
+    awsS3BucketEndpoint: false,
+    awsS3ForcePathStyle: true,
+    awsSecretAccessKey: 'ABRACADABRA',
+    key: 'LINUX-nodejs-ABRACADABRA',
+    path: ['./node_modules', './package-lock.json'],
+    restoreKeys: ['LINUX-nodejs-', 'LINUX-'],
+    uploadChunkSize: 9999,
+  }));
 });
 
 afterEach(() => {

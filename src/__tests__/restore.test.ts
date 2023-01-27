@@ -1,6 +1,7 @@
 import * as process from 'process';
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import * as utils from '@/lib/utils';
+import * as cacheUtils from '@/lib/actions/cacheUtils';
 import * as actions from '@/lib/actions/core';
 import * as cache from '@/lib/actions/cache';
 import * as inputs from '@/lib/inputs';
@@ -15,7 +16,7 @@ beforeEach(() => {
   process.env['DEBUG_MODE'] = 'true';
 
   jest.spyOn(utils, 'isValidEvent').mockImplementation(() => true);
-  jest.spyOn(utils, 'isGhes').mockImplementation(() => false);
+  jest.spyOn(cacheUtils, 'isGhes').mockImplementation(() => false);
   jest.spyOn(utils, 'isExactKeyMatch').mockImplementation(() => false);
   jest.spyOn(actions, 'getInput').mockImplementation(() => 'XXX');
   jest.spyOn(actions, 'getInputAsInt').mockImplementation(() => 9999);

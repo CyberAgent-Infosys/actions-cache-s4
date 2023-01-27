@@ -22,7 +22,6 @@ export async function run(): Promise<void> {
         inputs.path,
         inputs.key,
         inputs.restoreKeys,
-        undefined,
         s3ClientConfig,
         inputs.awsS3Bucket,
       );

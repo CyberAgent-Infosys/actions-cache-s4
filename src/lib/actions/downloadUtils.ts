@@ -1,16 +1,12 @@
 import * as core from '@actions/core';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
-import { BlockBlobClient } from '@azure/storage-blob';
-import { TransferProgressEvent } from '@azure/ms-rest-js';
 import { GetObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
-import * as buffer from 'buffer';
 import * as fs from 'fs';
 import * as stream from 'stream';
 import * as util from 'util';
 
 import * as utils from '@/lib/actions/cacheUtils';
 import { SocketTimeout } from '@/lib/actions/constants';
-import { DownloadOptions } from '@/lib/options';
 import { retryHttpClientResponse } from '@/lib/actions/requestUtils';
 
 /**
@@ -107,15 +103,6 @@ export class DownloadProgress {
   }
 
   /**
-   * Returns a function used to handle TransferProgressEvents.
-   */
-  onProgress(): (progress: TransferProgressEvent) => void {
-    return (progress: TransferProgressEvent) => {
-      this.setReceivedBytes(progress.loadedBytes);
-    };
-  }
-
-  /**
    * Starts the timer that displays the stats.
    *
    * @param delayInMs the delay between each write
@@ -182,72 +169,6 @@ export async function downloadCacheHttpClient(archiveLocation: string, archivePa
 }
 
 /**
- * Download the cache using the Azure Storage SDK.  Only call this method if the
- * URL points to an Azure Storage endpoint.
- *
- * @param archiveLocation the URL for the cache
- * @param archivePath the local path where the cache is saved
- * @param options the download options with the defaults set
- */
-export async function downloadCacheStorageSDK(
-  archiveLocation: string,
-  archivePath: string,
-  options: DownloadOptions,
-): Promise<void> {
-  const client = new BlockBlobClient(archiveLocation, undefined, {
-    retryOptions: {
-      // Override the timeout used when downloading each 4 MB chunk
-      // The default is 2 min / MB, which is way too slow
-      tryTimeoutInMs: options.timeoutInMs,
-    },
-  });
-
-  const properties = await client.getProperties();
-  const contentLength = properties.contentLength ?? -1;
-
-  if (contentLength < 0) {
-    // We should never hit this condition, but just in case fall back to downloading the
-    // file as one large stream
-    core.debug('Unable to determine content length, downloading file with http-client...');
-
-    await downloadCacheHttpClient(archiveLocation, archivePath);
-  } else {
-    // Use downloadToBuffer for faster downloads, since internally it splits the
-    // file into 4 MB chunks which can then be parallelized and retried independently
-    //
-    // If the file exceeds the buffer maximum length (~1 GB on 32-bit systems and ~2 GB
-    // on 64-bit systems), split the download into multiple segments
-    // ~2 GB = 2147483647, beyond this, we start getting out of range error. So, capping it accordingly.
-    const maxSegmentSize = Math.min(2147483647, buffer.constants.MAX_LENGTH);
-    const downloadProgress = new DownloadProgress(contentLength);
-
-    const fd = fs.openSync(archivePath, 'w');
-
-    try {
-      downloadProgress.startDisplayTimer();
-
-      while (!downloadProgress.isDone()) {
-        const segmentStart = downloadProgress.segmentOffset + downloadProgress.segmentSize;
-
-        const segmentSize = Math.min(maxSegmentSize, contentLength - segmentStart);
-
-        downloadProgress.nextSegment(segmentSize);
-
-        const result = await client.downloadToBuffer(segmentStart, segmentSize, {
-          concurrency: options.downloadConcurrency,
-          onProgress: downloadProgress.onProgress(),
-        });
-
-        fs.writeFileSync(fd, result);
-      }
-    } finally {
-      downloadProgress.stopDisplayTimer();
-      fs.closeSync(fd);
-    }
-  }
-}
-
-/**
  * Download the cache using the AWS S3.  Only call this method if the use S3.
  *
  * @param key the key for the cache in S3
@@ -269,7 +190,7 @@ export async function downloadCacheStorageS3(
 
   const response = await s3client.send(new GetObjectCommand(param));
   if (!response.Body) {
-    throw new Error(`Incomplete download. response.Body is undefined from S3.`);
+    throw new Error('Incomplete download. response.Body is undefined from S3.');
   }
 
   const fileStream = fs.createWriteStream(archivePath);

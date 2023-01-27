@@ -21,11 +21,6 @@ export function isValidEvent(): boolean {
   return isValid;
 }
 
-export function isGhes(): boolean {
-  const ghUrl = new URL(getEnv('GITHUB_SERVER_URL') ?? 'https://github.com');
-  return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
-}
-
 export function isExactKeyMatch(key: string, cacheKey?: string): boolean {
   return !!(
     cacheKey &&

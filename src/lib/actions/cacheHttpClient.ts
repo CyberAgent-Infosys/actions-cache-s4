@@ -6,7 +6,6 @@ import { ListObjectsV2Command, ListObjectsV2CommandInput, S3Client, S3ClientConf
 import { Progress, Upload } from '@aws-sdk/lib-storage';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-import { URL } from 'url';
 
 import * as utils from '@/lib/actions/cacheUtils';
 import { CompressionMethod } from '@/lib/actions/constants';
@@ -18,8 +17,8 @@ import {
   ReserveCacheResponse,
   ITypedResponseWithError,
 } from '@/lib/actions/contracts';
-import { downloadCacheHttpClient, downloadCacheStorageS3, downloadCacheStorageSDK } from '@/lib/actions/downloadUtils';
-import { DownloadOptions, UploadOptions, getDownloadOptions, getUploadOptions } from '@/lib/options';
+import { downloadCacheHttpClient, downloadCacheStorageS3 } from '@/lib/actions/downloadUtils';
+import { UploadOptions, getUploadOptions } from '@/lib/options';
 import { isSuccessStatusCode, retryHttpClientResponse, retryTypedResponse } from '@/lib/actions/requestUtils';
 const versionSalt = '1.0';
 
@@ -155,7 +154,7 @@ function _searchRestoreKeyEntry(notPrimaryKey: string, entries: _content[]): _co
   }
 
   matchPrefix.sort(function (i, j) {
-    if (i.LastModified == undefined || j.LastModified == undefined) {
+    if (i.LastModified === undefined || j.LastModified === undefined) {
       return 0;
     }
     if (i.LastModified?.getTime() === j.LastModified?.getTime()) {
@@ -206,27 +205,19 @@ export async function getCacheEntry(
     throw new Error('Cache not found.');
   }
   core.setSecret(cacheDownloadUrl);
-  core.debug(`Cache Result:`);
+  core.debug('Cache Result:');
   core.debug(JSON.stringify(cacheResult));
 
   return cacheResult;
 }
 
-export async function downloadCache(
+export async function downloadS3Cache(
   cacheEntry: ArtifactCacheEntry,
   archivePath: string,
-  options?: DownloadOptions,
   s3Options?: S3ClientConfig,
   s3BucketName?: string,
 ): Promise<void> {
   const archiveLocation = cacheEntry.archiveLocation ?? 'https://example.com'; // for dummy
-  const archiveUrl = new URL(archiveLocation);
-  const downloadOptions = getDownloadOptions(options);
-
-  if (downloadOptions.useAzureSdk && archiveUrl.hostname.endsWith('.blob.core.windows.net')) {
-    // Use Azure storage SDK to download caches hosted on Azure to improve speed and reliability.
-    await downloadCacheStorageSDK(archiveLocation, archivePath, downloadOptions);
-  }
   if (s3Options && s3BucketName && cacheEntry.cacheKey) {
     await downloadCacheStorageS3(cacheEntry.cacheKey, archivePath, s3Options, s3BucketName);
   } else {
@@ -407,7 +398,7 @@ async function commitCache(httpClient: HttpClient, cacheId: number, filesize: nu
   );
 }
 
-export async function saveCache(
+export async function saveS3Cache(
   cacheId: number,
   archivePath: string,
   key: string,

@@ -36,9 +36,12 @@
   "author": "CA Advance",
   "license": "MIT",
   "dependencies": {
-    "@actions/cache": "https://gitpkg.now.sh/whywaita/toolkit/packages/cache?64211f2f7962ad17f664b009a22cf187c6ce157f",
     "@actions/core": "^1.10.0",
+    "@actions/exec": "^1.1.1",
+    "@actions/glob": "^0.4.0",
+    "@actions/io": "^1.1.2",
     "@aws-sdk/client-s3": "^3.259.0",
+    "@aws-sdk/lib-storage": "^3.259.0",
     "@aws-sdk/types": "^3.257.0"
   },
   "devDependencies": {

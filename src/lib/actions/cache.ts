@@ -1,12 +1,18 @@
-import { saveCache as _saveCache, restoreCache as _restoreCache } from '@actions/cache';
 import * as path from 'path';
-
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { isDebug } from '@/lib/utils';
 import { logDebug, logInfo } from '@/lib/actions/core';
-import * as utils from '@/lib/actions/cacheUtils';
-import { listTar, createTar } from '@/lib/actions/tar';
-import * as cacheHttpClient from '@/lib/actions/cacheHttpClient';
+import {
+  getCompressionMethod,
+  resolvePaths,
+  getCacheFileName,
+  getArchiveFileSizeInBytes,
+  createTempDirectory,
+  isGhes,
+  unlinkFile,
+} from '@/lib/actions/cacheUtils';
+import { listTar, createTar, extractTar } from '@/lib/actions/tar';
+import { downloadS3Cache, getCacheEntry, reserveCache, saveS3Cache } from '@/lib/actions/cacheHttpClient';
 import { UploadOptions } from '@/lib/options';
 
 export class ValidationError extends Error {
@@ -41,23 +47,6 @@ function checkKey(key: string): void {
   }
 }
 
-// TODO:
-export async function __saveCache(
-  paths: string[],
-  key: string,
-  options: UploadOptions,
-  s3ClientConfig?: S3ClientConfig,
-  s3BucketName?: string | undefined,
-): Promise<number | void> {
-  if (isDebug) {
-    logDebug('Skip save process.');
-    return;
-  }
-
-  logInfo(`Cache saved with key: ${key}`);
-  return _saveCache(paths, key, options, s3ClientConfig, s3BucketName);
-}
-
 export async function saveCache(
   paths: string[],
   key: string,
@@ -74,15 +63,15 @@ export async function saveCache(
   checkPaths(paths);
   checkKey(key);
 
-  const compressionMethod = await utils.getCompressionMethod();
+  const compressionMethod = await getCompressionMethod();
   let cacheId = 0;
 
-  const cachePaths = await utils.resolvePaths(paths);
+  const cachePaths = await resolvePaths(paths);
   logDebug('Cache Paths:');
   logDebug(`${JSON.stringify(cachePaths)}`);
 
-  const archiveFolder = await utils.createTempDirectory();
-  const archivePath = path.join(archiveFolder, utils.getCacheFileName(compressionMethod));
+  const archiveFolder = await createTempDirectory();
+  const archivePath = path.join(archiveFolder, getCacheFileName(compressionMethod));
 
   logDebug(`Archive Path: ${archivePath}`);
 
@@ -92,11 +81,11 @@ export async function saveCache(
       await listTar(archivePath, compressionMethod);
     }
     const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
-    const archiveFileSize = utils.getArchiveFileSizeInBytes(archivePath);
+    const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
     logDebug(`File Size: ${archiveFileSize}`);
 
     // For GHES, this check will take place in ReserveCache API with enterprise file size limit
-    if (archiveFileSize > fileSizeLimit && !utils.isGhes()) {
+    if (archiveFileSize > fileSizeLimit && !isGhes()) {
       throw new Error(
         `Cache size of ~${Math.round(
           archiveFileSize / (1024 * 1024),
@@ -106,7 +95,7 @@ export async function saveCache(
 
     if (!(s3Options && s3BucketName)) {
       logDebug('Reserving Cache');
-      const reserveCacheResponse = await cacheHttpClient.reserveCache(
+      const reserveCacheResponse = await reserveCache(
         key,
         paths,
         {
@@ -134,11 +123,11 @@ export async function saveCache(
     }
 
     logDebug(`Saving Cache (ID: ${cacheId})`);
-    await cacheHttpClient.saveCache(cacheId, archivePath, key, options, s3Options, s3BucketName);
+    await saveS3Cache(cacheId, archivePath, key, options, s3Options, s3BucketName);
   } finally {
     // Try to delete the archive to save space
     try {
-      await utils.unlinkFile(archivePath);
+      await unlinkFile(archivePath);
     } catch (error) {
       logDebug(`Failed to delete archive: ${error}`);
     }
@@ -147,19 +136,73 @@ export async function saveCache(
   return cacheId;
 }
 
-// TODO:
 export async function restoreCache(
   paths: string[],
   primaryKey: string,
-  restoreKeys: string[] | undefined,
-  options: object | undefined,
-  s3ClientConfig?: S3ClientConfig,
-  s3BucketName?: string | undefined,
-): Promise<string | void> {
-  if (isDebug) {
-    logDebug('Skip restore cache process.');
-    return;
+  restoreKeys?: string[],
+  s3Options?: S3ClientConfig,
+  s3BucketName?: string,
+): Promise<string | undefined> {
+  // if (isDebug) {
+  //   logDebug('Skip restore cache process.');
+  //   return;
+  // }
+  checkPaths(paths);
+
+  restoreKeys = restoreKeys || [];
+  const keys = [primaryKey, ...restoreKeys];
+
+  logDebug('Resolved Keys:');
+  logDebug(JSON.stringify(keys));
+
+  if (keys.length > 10) {
+    throw new ValidationError('Key Validation Error: Keys are limited to a maximum of 10.');
+  }
+  for (const key of keys) {
+    checkKey(key);
   }
 
-  return _restoreCache(paths, primaryKey, restoreKeys, options, s3ClientConfig, s3BucketName);
+  const compressionMethod = await getCompressionMethod();
+
+  // path are needed to compute version
+  const cacheEntry = await getCacheEntry(
+    keys,
+    paths,
+    {
+      compressionMethod,
+    },
+    s3Options,
+    s3BucketName,
+  );
+  if (!cacheEntry?.archiveLocation && !cacheEntry?.cacheKey) {
+    // Cache not found
+    return undefined;
+  }
+
+  const archivePath = path.join(await createTempDirectory(), getCacheFileName(compressionMethod));
+  logDebug(`Archive Path: ${archivePath}`);
+
+  try {
+    // Download the cache from the cache entry
+    await downloadS3Cache(cacheEntry, archivePath, s3Options, s3BucketName);
+
+    if (isDebug) {
+      await listTar(archivePath, compressionMethod);
+    }
+
+    const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
+    logInfo(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+
+    await extractTar(archivePath, compressionMethod);
+    logInfo('Cache restored successfully');
+  } finally {
+    // Try to delete the archive to save space
+    try {
+      await unlinkFile(archivePath);
+    } catch (error) {
+      logDebug(`Failed to delete archive: ${error}`);
+    }
+  }
+
+  return cacheEntry.cacheKey;
 }

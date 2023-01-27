@@ -1,7 +1,7 @@
 import { Inputs } from '@/@types/input';
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { getArgv } from '@/lib/argv';
-import { getInput, getInputAsInt, getBooleanInput, logDebug, getInputAsArray } from '@/lib/actions';
+import { getInput, getInputAsInt, getBooleanInput, logDebug, getInputAsArray } from '@/lib/actions/core';
 
 // TODO: 初期値見直し
 const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';

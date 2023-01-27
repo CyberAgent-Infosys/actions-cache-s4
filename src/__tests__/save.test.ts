@@ -13,6 +13,7 @@ beforeEach(() => {
   process.env['GITHUB_EVENT_NAME'] = 'push';
   process.env['GITHUB_REF'] = 'refs/heads/feature-branch';
   process.env['DEBUG_MODE'] = 'true';
+
   jest.spyOn(utils, 'isValidEvent').mockImplementation(() => true);
   jest.spyOn(utils, 'isGhes').mockImplementation(() => false);
   jest.spyOn(actions, 'getInput').mockImplementation(() => 'XXX');
@@ -20,7 +21,6 @@ beforeEach(() => {
   jest.spyOn(actions, 'getBooleanInput').mockImplementation(() => true);
   jest.spyOn(actions, 'getInputAsArray').mockImplementation(() => ['XXX']);
   jest.spyOn(cache, 'saveCache').mockImplementation(async () => -1);
-  jest.spyOn(cache, 'restoreCache');
   jest.spyOn(inputs, 'getInputs').mockImplementation(() => ({
     awsAccessKeyId: 'ABRACADABRA',
     awsEndpoint: 'example.com',
@@ -46,8 +46,8 @@ describe('test runs', () => {
   test('save.js', async () => {
     const getStateMock = jest.spyOn(actions, 'getState').mockImplementation(() => 'XXX');
     const saveStateMock = jest.spyOn(actions, 'saveState');
-    const logInfoMock = jest.spyOn(actions, 'logInfo');
-    const logWarningMock = jest.spyOn(actions, 'logWarning');
+    const logInfoMock = jest.spyOn(actions, 'logInfo').mockImplementation(v => console.log('[logInfo]', v));
+    const logWarningMock = jest.spyOn(actions, 'logWarning').mockImplementation(v => console.log('[logWarning]', v));
 
     await run();
 

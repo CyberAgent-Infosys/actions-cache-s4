@@ -301,7 +301,7 @@ async function uploadChunk(
   }
 }
 
-async function uploadFileS3(
+export async function uploadFileS3(
   s3options: S3ClientConfig,
   s3BucketName: string,
   archivePath: string,

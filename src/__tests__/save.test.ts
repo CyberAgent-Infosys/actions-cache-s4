@@ -18,7 +18,7 @@ beforeEach(() => {
   jest.spyOn(actions, 'getInputAsInt').mockImplementation(() => 9999);
   jest.spyOn(actions, 'getBooleanInput').mockImplementation(() => true);
   jest.spyOn(actions, 'getInputAsArray').mockImplementation(() => ['XXX']);
-  jest.spyOn(cache, 'saveCache');
+  jest.spyOn(cache, 'saveCache').mockImplementation(async () => -1);
   jest.spyOn(cache, 'restoreCache');
 });
 
@@ -33,7 +33,6 @@ describe('test runs', () => {
     const getStateMock = jest.spyOn(actions, 'getState').mockImplementation(() => 'XXX');
     const saveStateMock = jest.spyOn(actions, 'saveState');
     const logInfoMock = jest.spyOn(actions, 'logInfo');
-    // saveCache
     const logWarningMock = jest.spyOn(actions, 'logWarning');
 
     await run();

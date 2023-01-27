@@ -38,19 +38,19 @@
   "dependencies": {
     "@actions/cache": "https://gitpkg.now.sh/whywaita/toolkit/packages/cache?64211f2f7962ad17f664b009a22cf187c6ce157f",
     "@actions/core": "^1.10.0",
-    "@aws-sdk/client-s3": "^3.252.0",
-    "@aws-sdk/types": "^3.226.0"
+    "@aws-sdk/client-s3": "^3.259.0",
+    "@aws-sdk/types": "^3.257.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
     "@types/uuid": "^9.0.0",
-    "@typescript-eslint/parser": "^5.48.2",
-    "@vercel/ncc": "^0.36.0",
+    "@typescript-eslint/parser": "^5.49.0",
+    "@vercel/ncc": "^0.36.1",
     "eslint": "^8.32.0",
     "eslint-import-resolver-typescript": "^3.5.3",
     "eslint-plugin-github": "^4.6.0",
     "eslint-plugin-jest": "^27.2.1",
-    "jest": "^29.3.1",
+    "jest": "^29.4.1",
     "js-yaml": "^4.1.0",
     "nock": "^13.3.0",
     "npm-run-all": "^4.1.5",

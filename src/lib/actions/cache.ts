@@ -54,12 +54,7 @@ export async function saveCache(
   s3Options?: S3ClientConfig,
   s3BucketName?: string,
 ): Promise<number> {
-  // TODO: localで動くように考える
-  if (isDebug) {
-    logDebug('Skip save process.');
-    return -1;
-  }
-
+  // 問題があればthrowされる
   checkPaths(paths);
   checkKey(key);
 
@@ -93,6 +88,8 @@ export async function saveCache(
       );
     }
 
+    // TODO: 関連処理削除
+    // S3の設定がない場合
     if (!(s3Options && s3BucketName)) {
       logDebug('Reserving Cache');
       const reserveCacheResponse = await reserveCache(
@@ -143,10 +140,7 @@ export async function restoreCache(
   s3Options?: S3ClientConfig,
   s3BucketName?: string,
 ): Promise<string | undefined> {
-  // if (isDebug) {
-  //   logDebug('Skip restore cache process.');
-  //   return;
-  // }
+  // 問題があればthrowされる
   checkPaths(paths);
 
   restoreKeys = restoreKeys || [];

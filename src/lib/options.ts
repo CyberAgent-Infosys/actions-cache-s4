@@ -1,4 +1,4 @@
-import * as core from '@actions/core';
+import { logDebug } from '@/lib/actions/core';
 
 /**
  * Options to control cache upload
@@ -38,8 +38,8 @@ export function getUploadOptions(copy?: UploadOptions): UploadOptions {
     }
   }
 
-  core.debug(`Upload concurrency: ${result.uploadConcurrency}`);
-  core.debug(`Upload chunk size: ${result.uploadChunkSize}`);
+  logDebug(`Upload concurrency: ${result.uploadConcurrency}`);
+  logDebug(`Upload chunk size: ${result.uploadChunkSize}`);
 
   return result;
 }

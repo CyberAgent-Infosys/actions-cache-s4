@@ -7,7 +7,7 @@ import { getInput, getInputAsInt, getBooleanInput, logDebug, getInputAsArray } f
 const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';
 const DEFAULT_AWS_REGION = 'us-east-1';
 const DEFAULT_S3_BUCKET_ENDPOINT = true;
-const DEFAULT_S3_FORCE_PATH_STYLE = false;
+const DEFAULT_S3_FORCE_PATH_STYLE = true;
 const DEFAULT_UPLOAD_CHUNK_SIZE = 0;
 
 export function getInputs(argv: string[]): Inputs {

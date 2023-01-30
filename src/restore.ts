@@ -1,7 +1,6 @@
-import { setFailed } from '@actions/core';
 import { isValidEvent, isExactKeyMatch } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
-import { setCacheHitOutput, saveState, logInfo, logWarning } from '@/lib/actions/core';
+import { setCacheHitOutput, saveState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { restoreCache, ValidationError } from '@/lib/actions/cache';
 
 export async function run(): Promise<void> {

@@ -7,6 +7,7 @@ import {
   saveState as _saveState,
   setOutput as _setOutput,
   setFailed as _setFailed,
+  setSecret as _setSecret,
   InputOptions,
 } from '@actions/core';
 import { InputParamsKey } from '@/@types/input';
@@ -25,6 +26,10 @@ export function logWarning(v: string): void {
 
 export function logDebug(v: string): void {
   debug(v);
+}
+
+export function setSecret(v: string): void {
+  _setSecret(v);
 }
 
 export function setFailed(v: string): void {

@@ -1,4 +1,3 @@
-import * as core from '@actions/core';
 import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import { GetObjectCommand, S3Client, S3ClientConfig } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
@@ -8,6 +7,7 @@ import * as util from 'util';
 import * as utils from '@/lib/actions/cacheUtils';
 import { SocketTimeout } from '@/lib/actions/constants';
 import { retryHttpClientResponse } from '@/lib/actions/requestUtils';
+import { logDebug, logInfo } from '@/lib/actions/core';
 
 /**
  * Pipes the body of a HTTP response to a stream
@@ -55,7 +55,7 @@ export class DownloadProgress {
     this.segmentSize = segmentSize;
     this.receivedBytes = 0;
 
-    core.debug(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
+    logDebug(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
   }
 
   /**
@@ -95,7 +95,7 @@ export class DownloadProgress {
     const elapsedTime = Date.now() - this.startTime;
     const downloadSpeed = (transferredBytes / (1024 * 1024) / (elapsedTime / 1000)).toFixed(1);
 
-    core.info(`Received ${transferredBytes} of ${this.contentLength} (${percentage}%), ${downloadSpeed} MBs/sec`);
+    logInfo(`Received ${transferredBytes} of ${this.contentLength} (${percentage}%), ${downloadSpeed} MBs/sec`);
 
     if (this.isDone()) {
       this.displayedComplete = true;
@@ -148,7 +148,7 @@ export async function downloadCacheHttpClient(archiveLocation: string, archivePa
   // Abort download if no traffic received over the socket.
   downloadResponse.message.socket.setTimeout(SocketTimeout, () => {
     downloadResponse.message.destroy();
-    core.debug(`Aborting download, socket timed out after ${SocketTimeout} ms`);
+    logDebug(`Aborting download, socket timed out after ${SocketTimeout} ms`);
   });
 
   await pipeResponseToStream(downloadResponse, writeStream);
@@ -164,7 +164,7 @@ export async function downloadCacheHttpClient(archiveLocation: string, archivePa
       throw new Error(`Incomplete download. Expected file size: ${expectedLength}, actual file size: ${actualLength}`);
     }
   } else {
-    core.debug('Unable to validate download, no Content-Length header');
+    logDebug('Unable to validate download, no Content-Length header');
   }
 }
 

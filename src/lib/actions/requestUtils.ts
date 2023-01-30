@@ -1,7 +1,7 @@
-import * as core from '@actions/core';
 import { HttpCodes, HttpClientError, HttpClientResponse } from '@actions/http-client';
 import { DefaultRetryDelay, DefaultRetryAttempts } from '@/lib/actions/constants';
 import { ITypedResponseWithError } from '@/lib/actions/contracts';
+import { logDebug } from '@/lib/actions/core';
 
 export function isSuccessStatusCode(statusCode?: number): boolean {
   if (!statusCode) {
@@ -71,10 +71,10 @@ export async function retry<T>(
       errorMessage = `Cache service responded with ${statusCode}`;
     }
 
-    core.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
+    logDebug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
 
     if (!isRetryable) {
-      core.debug(`${name} - Error is not retryable`);
+      logDebug(`${name} - Error is not retryable`);
       break;
     }
 

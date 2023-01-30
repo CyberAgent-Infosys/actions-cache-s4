@@ -1,4 +1,3 @@
-import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as glob from '@actions/glob';
 import * as io from '@actions/io';
@@ -8,7 +7,7 @@ import * as semver from 'semver';
 import * as util from 'util';
 import { v4 as uuidV4 } from 'uuid';
 import { CacheFilename, CompressionMethod } from '@/lib/actions/constants';
-import { logInfo } from '@/lib/actions/core';
+import { logInfo, logDebug } from '@/lib/actions/core';
 
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
 export async function createTempDirectory(): Promise<string> {
@@ -50,7 +49,7 @@ export async function resolvePaths(patterns: string[]): Promise<string[]> {
 
   for await (const file of globber.globGenerator()) {
     const relativeFile = path.relative(workspace, file).replace(new RegExp(`\\${path.sep}`, 'g'), '/');
-    core.debug(`Matched: ${relativeFile}`);
+    logDebug(`Matched: ${relativeFile}`);
     // Paths are made relative so the tar entries are all relative to the root of the workspace.
     paths.push(`${relativeFile}`);
   }
@@ -63,7 +62,7 @@ export async function unlinkFile(filePath: fs.PathLike): Promise<void> {
 }
 
 async function getVersion(app: string): Promise<string> {
-  core.debug(`Checking ${app} --version`);
+  logDebug(`Checking ${app} --version`);
   let versionOutput = '';
   try {
     await exec.exec(`${app} --version`, [], {
@@ -83,7 +82,7 @@ async function getVersion(app: string): Promise<string> {
   }
 
   versionOutput = versionOutput.trim();
-  core.debug(versionOutput);
+  logDebug(versionOutput);
   return versionOutput;
 }
 

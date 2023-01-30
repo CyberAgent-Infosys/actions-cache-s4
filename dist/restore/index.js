@@ -67656,7 +67656,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.saveS3Cache = exports.uploadFileS3 = exports.reserveCache = exports.downloadS3Cache = exports.getCacheEntry = exports.getCacheVersion = void 0;
-const core_1 = __nccwpck_require__(42186);
 const http_client_1 = __nccwpck_require__(96255);
 const auth_1 = __nccwpck_require__(35526);
 const client_s3_1 = __nccwpck_require__(19250);
@@ -67668,7 +67667,7 @@ const constants_1 = __nccwpck_require__(27151);
 const downloadUtils_1 = __nccwpck_require__(98076);
 const options_1 = __nccwpck_require__(12102);
 const requestUtils_1 = __nccwpck_require__(18594);
-const core_2 = __nccwpck_require__(58816);
+const core_1 = __nccwpck_require__(58816);
 const versionSalt = '1.0';
 function getCacheApiUrl(resource) {
     const baseUrl = process.env['ACTIONS_CACHE_URL'] || '';
@@ -67676,7 +67675,7 @@ function getCacheApiUrl(resource) {
         throw new Error('Cache Service Url not found, unable to restore cache.');
     }
     const url = `${baseUrl}_apis/artifactcache/${resource}`;
-    (0, core_2.logDebug)(`Resource Url: ${url}`);
+    (0, core_1.logDebug)(`Resource Url: ${url}`);
     return url;
 }
 function createAcceptHeader(type, apiVersion) {
@@ -67801,8 +67800,8 @@ async function getCacheEntry(keys, paths, options, s3Options, s3BucketName) {
         throw new Error('Cache not found.');
     }
     (0, core_1.setSecret)(cacheDownloadUrl);
-    (0, core_2.logDebug)('Cache Result:');
-    (0, core_2.logDebug)(JSON.stringify(cacheResult));
+    (0, core_1.logDebug)('Cache Result:');
+    (0, core_1.logDebug)(JSON.stringify(cacheResult));
     return cacheResult;
 }
 exports.getCacheEntry = getCacheEntry;
@@ -67846,7 +67845,7 @@ function getContentRange(start, end) {
     return `bytes ${start}-${end}/*`;
 }
 async function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
-    (0, core_2.logDebug)(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
+    (0, core_1.logDebug)(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
     const additionalHeaders = {
         'Content-Type': 'application/octet-stream',
         'Content-Range': getContentRange(start, end),
@@ -67857,7 +67856,7 @@ async function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
     }
 }
 async function uploadFileS3(s3options, s3BucketName, archivePath, key, concurrency, maxChunkSize) {
-    (0, core_2.logDebug)(`Start upload to S3 (bucket: ${s3BucketName})`);
+    (0, core_1.logDebug)(`Start upload to S3 (bucket: ${s3BucketName})`);
     try {
         const fileStream = fs.createReadStream(archivePath);
         const parallelUpload = new lib_storage_1.Upload({
@@ -67871,7 +67870,7 @@ async function uploadFileS3(s3options, s3BucketName, archivePath, key, concurren
             },
         });
         parallelUpload.on('httpUploadProgress', (progress) => {
-            (0, core_2.logDebug)(`Uploading chunk progress: ${JSON.stringify(progress)}`);
+            (0, core_1.logDebug)(`Uploading chunk progress: ${JSON.stringify(progress)}`);
         });
         await parallelUpload.done();
     }
@@ -67887,7 +67886,7 @@ async function uploadFile(httpClient, cacheId, archivePath, key, options, s3opti
     const concurrency = utils.assertDefined('uploadConcurrency', uploadOptions.uploadConcurrency);
     const maxChunkSize = utils.assertDefined('uploadChunkSize', uploadOptions.uploadChunkSize);
     const parallelUploads = [...new Array(concurrency).keys()];
-    (0, core_2.logDebug)('Awaiting all uploads');
+    (0, core_1.logDebug)('Awaiting all uploads');
     let offset = 0;
     if (s3options && s3BucketName) {
         await uploadFileS3(s3options, s3BucketName, archivePath, key, concurrency, maxChunkSize);
@@ -67927,12 +67926,12 @@ async function commitCache(httpClient, cacheId, filesize) {
 }
 async function saveS3Cache(cacheId, archivePath, key, options, s3Options, s3BucketName) {
     const httpClient = createHttpClient();
-    (0, core_2.logDebug)('Upload Cache');
+    (0, core_1.logDebug)('Upload Cache');
     await uploadFile(httpClient, cacheId, archivePath, key, options, s3Options, s3BucketName);
     // Commit Cache
-    (0, core_2.logDebug)('Commiting cache');
+    (0, core_1.logDebug)('Commiting cache');
     const cacheSize = utils.getArchiveFileSizeInBytes(archivePath);
-    (0, core_2.logInfo)(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
+    (0, core_1.logInfo)(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
     if (!s3Options) {
         // already commit on S3
         const commitCacheResponse = await commitCache(httpClient, cacheId, cacheSize);
@@ -67940,7 +67939,7 @@ async function saveS3Cache(cacheId, archivePath, key, options, s3Options, s3Buck
             throw new Error(`Cache service responded with ${commitCacheResponse.statusCode} during commit cache.`);
         }
     }
-    (0, core_2.logInfo)('Cache saved successfully');
+    (0, core_1.logInfo)('Cache saved successfully');
 }
 exports.saveS3Cache = saveS3Cache;
 
@@ -67977,7 +67976,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isGhes = exports.assertDefined = exports.isGnuTarInstalled = exports.getCacheFileName = exports.getCompressionMethod = exports.unlinkFile = exports.resolvePaths = exports.getArchiveFileSizeInBytes = exports.createTempDirectory = void 0;
-const core = __importStar(__nccwpck_require__(42186));
 const exec = __importStar(__nccwpck_require__(71514));
 const glob = __importStar(__nccwpck_require__(28090));
 const io = __importStar(__nccwpck_require__(47351));
@@ -68026,7 +68024,7 @@ async function resolvePaths(patterns) {
     });
     for await (const file of globber.globGenerator()) {
         const relativeFile = path.relative(workspace, file).replace(new RegExp(`\\${path.sep}`, 'g'), '/');
-        core.debug(`Matched: ${relativeFile}`);
+        (0, core_1.logDebug)(`Matched: ${relativeFile}`);
         // Paths are made relative so the tar entries are all relative to the root of the workspace.
         paths.push(`${relativeFile}`);
     }
@@ -68038,7 +68036,7 @@ async function unlinkFile(filePath) {
 }
 exports.unlinkFile = unlinkFile;
 async function getVersion(app) {
-    core.debug(`Checking ${app} --version`);
+    (0, core_1.logDebug)(`Checking ${app} --version`);
     let versionOutput = '';
     try {
         await exec.exec(`${app} --version`, [], {
@@ -68059,7 +68057,7 @@ async function getVersion(app) {
         }
     }
     versionOutput = versionOutput.trim();
-    core.debug(versionOutput);
+    (0, core_1.logDebug)(versionOutput);
     return versionOutput;
 }
 // Use zstandard if possible to maximize cache performance
@@ -68147,7 +68145,7 @@ exports.SocketTimeout = 5000;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setCacheHitOutput = exports.setOutput = exports.saveState = exports.getState = exports.getInputAsArray = exports.getBooleanInput = exports.getInputAsInt = exports.getInput = exports.setFailed = exports.logDebug = exports.logWarning = exports.logInfo = void 0;
+exports.setCacheHitOutput = exports.setOutput = exports.saveState = exports.getState = exports.getInputAsArray = exports.getBooleanInput = exports.getInputAsInt = exports.getInput = exports.setFailed = exports.setSecret = exports.logDebug = exports.logWarning = exports.logInfo = void 0;
 const core_1 = __nccwpck_require__(42186);
 const isNumber_1 = __nccwpck_require__(2206);
 const strToArray_1 = __nccwpck_require__(37602);
@@ -68164,6 +68162,10 @@ function logDebug(v) {
     (0, core_1.debug)(v);
 }
 exports.logDebug = logDebug;
+function setSecret(v) {
+    (0, core_1.setSecret)(v);
+}
+exports.setSecret = setSecret;
 function setFailed(v) {
     (0, core_1.setFailed)(v);
 }
@@ -68243,7 +68245,6 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadCacheStorageS3 = exports.downloadCacheHttpClient = exports.DownloadProgress = void 0;
-const core = __importStar(__nccwpck_require__(42186));
 const http_client_1 = __nccwpck_require__(96255);
 const client_s3_1 = __nccwpck_require__(19250);
 const fs = __importStar(__nccwpck_require__(57147));
@@ -68252,6 +68253,7 @@ const util = __importStar(__nccwpck_require__(73837));
 const utils = __importStar(__nccwpck_require__(32534));
 const constants_1 = __nccwpck_require__(27151);
 const requestUtils_1 = __nccwpck_require__(18594);
+const core_1 = __nccwpck_require__(58816);
 /**
  * Pipes the body of a HTTP response to a stream
  *
@@ -68294,7 +68296,7 @@ class DownloadProgress {
         this.segmentIndex = this.segmentIndex + 1;
         this.segmentSize = segmentSize;
         this.receivedBytes = 0;
-        core.debug(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
+        (0, core_1.logDebug)(`Downloading segment at offset ${this.segmentOffset} with length ${this.segmentSize}...`);
     }
     /**
      * Sets the number of bytes received for the current segment.
@@ -68328,7 +68330,7 @@ class DownloadProgress {
         const percentage = (100 * (transferredBytes / this.contentLength)).toFixed(1);
         const elapsedTime = Date.now() - this.startTime;
         const downloadSpeed = (transferredBytes / (1024 * 1024) / (elapsedTime / 1000)).toFixed(1);
-        core.info(`Received ${transferredBytes} of ${this.contentLength} (${percentage}%), ${downloadSpeed} MBs/sec`);
+        (0, core_1.logInfo)(`Received ${transferredBytes} of ${this.contentLength} (${percentage}%), ${downloadSpeed} MBs/sec`);
         if (this.isDone()) {
             this.displayedComplete = true;
         }
@@ -68374,7 +68376,7 @@ async function downloadCacheHttpClient(archiveLocation, archivePath) {
     // Abort download if no traffic received over the socket.
     downloadResponse.message.socket.setTimeout(constants_1.SocketTimeout, () => {
         downloadResponse.message.destroy();
-        core.debug(`Aborting download, socket timed out after ${constants_1.SocketTimeout} ms`);
+        (0, core_1.logDebug)(`Aborting download, socket timed out after ${constants_1.SocketTimeout} ms`);
     });
     await pipeResponseToStream(downloadResponse, writeStream);
     // Validate download size.
@@ -68387,7 +68389,7 @@ async function downloadCacheHttpClient(archiveLocation, archivePath) {
         }
     }
     else {
-        core.debug('Unable to validate download, no Content-Length header');
+        (0, core_1.logDebug)('Unable to validate download, no Content-Length header');
     }
 }
 exports.downloadCacheHttpClient = downloadCacheHttpClient;
@@ -68420,38 +68422,15 @@ exports.downloadCacheStorageS3 = downloadCacheStorageS3;
 /***/ }),
 
 /***/ 18594:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.retryHttpClientResponse = exports.retryTypedResponse = exports.retry = exports.isRetryableStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
-const core = __importStar(__nccwpck_require__(42186));
 const http_client_1 = __nccwpck_require__(96255);
 const constants_1 = __nccwpck_require__(27151);
+const core_1 = __nccwpck_require__(58816);
 function isSuccessStatusCode(statusCode) {
     if (!statusCode) {
         return false;
@@ -68506,9 +68485,9 @@ async function retry(name, method, getStatusCode, maxAttempts = constants_1.Defa
             isRetryable = isRetryableStatusCode(statusCode);
             errorMessage = `Cache service responded with ${statusCode}`;
         }
-        core.debug(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
+        (0, core_1.logDebug)(`${name} - Attempt ${attempt} of ${maxAttempts} failed with error: ${errorMessage}`);
         if (!isRetryable) {
-            core.debug(`${name} - Error is not retryable`);
+            (0, core_1.logDebug)(`${name} - Error is not retryable`);
             break;
         }
         await sleep(delay);
@@ -68853,36 +68832,13 @@ exports.isNumber = isNumber;
 /***/ }),
 
 /***/ 12102:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getUploadOptions = void 0;
-const core = __importStar(__nccwpck_require__(42186));
+const core_1 = __nccwpck_require__(58816);
 /**
  * Returns a copy of the upload options with defaults filled in.
  *
@@ -68901,8 +68857,8 @@ function getUploadOptions(copy) {
             result.uploadChunkSize = copy.uploadChunkSize;
         }
     }
-    core.debug(`Upload concurrency: ${result.uploadConcurrency}`);
-    core.debug(`Upload chunk size: ${result.uploadChunkSize}`);
+    (0, core_1.logDebug)(`Upload concurrency: ${result.uploadConcurrency}`);
+    (0, core_1.logDebug)(`Upload chunk size: ${result.uploadChunkSize}`);
     return result;
 }
 exports.getUploadOptions = getUploadOptions;
@@ -69234,10 +69190,9 @@ var exports = __webpack_exports__;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
-const core_1 = __nccwpck_require__(42186);
 const utils_1 = __nccwpck_require__(34977);
 const inputs_1 = __nccwpck_require__(58163);
-const core_2 = __nccwpck_require__(58816);
+const core_1 = __nccwpck_require__(58816);
 const cache_1 = __nccwpck_require__(38207);
 async function run() {
     try {
@@ -69245,20 +69200,20 @@ async function run() {
             return;
         const inputs = (0, inputs_1.getInputs)(process.argv);
         if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
-            (0, core_2.logInfo)('Please input required key.');
+            (0, core_1.logInfo)('Please input required key.');
             return;
         }
         const s3ClientConfig = (0, inputs_1.getS3ClientConfigByInputs)(inputs);
-        (0, core_2.saveState)('CACHE_KEY', inputs.key);
+        (0, core_1.saveState)('CACHE_KEY', inputs.key);
         try {
             const cacheKey = await (0, cache_1.restoreCache)(inputs.path, inputs.key, inputs.restoreKeys, s3ClientConfig, inputs.awsS3Bucket);
             if (!cacheKey) {
-                (0, core_2.logInfo)(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);
+                (0, core_1.logInfo)(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);
                 return;
             }
-            (0, core_2.saveState)('CACHE_RESULT', cacheKey);
-            (0, core_2.setCacheHitOutput)((0, utils_1.isExactKeyMatch)(inputs.key, cacheKey));
-            (0, core_2.logInfo)(`Cache restored from key: ${cacheKey}`);
+            (0, core_1.saveState)('CACHE_RESULT', cacheKey);
+            (0, core_1.setCacheHitOutput)((0, utils_1.isExactKeyMatch)(inputs.key, cacheKey));
+            (0, core_1.logInfo)(`Cache restored from key: ${cacheKey}`);
         }
         catch (e) {
             if (e instanceof Error) {
@@ -69266,8 +69221,8 @@ async function run() {
                     throw e;
                 }
                 else {
-                    (0, core_2.logWarning)(e.message);
-                    (0, core_2.setCacheHitOutput)(false);
+                    (0, core_1.logWarning)(e.message);
+                    (0, core_1.setCacheHitOutput)(false);
                 }
             }
         }

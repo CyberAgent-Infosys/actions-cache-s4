@@ -1,4 +1,3 @@
-import { setSecret } from '@actions/core';
 import { HttpClient } from '@actions/http-client';
 import { BearerCredentialHandler } from '@actions/http-client/lib/auth';
 import { RequestOptions, TypedResponse } from '@actions/http-client/lib/interfaces';
@@ -20,7 +19,7 @@ import {
 import { downloadCacheHttpClient, downloadCacheStorageS3 } from '@/lib/actions/downloadUtils';
 import { UploadOptions, getUploadOptions } from '@/lib/options';
 import { isSuccessStatusCode, retryHttpClientResponse, retryTypedResponse } from '@/lib/actions/requestUtils';
-import { logDebug, logInfo } from '@/lib/actions/core';
+import { logDebug, logInfo, setSecret } from '@/lib/actions/core';
 const versionSalt = '1.0';
 
 function getCacheApiUrl(resource: string): string {

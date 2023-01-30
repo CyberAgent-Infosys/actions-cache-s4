@@ -67518,11 +67518,6 @@ function checkKey(key) {
     }
 }
 async function saveCache(paths, key, options, s3Options, s3BucketName) {
-    // TODO: localで動くように考える
-    if (utils_1.isDebug) {
-        (0, core_1.logDebug)('Skip save process.');
-        return -1;
-    }
     // 問題があればthrowされる
     checkPaths(paths);
     checkKey(key);
@@ -67546,6 +67541,8 @@ async function saveCache(paths, key, options, s3Options, s3BucketName) {
         if (archiveFileSize > fileSizeLimit && !(0, cacheUtils_1.isGhes)()) {
             throw new Error(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
         }
+        // TODO: 関連処理削除
+        // S3の設定がない場合
         if (!(s3Options && s3BucketName)) {
             (0, core_1.logDebug)('Reserving Cache');
             const reserveCacheResponse = await (0, cacheHttpClient_1.reserveCache)(key, paths, {
@@ -67579,10 +67576,7 @@ async function saveCache(paths, key, options, s3Options, s3BucketName) {
 }
 exports.saveCache = saveCache;
 async function restoreCache(paths, primaryKey, restoreKeys, s3Options, s3BucketName) {
-    // if (isDebug) {
-    //   logDebug('Skip restore cache process.');
-    //   return;
-    // }
+    // 問題があればthrowされる
     checkPaths(paths);
     restoreKeys = restoreKeys || [];
     const keys = [primaryKey, ...restoreKeys];
@@ -67708,7 +67702,7 @@ function getCacheVersion(paths, compressionMethod) {
     return crypto.createHash('sha256').update(components.join('|')).digest('hex');
 }
 exports.getCacheVersion = getCacheVersion;
-async function getCacheEntryS3(s3Options, s3BucketName, keys, paths) {
+async function getCacheEntryS3(s3Options, s3BucketName, keys) {
     const primaryKey = keys[0];
     const s3client = new client_s3_1.S3Client(s3Options);
     const param = {
@@ -67769,7 +67763,7 @@ function _searchRestoreKeyEntry(notPrimaryKey, entries) {
         // not found, go to next key
         return null;
     }
-    matchPrefix.sort(function (i, j) {
+    matchPrefix.sort((i, j) => {
         if (i.LastModified === undefined || j.LastModified === undefined) {
             return 0;
         }
@@ -67789,7 +67783,7 @@ function _searchRestoreKeyEntry(notPrimaryKey, entries) {
 }
 async function getCacheEntry(keys, paths, options, s3Options, s3BucketName) {
     if (s3Options && s3BucketName) {
-        return await getCacheEntryS3(s3Options, s3BucketName, keys, paths);
+        return await getCacheEntryS3(s3Options, s3BucketName, keys);
     }
     const httpClient = createHttpClient();
     const version = getCacheVersion(paths, options?.compressionMethod);
@@ -67864,8 +67858,8 @@ async function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
 }
 async function uploadFileS3(s3options, s3BucketName, archivePath, key, concurrency, maxChunkSize) {
     (0, core_2.logDebug)(`Start upload to S3 (bucket: ${s3BucketName})`);
-    const fileStream = fs.createReadStream(archivePath);
     try {
+        const fileStream = fs.createReadStream(archivePath);
         const parallelUpload = new lib_storage_1.Upload({
             client: new client_s3_1.S3Client(s3options),
             queueSize: concurrency,
@@ -68153,7 +68147,7 @@ exports.SocketTimeout = 5000;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.setCacheHitOutput = exports.setOutput = exports.saveState = exports.getState = exports.getInputAsArray = exports.getBooleanInput = exports.getInputAsInt = exports.getInput = exports.logDebug = exports.logWarning = exports.logInfo = void 0;
+exports.setCacheHitOutput = exports.setOutput = exports.saveState = exports.getState = exports.getInputAsArray = exports.getBooleanInput = exports.getInputAsInt = exports.getInput = exports.setFailed = exports.logDebug = exports.logWarning = exports.logInfo = void 0;
 const core_1 = __nccwpck_require__(42186);
 const isNumber_1 = __nccwpck_require__(2206);
 const strToArray_1 = __nccwpck_require__(37602);
@@ -68170,6 +68164,10 @@ function logDebug(v) {
     (0, core_1.debug)(v);
 }
 exports.logDebug = logDebug;
+function setFailed(v) {
+    (0, core_1.setFailed)(v);
+}
+exports.setFailed = setFailed;
 function getInput(k, options) {
     const v = (0, core_1.getInput)(k, options);
     return v !== '' ? v : undefined;
@@ -68781,7 +68779,7 @@ const core_1 = __nccwpck_require__(58816);
 const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';
 const DEFAULT_AWS_REGION = 'us-east-1';
 const DEFAULT_S3_BUCKET_ENDPOINT = true;
-const DEFAULT_S3_FORCE_PATH_STYLE = false;
+const DEFAULT_S3_FORCE_PATH_STYLE = true;
 const DEFAULT_UPLOAD_CHUNK_SIZE = 0;
 function getInputs(argv) {
     const inputArgv = (0, argv_1.getArgv)(argv);

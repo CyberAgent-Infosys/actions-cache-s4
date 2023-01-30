@@ -15,6 +15,7 @@ npm run dev:save --\
   --aws-region="${AWS_REGION}" \
   --aws-endpoint="${AWS_ENDPOINT}" \
   --aws-s3-bucket-endpoint=false \
+  --aws-s3-force-path-style=true
 
 # npm run dev:save --\
 #   --path="${SAVE_PATH}" \

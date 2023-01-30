@@ -75,7 +75,6 @@ async function getCacheEntryS3(
   s3Options: S3ClientConfig,
   s3BucketName: string,
   keys: string[],
-  paths: string[],
 ): Promise<ArtifactCacheEntry | null> {
   const primaryKey = keys[0];
 
@@ -154,7 +153,7 @@ function _searchRestoreKeyEntry(notPrimaryKey: string, entries: _content[]): _co
     return null;
   }
 
-  matchPrefix.sort(function (i, j) {
+  matchPrefix.sort((i, j) => {
     if (i.LastModified === undefined || j.LastModified === undefined) {
       return 0;
     }
@@ -183,7 +182,7 @@ export async function getCacheEntry(
   s3BucketName?: string,
 ): Promise<ArtifactCacheEntry | null> {
   if (s3Options && s3BucketName) {
-    return await getCacheEntryS3(s3Options, s3BucketName, keys, paths);
+    return await getCacheEntryS3(s3Options, s3BucketName, keys);
   }
 
   const httpClient = createHttpClient();
@@ -303,14 +302,13 @@ export async function uploadFileS3(
   maxChunkSize: number,
 ): Promise<void> {
   logDebug(`Start upload to S3 (bucket: ${s3BucketName})`);
-  const fileStream = fs.createReadStream(archivePath);
 
   try {
+    const fileStream = fs.createReadStream(archivePath);
     const parallelUpload = new Upload({
       client: new S3Client(s3options),
       queueSize: concurrency,
       partSize: maxChunkSize,
-
       params: {
         Bucket: s3BucketName,
         Key: key,

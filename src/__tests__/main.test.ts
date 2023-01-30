@@ -6,6 +6,7 @@ import { describe, test, beforeEach, afterEach } from '@jest/globals';
 beforeEach(() => {
   process.env['GITHUB_EVENT_NAME'] = 'push';
   process.env['GITHUB_REF'] = 'refs/heads/feature-branch';
+  process.env['DEBUG_MODE'] = 'true';
 });
 
 afterEach(() => {
@@ -15,15 +16,10 @@ afterEach(() => {
 
 // shows how the runner will run a javascript action with env / stdout protocol
 describe('test runs', () => {
+  // パラメータ不足のエラーが出れば成功
   const np = process.execPath;
   const options: cp.ExecFileSyncOptions = { env: process.env };
-  const argv: string[] = [
-    '--path=node_modules',
-    '--key=XXXX',
-    '--aws-s3-bucket=XXXX',
-    '--aws-access-key-id=XXXX',
-    '--aws-secret-access-key=XXXX',
-  ];
+  const argv: string[] = ['--path=node_modules', '--key=XXXX', '--aws-s3-bucket=XXXX'];
 
   test('save.js', () => {
     const ip = path.join(__dirname, '../..', 'dist', 'save', 'index.js');

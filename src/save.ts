@@ -1,5 +1,4 @@
-import { setFailed } from '@actions/core';
-import { getState, logInfo, logWarning } from '@/lib/actions/core';
+import { getState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { saveCache, ValidationError, ReserveCacheError } from '@/lib/actions/cache';
 import { isExactKeyMatch, isValidEvent, isDebug } from '@/lib/utils';
 import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
@@ -45,10 +44,9 @@ export async function run(): Promise<void> {
         } else if (e.name === ReserveCacheError.name) {
           logInfo(e.message);
         } else {
-          logWarning(e.message);
+          throw e;
         }
       }
-      throw e;
     }
   } catch (error) {
     if (error instanceof Error) {

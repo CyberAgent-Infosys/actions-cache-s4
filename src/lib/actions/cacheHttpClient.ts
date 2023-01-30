@@ -1,4 +1,4 @@
-import * as core from '@actions/core';
+import { setSecret } from '@actions/core';
 import { HttpClient } from '@actions/http-client';
 import { BearerCredentialHandler } from '@actions/http-client/lib/auth';
 import { RequestOptions, TypedResponse } from '@actions/http-client/lib/interfaces';
@@ -20,6 +20,7 @@ import {
 import { downloadCacheHttpClient, downloadCacheStorageS3 } from '@/lib/actions/downloadUtils';
 import { UploadOptions, getUploadOptions } from '@/lib/options';
 import { isSuccessStatusCode, retryHttpClientResponse, retryTypedResponse } from '@/lib/actions/requestUtils';
+import { logDebug, logInfo } from '@/lib/actions/core';
 const versionSalt = '1.0';
 
 function getCacheApiUrl(resource: string): string {
@@ -29,7 +30,7 @@ function getCacheApiUrl(resource: string): string {
   }
 
   const url = `${baseUrl}_apis/artifactcache/${resource}`;
-  core.debug(`Resource Url: ${url}`);
+  logDebug(`Resource Url: ${url}`);
   return url;
 }
 
@@ -204,9 +205,10 @@ export async function getCacheEntry(
   if (!cacheDownloadUrl) {
     throw new Error('Cache not found.');
   }
-  core.setSecret(cacheDownloadUrl);
-  core.debug('Cache Result:');
-  core.debug(JSON.stringify(cacheResult));
+
+  setSecret(cacheDownloadUrl);
+  logDebug('Cache Result:');
+  logDebug(JSON.stringify(cacheResult));
 
   return cacheResult;
 }
@@ -272,7 +274,7 @@ async function uploadChunk(
   start: number,
   end: number,
 ): Promise<void> {
-  core.debug(
+  logDebug(
     `Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(
       start,
       end,
@@ -300,8 +302,7 @@ export async function uploadFileS3(
   concurrency: number,
   maxChunkSize: number,
 ): Promise<void> {
-  core.debug(`Start upload to S3 (bucket: ${s3BucketName})`);
-
+  logDebug(`Start upload to S3 (bucket: ${s3BucketName})`);
   const fileStream = fs.createReadStream(archivePath);
 
   try {
@@ -318,7 +319,7 @@ export async function uploadFileS3(
     });
 
     parallelUpload.on('httpUploadProgress', (progress: Progress) => {
-      core.debug(`Uploading chunk progress: ${JSON.stringify(progress)}`);
+      logDebug(`Uploading chunk progress: ${JSON.stringify(progress)}`);
     });
 
     await parallelUpload.done();
@@ -345,7 +346,7 @@ async function uploadFile(
   const maxChunkSize = utils.assertDefined('uploadChunkSize', uploadOptions.uploadChunkSize);
 
   const parallelUploads = [...new Array(concurrency).keys()];
-  core.debug('Awaiting all uploads');
+  logDebug('Awaiting all uploads');
   let offset = 0;
 
   if (s3options && s3BucketName) {
@@ -408,13 +409,13 @@ export async function saveS3Cache(
 ): Promise<void> {
   const httpClient = createHttpClient();
 
-  core.debug('Upload cache');
+  logDebug('Upload Cache');
   await uploadFile(httpClient, cacheId, archivePath, key, options, s3Options, s3BucketName);
 
   // Commit Cache
-  core.debug('Commiting cache');
+  logDebug('Commiting cache');
   const cacheSize = utils.getArchiveFileSizeInBytes(archivePath);
-  core.info(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
+  logInfo(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
 
   if (!s3Options) {
     // already commit on S3
@@ -424,5 +425,5 @@ export async function saveS3Cache(
     }
   }
 
-  core.info('Cache saved successfully');
+  logInfo('Cache saved successfully');
 }

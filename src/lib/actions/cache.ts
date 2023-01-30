@@ -60,6 +60,7 @@ export async function saveCache(
     return -1;
   }
 
+  // 問題があればthrowされる
   checkPaths(paths);
   checkKey(key);
 

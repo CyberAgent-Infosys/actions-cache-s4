@@ -51,10 +51,11 @@ export async function run(): Promise<void> {
       throw e;
     }
   } catch (error) {
-    console.error(error);
-
     if (error instanceof Error) {
+      logWarning(error.message);
       setFailed(error.message);
+    } else {
+      console.error(error);
     }
   }
 }

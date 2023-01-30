@@ -67523,6 +67523,7 @@ async function saveCache(paths, key, options, s3Options, s3BucketName) {
         (0, core_1.logDebug)('Skip save process.');
         return -1;
     }
+    // 問題があればthrowされる
     checkPaths(paths);
     checkKey(key);
     const compressionMethod = await (0, cacheUtils_1.getCompressionMethod)();
@@ -67661,7 +67662,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.saveS3Cache = exports.uploadFileS3 = exports.reserveCache = exports.downloadS3Cache = exports.getCacheEntry = exports.getCacheVersion = void 0;
-const core = __importStar(__nccwpck_require__(42186));
+const core_1 = __nccwpck_require__(42186);
 const http_client_1 = __nccwpck_require__(96255);
 const auth_1 = __nccwpck_require__(35526);
 const client_s3_1 = __nccwpck_require__(19250);
@@ -67673,6 +67674,7 @@ const constants_1 = __nccwpck_require__(27151);
 const downloadUtils_1 = __nccwpck_require__(98076);
 const options_1 = __nccwpck_require__(12102);
 const requestUtils_1 = __nccwpck_require__(18594);
+const core_2 = __nccwpck_require__(58816);
 const versionSalt = '1.0';
 function getCacheApiUrl(resource) {
     const baseUrl = process.env['ACTIONS_CACHE_URL'] || '';
@@ -67680,7 +67682,7 @@ function getCacheApiUrl(resource) {
         throw new Error('Cache Service Url not found, unable to restore cache.');
     }
     const url = `${baseUrl}_apis/artifactcache/${resource}`;
-    core.debug(`Resource Url: ${url}`);
+    (0, core_2.logDebug)(`Resource Url: ${url}`);
     return url;
 }
 function createAcceptHeader(type, apiVersion) {
@@ -67804,9 +67806,9 @@ async function getCacheEntry(keys, paths, options, s3Options, s3BucketName) {
     if (!cacheDownloadUrl) {
         throw new Error('Cache not found.');
     }
-    core.setSecret(cacheDownloadUrl);
-    core.debug('Cache Result:');
-    core.debug(JSON.stringify(cacheResult));
+    (0, core_1.setSecret)(cacheDownloadUrl);
+    (0, core_2.logDebug)('Cache Result:');
+    (0, core_2.logDebug)(JSON.stringify(cacheResult));
     return cacheResult;
 }
 exports.getCacheEntry = getCacheEntry;
@@ -67850,7 +67852,7 @@ function getContentRange(start, end) {
     return `bytes ${start}-${end}/*`;
 }
 async function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
-    core.debug(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
+    (0, core_2.logDebug)(`Uploading chunk of size ${end - start + 1} bytes at offset ${start} with content range: ${getContentRange(start, end)}`);
     const additionalHeaders = {
         'Content-Type': 'application/octet-stream',
         'Content-Range': getContentRange(start, end),
@@ -67861,7 +67863,7 @@ async function uploadChunk(httpClient, resourceUrl, openStream, start, end) {
     }
 }
 async function uploadFileS3(s3options, s3BucketName, archivePath, key, concurrency, maxChunkSize) {
-    core.debug(`Start upload to S3 (bucket: ${s3BucketName})`);
+    (0, core_2.logDebug)(`Start upload to S3 (bucket: ${s3BucketName})`);
     const fileStream = fs.createReadStream(archivePath);
     try {
         const parallelUpload = new lib_storage_1.Upload({
@@ -67875,7 +67877,7 @@ async function uploadFileS3(s3options, s3BucketName, archivePath, key, concurren
             },
         });
         parallelUpload.on('httpUploadProgress', (progress) => {
-            core.debug(`Uploading chunk progress: ${JSON.stringify(progress)}`);
+            (0, core_2.logDebug)(`Uploading chunk progress: ${JSON.stringify(progress)}`);
         });
         await parallelUpload.done();
     }
@@ -67891,7 +67893,7 @@ async function uploadFile(httpClient, cacheId, archivePath, key, options, s3opti
     const concurrency = utils.assertDefined('uploadConcurrency', uploadOptions.uploadConcurrency);
     const maxChunkSize = utils.assertDefined('uploadChunkSize', uploadOptions.uploadChunkSize);
     const parallelUploads = [...new Array(concurrency).keys()];
-    core.debug('Awaiting all uploads');
+    (0, core_2.logDebug)('Awaiting all uploads');
     let offset = 0;
     if (s3options && s3BucketName) {
         await uploadFileS3(s3options, s3BucketName, archivePath, key, concurrency, maxChunkSize);
@@ -67931,12 +67933,12 @@ async function commitCache(httpClient, cacheId, filesize) {
 }
 async function saveS3Cache(cacheId, archivePath, key, options, s3Options, s3BucketName) {
     const httpClient = createHttpClient();
-    core.debug('Upload cache');
+    (0, core_2.logDebug)('Upload Cache');
     await uploadFile(httpClient, cacheId, archivePath, key, options, s3Options, s3BucketName);
     // Commit Cache
-    core.debug('Commiting cache');
+    (0, core_2.logDebug)('Commiting cache');
     const cacheSize = utils.getArchiveFileSizeInBytes(archivePath);
-    core.info(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
+    (0, core_2.logInfo)(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
     if (!s3Options) {
         // already commit on S3
         const commitCacheResponse = await commitCache(httpClient, cacheId, cacheSize);
@@ -67944,7 +67946,7 @@ async function saveS3Cache(cacheId, archivePath, key, options, s3Options, s3Buck
             throw new Error(`Cache service responded with ${commitCacheResponse.statusCode} during commit cache.`);
         }
     }
-    core.info('Cache saved successfully');
+    (0, core_2.logInfo)('Cache saved successfully');
 }
 exports.saveS3Cache = saveS3Cache;
 
@@ -68004,10 +68006,11 @@ async function createTempDirectory() {
         }
         else {
             if (process.platform === 'darwin') {
-                baseLocation = '/Users';
+                baseLocation = process.env['HOME'] || '/Users';
             }
             else {
-                baseLocation = '/home';
+                // FIXME: 生成先として適切か未検証
+                baseLocation = process.env['HOME'] || '/home';
             }
         }
         tempDirectory = path.join(baseLocation, 'actions', 'temp');
@@ -68961,10 +68964,9 @@ function isValidEvent() {
     if (exports.isDebug)
         return true;
     const isValid = Boolean((0, env_1.getEnv)('GITHUB_REF') ?? false);
-    const eventName = (0, env_1.getEnv)('GITHUB_EVENT_NAME');
+    const eventName = (0, env_1.getEnv)('GITHUB_EVENT_NAME') ?? 'undefined';
     if (!isValid) {
-        (0, core_1.logWarning)(`Event Validation Error: The event type ${eventName}
-      } is not supported because it's not tied to a branch or tag ref.`);
+        (0, core_1.logWarning)(`Event Validation Error: The event type ${eventName} is not supported because it's not tied to a branch or tag ref.`);
     }
     return isValid;
 }
@@ -69281,9 +69283,12 @@ async function run() {
         }
     }
     catch (error) {
-        console.error(error);
         if (error instanceof Error) {
+            (0, core_2.logWarning)(error.message);
             (0, core_1.setFailed)(error.message);
+        }
+        else {
+            console.error(error);
         }
     }
 }

@@ -9,12 +9,11 @@ export function isValidEvent(): boolean {
   if (isDebug) return true;
 
   const isValid = Boolean(getEnv('GITHUB_REF') ?? false);
-  const eventName = getEnv('GITHUB_EVENT_NAME');
+  const eventName = getEnv('GITHUB_EVENT_NAME') ?? 'undefined';
 
   if (!isValid) {
     logWarning(
-      `Event Validation Error: The event type ${eventName}
-      } is not supported because it's not tied to a branch or tag ref.`,
+      `Event Validation Error: The event type ${eventName} is not supported because it's not tied to a branch or tag ref.`,
     );
   }
 

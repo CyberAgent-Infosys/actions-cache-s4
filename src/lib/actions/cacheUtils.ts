@@ -23,9 +23,10 @@ export async function createTempDirectory(): Promise<string> {
       baseLocation = process.env['USERPROFILE'] || 'C:\\';
     } else {
       if (process.platform === 'darwin') {
-        baseLocation = '/Users';
+        baseLocation = process.env['HOME'] || '/Users';
       } else {
-        baseLocation = '/home';
+        // FIXME: 生成先として適切か未検証
+        baseLocation = process.env['HOME'] || '/home';
       }
     }
     tempDirectory = path.join(baseLocation, 'actions', 'temp');

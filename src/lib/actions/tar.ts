@@ -4,12 +4,11 @@ import { existsSync, writeFileSync } from 'fs';
 import * as path from 'path';
 import * as utils from '@/lib/actions/cacheUtils';
 import { CompressionMethod } from '@/lib/actions/constants';
-import { getEnv } from '@/lib/env';
 
 async function getTarPath(args: string[], compressionMethod: CompressionMethod): Promise<string> {
   switch (process.platform) {
     case 'win32': {
-      const systemTar = `${getEnv('windir')}\\System32\\tar.exe`;
+      const systemTar = `${process.env['windir']}\\System32\\tar.exe`;
       if (compressionMethod !== CompressionMethod.Gzip) {
         // We only use zstandard compression on windows when gnu tar is installed due to
         // a bug with compressing large files with bsdtar + zstd
@@ -47,7 +46,7 @@ async function execTar(args: string[], compressionMethod: CompressionMethod, cwd
 }
 
 function getWorkingDirectory(): string {
-  return getEnv('GITHUB_WORKSPACE') ?? process.cwd();
+  return process.env['GITHUB_WORKSPACE'] ?? process.cwd();
 }
 
 export async function extractTar(archivePath: string, compressionMethod: CompressionMethod): Promise<void> {

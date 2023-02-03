@@ -1,7 +1,4 @@
 {
-  "globals": {
-    "NodeJS": true
-  },
   "plugins": ["jest", "@typescript-eslint"],
   "extends": ["plugin:github/recommended"],
   "parser": "@typescript-eslint/parser",

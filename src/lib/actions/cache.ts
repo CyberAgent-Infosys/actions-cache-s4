@@ -1,6 +1,6 @@
 import * as path from 'path';
 import { S3ClientConfig } from '@aws-sdk/client-s3';
-import { isDebug } from '@/lib/utils';
+import { isDebug, isSilent } from '@/lib/utils';
 import { logDebug, logInfo } from '@/lib/actions/core';
 import {
   getCompressionMethod,
@@ -54,7 +54,7 @@ export async function saveCache(
   s3Options?: S3ClientConfig,
   s3BucketName?: string,
 ): Promise<number> {
-  // 問題があればthrowされる
+  // 問題があればthrow
   checkPaths(paths);
   checkKey(key);
 
@@ -72,7 +72,7 @@ export async function saveCache(
 
   try {
     await createTar(archiveFolder, cachePaths, compressionMethod);
-    if (isDebug) {
+    if (isDebug && !isSilent) {
       await listTar(archivePath, compressionMethod);
     }
     const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
@@ -179,7 +179,7 @@ export async function restoreCache(
     // Download the cache from the cache entry
     await downloadS3Cache(cacheEntry, archivePath, s3Options, s3BucketName);
 
-    if (isDebug) {
+    if (isDebug && !isSilent) {
       await listTar(archivePath, compressionMethod);
     }
 

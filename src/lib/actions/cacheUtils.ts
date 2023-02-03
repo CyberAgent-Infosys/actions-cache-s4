@@ -8,24 +8,25 @@ import * as util from 'util';
 import { v4 as uuidV4 } from 'uuid';
 import { CacheFilename, CompressionMethod } from '@/lib/actions/constants';
 import { logInfo, logDebug } from '@/lib/actions/core';
+import { getEnv } from '@/lib/env';
 
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
 export async function createTempDirectory(): Promise<string> {
   const IS_WINDOWS = process.platform === 'win32';
 
-  let tempDirectory: string = process.env['RUNNER_TEMP'] || '';
+  let tempDirectory = getEnv('RUNNER_TEMP') || '';
 
   if (!tempDirectory) {
     let baseLocation: string;
     if (IS_WINDOWS) {
       // On Windows use the USERPROFILE env variable
-      baseLocation = process.env['USERPROFILE'] || 'C:\\';
+      baseLocation = getEnv('USERPROFILE') || 'C:\\';
     } else {
       if (process.platform === 'darwin') {
-        baseLocation = process.env['HOME'] || '/Users';
+        baseLocation = getEnv('HOME') || '/Users';
       } else {
         // FIXME: 生成先として適切か未検証
-        baseLocation = process.env['HOME'] || '/home';
+        baseLocation = getEnv('HOME') || '/home';
       }
     }
     tempDirectory = path.join(baseLocation, 'actions', 'temp');
@@ -42,7 +43,7 @@ export function getArchiveFileSizeInBytes(filePath: string): number {
 
 export async function resolvePaths(patterns: string[]): Promise<string[]> {
   const paths: string[] = [];
-  const workspace = process.env['GITHUB_WORKSPACE'] ?? process.cwd();
+  const workspace = getEnv('GITHUB_WORKSPACE') ?? process.cwd();
   const globber = await glob.create(patterns.join('\n'), {
     implicitDescendants: false,
   });
@@ -126,6 +127,6 @@ export function assertDefined<T>(name: string, value?: T): T {
 }
 
 export function isGhes(): boolean {
-  const ghUrl = new URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
+  const ghUrl = new URL(getEnv('GITHUB_SERVER_URL') || 'https://github.com');
   return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
 }

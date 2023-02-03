@@ -67518,7 +67518,7 @@ function checkKey(key) {
     }
 }
 async function saveCache(paths, key, options, s3Options, s3BucketName) {
-    // 問題があればthrowされる
+    // 問題があればthrow
     checkPaths(paths);
     checkKey(key);
     const compressionMethod = await (0, cacheUtils_1.getCompressionMethod)();
@@ -67531,7 +67531,7 @@ async function saveCache(paths, key, options, s3Options, s3BucketName) {
     (0, core_1.logDebug)(`Archive Path: ${archivePath}`);
     try {
         await (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
-        if (utils_1.isDebug) {
+        if (utils_1.isDebug && !utils_1.isSilent) {
             await (0, tar_1.listTar)(archivePath, compressionMethod);
         }
         const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
@@ -67541,7 +67541,6 @@ async function saveCache(paths, key, options, s3Options, s3BucketName) {
         if (archiveFileSize > fileSizeLimit && !(0, cacheUtils_1.isGhes)()) {
             throw new Error(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
         }
-        // TODO: 関連処理削除
         // S3の設定がない場合
         if (!(s3Options && s3BucketName)) {
             (0, core_1.logDebug)('Reserving Cache');
@@ -67602,7 +67601,7 @@ async function restoreCache(paths, primaryKey, restoreKeys, s3Options, s3BucketN
     try {
         // Download the cache from the cache entry
         await (0, cacheHttpClient_1.downloadS3Cache)(cacheEntry, archivePath, s3Options, s3BucketName);
-        if (utils_1.isDebug) {
+        if (utils_1.isDebug && !utils_1.isSilent) {
             await (0, tar_1.listTar)(archivePath, compressionMethod);
         }
         const archiveFileSize = (0, cacheUtils_1.getArchiveFileSizeInBytes)(archivePath);
@@ -67668,9 +67667,10 @@ const downloadUtils_1 = __nccwpck_require__(98076);
 const options_1 = __nccwpck_require__(12102);
 const requestUtils_1 = __nccwpck_require__(18594);
 const core_1 = __nccwpck_require__(58816);
+const env_1 = __nccwpck_require__(92479);
 const versionSalt = '1.0';
 function getCacheApiUrl(resource) {
-    const baseUrl = process.env['ACTIONS_CACHE_URL'] || '';
+    const baseUrl = (0, env_1.getEnv)('ACTIONS_CACHE_URL') || '';
     if (!baseUrl) {
         throw new Error('Cache Service Url not found, unable to restore cache.');
     }
@@ -67690,7 +67690,7 @@ function getRequestOptions() {
     return requestOptions;
 }
 function createHttpClient() {
-    const token = process.env['ACTIONS_RUNTIME_TOKEN'] || '';
+    const token = (0, env_1.getEnv)('ACTIONS_RUNTIME_TOKEN') || '';
     const bearerCredentialHandler = new auth_1.BearerCredentialHandler(token);
     return new http_client_1.HttpClient('actions/cache', [bearerCredentialHandler], getRequestOptions());
 }
@@ -67707,7 +67707,7 @@ async function getCacheEntryS3(s3Options, s3BucketName, keys) {
     const param = {
         Bucket: s3BucketName,
     };
-    let contents = new Array();
+    const contents = [];
     let hasNext = true;
     while (hasNext) {
         const response = await s3client.send(new client_s3_1.ListObjectsV2Command(param));
@@ -67748,7 +67748,7 @@ function searchRestoreKeyEntry(notPrimaryKey, entries) {
     return null;
 }
 function _searchRestoreKeyEntry(notPrimaryKey, entries) {
-    let matchPrefix = new Array();
+    const matchPrefix = [];
     for (const entry of entries) {
         if (entry.Key === notPrimaryKey) {
             // extractly match, Use this entry
@@ -67986,23 +67986,24 @@ const util = __importStar(__nccwpck_require__(73837));
 const uuid_1 = __nccwpck_require__(75840);
 const constants_1 = __nccwpck_require__(27151);
 const core_1 = __nccwpck_require__(58816);
+const env_1 = __nccwpck_require__(92479);
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
 async function createTempDirectory() {
     const IS_WINDOWS = process.platform === 'win32';
-    let tempDirectory = process.env['RUNNER_TEMP'] || '';
+    let tempDirectory = (0, env_1.getEnv)('RUNNER_TEMP') || '';
     if (!tempDirectory) {
         let baseLocation;
         if (IS_WINDOWS) {
             // On Windows use the USERPROFILE env variable
-            baseLocation = process.env['USERPROFILE'] || 'C:\\';
+            baseLocation = (0, env_1.getEnv)('USERPROFILE') || 'C:\\';
         }
         else {
             if (process.platform === 'darwin') {
-                baseLocation = process.env['HOME'] || '/Users';
+                baseLocation = (0, env_1.getEnv)('HOME') || '/Users';
             }
             else {
                 // FIXME: 生成先として適切か未検証
-                baseLocation = process.env['HOME'] || '/home';
+                baseLocation = (0, env_1.getEnv)('HOME') || '/home';
             }
         }
         tempDirectory = path.join(baseLocation, 'actions', 'temp');
@@ -68018,7 +68019,7 @@ function getArchiveFileSizeInBytes(filePath) {
 exports.getArchiveFileSizeInBytes = getArchiveFileSizeInBytes;
 async function resolvePaths(patterns) {
     const paths = [];
-    const workspace = process.env['GITHUB_WORKSPACE'] ?? process.cwd();
+    const workspace = (0, env_1.getEnv)('GITHUB_WORKSPACE') ?? process.cwd();
     const globber = await glob.create(patterns.join('\n'), {
         implicitDescendants: false,
     });
@@ -68099,7 +68100,7 @@ function assertDefined(name, value) {
 }
 exports.assertDefined = assertDefined;
 function isGhes() {
-    const ghUrl = new URL(process.env['GITHUB_SERVER_URL'] || 'https://github.com');
+    const ghUrl = new URL((0, env_1.getEnv)('GITHUB_SERVER_URL') || 'https://github.com');
     return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
 }
 exports.isGhes = isGhes;
@@ -68559,10 +68560,11 @@ const fs_1 = __nccwpck_require__(57147);
 const path = __importStar(__nccwpck_require__(71017));
 const utils = __importStar(__nccwpck_require__(32534));
 const constants_1 = __nccwpck_require__(27151);
+const env_1 = __nccwpck_require__(92479);
 async function getTarPath(args, compressionMethod) {
     switch (process.platform) {
         case 'win32': {
-            const systemTar = `${process.env['windir']}\\System32\\tar.exe`;
+            const systemTar = `${(0, env_1.getEnv)('windir')}\\System32\\tar.exe`;
             if (compressionMethod !== constants_1.CompressionMethod.Gzip) {
                 // We only use zstandard compression on windows when gnu tar is installed due to
                 // a bug with compressing large files with bsdtar + zstd
@@ -68601,7 +68603,7 @@ async function execTar(args, compressionMethod, cwd) {
     }
 }
 function getWorkingDirectory() {
-    return process.env['GITHUB_WORKSPACE'] ?? process.cwd();
+    return (0, env_1.getEnv)('GITHUB_WORKSPACE') ?? process.cwd();
 }
 async function extractTar(archivePath, compressionMethod) {
     // Create directory to extract tar into
@@ -68754,7 +68756,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getS3ClientConfigByInputs = exports.getInputs = void 0;
 const argv_1 = __nccwpck_require__(86955);
 const core_1 = __nccwpck_require__(58816);
-// TODO: 初期値見直し
 const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';
 const DEFAULT_AWS_REGION = 'us-east-1';
 const DEFAULT_S3_BUCKET_ENDPOINT = true;
@@ -68791,7 +68792,6 @@ function getInputs(argv) {
 }
 exports.getInputs = getInputs;
 function getS3ClientConfigByInputs(inputs) {
-    // TODO: S3向けのパラメータの初期化を考える
     if (!inputs.awsS3Bucket)
         return undefined;
     (0, core_1.logDebug)('Enable S3 backend mode.');
@@ -68895,7 +68895,7 @@ exports.strToBool = void 0;
 function strToBool(v) {
     if (typeof v !== 'string')
         return undefined;
-    return v === 'true';
+    return v === 'true' || v === 'TRUE';
 }
 exports.strToBool = strToBool;
 
@@ -68908,11 +68908,12 @@ exports.strToBool = strToBool;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isExactKeyMatch = exports.isValidEvent = exports.isDebug = void 0;
+exports.isExactKeyMatch = exports.isValidEvent = exports.isSilent = exports.isDebug = void 0;
 const env_1 = __nccwpck_require__(92479);
 const core_1 = __nccwpck_require__(58816);
 const strToBool_1 = __nccwpck_require__(66278);
 exports.isDebug = (0, strToBool_1.strToBool)((0, env_1.getEnv)('DEBUG_MODE')) ?? false;
+exports.isSilent = (0, strToBool_1.strToBool)((0, env_1.getEnv)('IS_SILENT')) ?? false;
 function isValidEvent() {
     // CLI実行だったらスキップ
     if (exports.isDebug)

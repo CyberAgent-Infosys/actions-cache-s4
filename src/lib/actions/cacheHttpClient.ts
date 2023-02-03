@@ -5,7 +5,6 @@ import { ListObjectsV2Command, ListObjectsV2CommandInput, S3Client, S3ClientConf
 import { Progress, Upload } from '@aws-sdk/lib-storage';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
-
 import * as utils from '@/lib/actions/cacheUtils';
 import { CompressionMethod } from '@/lib/actions/constants';
 import {
@@ -24,7 +23,7 @@ import { getEnv } from '@/lib/env';
 const versionSalt = '1.0';
 
 function getCacheApiUrl(resource: string): string {
-  const baseUrl: string = getEnv('ACTIONS_CACHE_URL') || '';
+  const baseUrl = getEnv('ACTIONS_CACHE_URL') || '';
   if (!baseUrl) {
     throw new Error('Cache Service Url not found, unable to restore cache.');
   }
@@ -83,8 +82,8 @@ async function getCacheEntryS3(
     Bucket: s3BucketName,
   } as ListObjectsV2CommandInput;
 
-  let contents: _content[] = new Array();
-  let hasNext: boolean = true;
+  const contents: _content[] = [];
+  let hasNext = true;
 
   while (hasNext) {
     const response = await s3client.send(new ListObjectsV2Command(param));
@@ -135,7 +134,7 @@ function searchRestoreKeyEntry(notPrimaryKey: string[], entries: _content[]): _c
 }
 
 function _searchRestoreKeyEntry(notPrimaryKey: string, entries: _content[]): _content | null {
-  let matchPrefix: _content[] = new Array();
+  const matchPrefix: _content[] = [];
 
   for (const entry of entries) {
     if (entry.Key === notPrimaryKey) {

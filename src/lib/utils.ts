@@ -3,6 +3,7 @@ import { logWarning } from '@/lib/actions/core';
 import { strToBool } from '@/lib/strToBool';
 
 export const isDebug = strToBool(getEnv('DEBUG_MODE')) ?? false;
+export const isSilent = strToBool(getEnv('IS_SILENT')) ?? false;
 
 export function isValidEvent(): boolean {
   // CLI実行だったらスキップ

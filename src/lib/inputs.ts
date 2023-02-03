@@ -3,7 +3,6 @@ import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { getArgv } from '@/lib/argv';
 import { getInput, getInputAsInt, getBooleanInput, logDebug, getInputAsArray } from '@/lib/actions/core';
 
-// TODO: 初期値見直し
 const DEFAULT_AWS_ENDPOINT = 'https://s4.cycloud.io';
 const DEFAULT_AWS_REGION = 'us-east-1';
 const DEFAULT_S3_BUCKET_ENDPOINT = true;
@@ -45,7 +44,6 @@ export function getInputs(argv: string[]): Inputs {
 }
 
 export function getS3ClientConfigByInputs(inputs: Inputs): S3ClientConfig | undefined {
-  // TODO: S3向けのパラメータの初期化を考える
   if (!inputs.awsS3Bucket) return undefined;
 
   logDebug('Enable S3 backend mode.');

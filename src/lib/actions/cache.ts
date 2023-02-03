@@ -88,7 +88,6 @@ export async function saveCache(
       );
     }
 
-    // TODO: 関連処理削除
     // S3の設定がない場合
     if (!(s3Options && s3BucketName)) {
       logDebug('Reserving Cache');

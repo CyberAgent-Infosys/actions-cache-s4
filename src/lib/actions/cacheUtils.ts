@@ -21,13 +21,13 @@ export async function createTempDirectory(): Promise<string> {
     let baseLocation: string;
     if (IS_WINDOWS) {
       // On Windows use the USERPROFILE env variable
-      baseLocation = getEnv('USERPROFILE') || 'C:\\';
+      baseLocation = getEnv('USERPROFILE') || getEnv('TMP') || 'C:\\';
     } else {
       if (IS_MAC) {
-        baseLocation = getEnv('HOME') || '/Users';
+        baseLocation = getEnv('HOME') || getEnv('TMPDIR') || '/Users';
       } else {
         // FIXME: 生成先として適切か未検証
-        baseLocation = getEnv('HOME') || '/home';
+        baseLocation = getEnv('HOME') || getEnv('TMPDIR') || '/home';
       }
     }
     tempDirectory = path.join(baseLocation, 'actions', 'temp');

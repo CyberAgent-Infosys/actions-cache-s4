@@ -54,7 +54,7 @@ export function getS3ClientConfigByInputs(inputs: Inputs): S3ClientConfig | unde
     },
     region: inputs.awsRegion,
     endpoint: inputs.awsEndpoint,
-    bucketEndpoint: inputs.awsEndpoint,
+    bucketEndpoint: inputs.awsS3BucketEndpoint,
     forcePathStyle: inputs.awsS3ForcePathStyle,
   } as S3ClientConfig;
 }

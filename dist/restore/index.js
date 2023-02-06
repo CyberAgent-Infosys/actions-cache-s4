@@ -68026,23 +68026,24 @@ const uuid_1 = __nccwpck_require__(75840);
 const constants_1 = __nccwpck_require__(27151);
 const core_1 = __nccwpck_require__(58816);
 const env_1 = __nccwpck_require__(92479);
+const IS_WINDOWS = process.platform === 'win32';
+const IS_MAC = process.platform === 'darwin';
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
 async function createTempDirectory() {
-    const IS_WINDOWS = process.platform === 'win32';
     let tempDirectory = (0, env_1.getEnv)('RUNNER_TEMP') || '';
     if (!tempDirectory) {
         let baseLocation;
         if (IS_WINDOWS) {
             // On Windows use the USERPROFILE env variable
-            baseLocation = (0, env_1.getEnv)('USERPROFILE') || 'C:\\';
+            baseLocation = (0, env_1.getEnv)('USERPROFILE') || (0, env_1.getEnv)('TMP') || 'C:\\';
         }
         else {
-            if (process.platform === 'darwin') {
-                baseLocation = (0, env_1.getEnv)('HOME') || '/Users';
+            if (IS_MAC) {
+                baseLocation = (0, env_1.getEnv)('HOME') || (0, env_1.getEnv)('TMPDIR') || '/Users';
             }
             else {
                 // FIXME: 生成先として適切か未検証
-                baseLocation = (0, env_1.getEnv)('HOME') || '/home';
+                baseLocation = (0, env_1.getEnv)('HOME') || (0, env_1.getEnv)('TMPDIR') || '/home';
             }
         }
         tempDirectory = path.join(baseLocation, 'actions', 'temp');
@@ -68102,7 +68103,7 @@ async function getVersion(app) {
 }
 // Use zstandard if possible to maximize cache performance
 async function getCompressionMethod() {
-    if (process.platform === 'win32' && !(await isGnuTarInstalled())) {
+    if (IS_WINDOWS && !(await isGnuTarInstalled())) {
         // Disable zstd due to bug https://github.com/actions/cache/issues/301
         return constants_1.CompressionMethod.Gzip;
     }
@@ -68841,7 +68842,7 @@ function getS3ClientConfigByInputs(inputs) {
         },
         region: inputs.awsRegion,
         endpoint: inputs.awsEndpoint,
-        bucketEndpoint: inputs.awsEndpoint,
+        bucketEndpoint: inputs.awsS3BucketEndpoint,
         forcePathStyle: inputs.awsS3ForcePathStyle,
     };
 }

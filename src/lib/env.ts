@@ -8,6 +8,8 @@ type PROCESS_ENV_KEY =
   | 'RUNNER_TEMP'
   | 'USERPROFILE'
   | 'HOME'
+  | 'TMP'
+  | 'TMPDIR'
   | 'windir'
   | 'DEBUG_MODE'
   | 'IS_SILENT';

@@ -10,23 +10,24 @@ import { CacheFilename, CompressionMethod } from '@/lib/actions/constants';
 import { logInfo, logDebug } from '@/lib/actions/core';
 import { getEnv } from '@/lib/env';
 
+const IS_WINDOWS = process.platform === 'win32';
+const IS_MAC = process.platform === 'darwin';
+
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
 export async function createTempDirectory(): Promise<string> {
-  const IS_WINDOWS = process.platform === 'win32';
-
   let tempDirectory = getEnv('RUNNER_TEMP') || '';
 
   if (!tempDirectory) {
     let baseLocation: string;
     if (IS_WINDOWS) {
       // On Windows use the USERPROFILE env variable
-      baseLocation = getEnv('USERPROFILE') || 'C:\\';
+      baseLocation = getEnv('USERPROFILE') || getEnv('TMP') || 'C:\\';
     } else {
-      if (process.platform === 'darwin') {
-        baseLocation = getEnv('HOME') || '/Users';
+      if (IS_MAC) {
+        baseLocation = getEnv('HOME') || getEnv('TMPDIR') || '/Users';
       } else {
         // FIXME: 生成先として適切か未検証
-        baseLocation = getEnv('HOME') || '/home';
+        baseLocation = getEnv('HOME') || getEnv('TMPDIR') || '/home';
       }
     }
     tempDirectory = path.join(baseLocation, 'actions', 'temp');
@@ -89,7 +90,7 @@ async function getVersion(app: string): Promise<string> {
 
 // Use zstandard if possible to maximize cache performance
 export async function getCompressionMethod(): Promise<CompressionMethod> {
-  if (process.platform === 'win32' && !(await isGnuTarInstalled())) {
+  if (IS_WINDOWS && !(await isGnuTarInstalled())) {
     // Disable zstd due to bug https://github.com/actions/cache/issues/301
     return CompressionMethod.Gzip;
   }

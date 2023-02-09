@@ -12,5 +12,7 @@ npm run dev:save --\
   --aws-s3-bucket="${AWS_S3_BUCKET_NAME}" \
   --aws-access-key-id="${AWS_ACCESS_KEY_ID}" \
   --aws-secret-access-key="${AWS_SECRET_ACCESS_KEY}" \
+  --aws-region="${AWS_REGION}" \
+  --aws-endpoint="${AWS_ENDPOINT}" \
   --aws-s3-bucket-endpoint=true \
-  --aws-s3-force-path-style=true
+  --aws-s3-force-path-style=false

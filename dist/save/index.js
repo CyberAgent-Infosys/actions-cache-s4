@@ -68375,7 +68375,7 @@ exports.isGhes = isGhes;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.defaultUploadChunkSize = exports.defaultAwsEndpoint = exports.SocketTimeout = exports.DefaultRetryDelay = exports.DefaultRetryAttempts = exports.CompressionMethod = exports.CacheFilename = void 0;
+exports.defaultUploadChunkSize = exports.defaultEndpoint = exports.SocketTimeout = exports.DefaultRetryDelay = exports.DefaultRetryAttempts = exports.CompressionMethod = exports.CacheFilename = void 0;
 var CacheFilename;
 (function (CacheFilename) {
     CacheFilename["Gzip"] = "cache.tgz";
@@ -68397,7 +68397,7 @@ exports.DefaultRetryDelay = 5000;
 // over the socket during this period, the socket is destroyed and the download
 // is aborted.
 exports.SocketTimeout = 5000;
-exports.defaultAwsEndpoint = 'https://s4.cycloud.io';
+exports.defaultEndpoint = 'https://s4.cycloud.io';
 exports.defaultUploadChunkSize = 0;
 
 
@@ -69046,7 +69046,7 @@ function getS3ClientConfigByInputs(inputs) {
             accessKeyId: inputs.awsAccessKeyId,
             secretAccessKey: inputs.awsSecretAccessKey,
         },
-        endpoint: constants_1.defaultAwsEndpoint,
+        endpoint: constants_1.defaultEndpoint,
         forcePathStyle: true,
     };
 }

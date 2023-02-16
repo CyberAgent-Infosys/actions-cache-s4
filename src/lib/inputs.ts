@@ -2,7 +2,7 @@ import { Inputs } from '@/@types/input';
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 import { getArgv } from '@/lib/argv';
 import { getInput, getInputAsInt, logDebug, getInputAsArray } from '@/lib/actions/core';
-import { defaultAwsEndpoint, defaultUploadChunkSize } from '@/lib/actions/constants';
+import { defaultEndpoint, defaultUploadChunkSize } from '@/lib/actions/constants';
 
 export function getInputs(argv: string[]): Inputs {
   const inputArgv = getArgv(argv);
@@ -37,7 +37,7 @@ export function getS3ClientConfigByInputs(inputs: Inputs): S3ClientConfig | unde
       accessKeyId: inputs.awsAccessKeyId,
       secretAccessKey: inputs.awsSecretAccessKey,
     },
-    endpoint: defaultAwsEndpoint,
+    endpoint: defaultEndpoint,
     forcePathStyle: true,
   } as S3ClientConfig;
 }

@@ -38,6 +38,7 @@ export function getS3ClientConfigByInputs(inputs: Inputs): S3ClientConfig | unde
       secretAccessKey: inputs.awsSecretAccessKey,
     },
     endpoint: defaultEndpoint,
+    region: 'none', // dummyの文字入れないとアップロードできない
     forcePathStyle: true,
   } as S3ClientConfig;
 }

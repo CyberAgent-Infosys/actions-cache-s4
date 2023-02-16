@@ -8,6 +8,7 @@ export async function run(): Promise<void> {
     if (!isValidEvent()) return;
 
     const inputs = getInputs(process.argv);
+
     if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
       logInfo('Please input required key.');
       return;

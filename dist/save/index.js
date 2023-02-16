@@ -69047,6 +69047,7 @@ function getS3ClientConfigByInputs(inputs) {
             secretAccessKey: inputs.awsSecretAccessKey,
         },
         endpoint: constants_1.defaultEndpoint,
+        region: 'none',
         forcePathStyle: true,
     };
 }

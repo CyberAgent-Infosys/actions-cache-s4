@@ -21,3 +21,7 @@ export const DefaultRetryDelay = 5000;
 // over the socket during this period, the socket is destroyed and the download
 // is aborted.
 export const SocketTimeout = 5000;
+
+export const defaultAwsEndpoint = 'https://s4.cycloud.io';
+
+export const defaultUploadChunkSize = 0;

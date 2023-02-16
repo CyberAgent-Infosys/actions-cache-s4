@@ -24,11 +24,7 @@ beforeEach(() => {
   jest.spyOn(cache, 'saveCache').mockImplementation(async () => -1);
   jest.spyOn(inputs, 'getInputs').mockImplementation(() => ({
     awsAccessKeyId: 'ABRACADABRA',
-    awsEndpoint: 'example.com',
-    awsRegion: 'ap-xxxxxxxxx-1',
     awsS3Bucket: 'mybucket',
-    awsS3BucketEndpoint: false,
-    awsS3ForcePathStyle: true,
     awsSecretAccessKey: 'ABRACADABRA',
     key: 'LINUX-nodejs-ABRACADABRA',
     path: ['./node_modules', './package-lock.json'],

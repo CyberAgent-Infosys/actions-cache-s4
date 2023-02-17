@@ -68235,7 +68235,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isGhes = exports.assertDefined = exports.isGnuTarInstalled = exports.getCacheFileName = exports.getCompressionMethod = exports.unlinkFile = exports.resolvePaths = exports.getArchiveFileSizeInBytes = exports.createTempDirectory = void 0;
+exports.isGhes = exports.assertDefined = exports.isZstdInstalled = exports.isGnuTarInstalled = exports.getCacheFileName = exports.getCompressionMethod = exports.unlinkFile = exports.resolvePaths = exports.getArchiveFileSizeInBytes = exports.createTempDirectory = void 0;
 const exec = __importStar(__nccwpck_require__(71514));
 const glob = __importStar(__nccwpck_require__(28090));
 const io = __importStar(__nccwpck_require__(47351));
@@ -68324,24 +68324,15 @@ async function getVersion(app) {
 }
 // Use zstandard if possible to maximize cache performance
 async function getCompressionMethod() {
-    if (IS_WINDOWS && !(await isGnuTarInstalled())) {
+    if ((IS_WINDOWS && !(await isGnuTarInstalled())) || !(await isZstdInstalled())) {
         // Disable zstd due to bug https://github.com/actions/cache/issues/301
         return constants_1.CompressionMethod.Gzip;
     }
     const versionOutput = await getVersion('zstd');
     const version = semver.clean(versionOutput);
-    if (!versionOutput.toLowerCase().includes('zstd command line interface')) {
-        // zstd is not installed
-        return constants_1.CompressionMethod.Gzip;
-    }
-    else if (!version || semver.lt(version, 'v1.3.2')) {
-        // zstd is installed but using a version earlier than v1.3.2
-        // v1.3.2 is required to use the `--long` options in zstd
-        return constants_1.CompressionMethod.ZstdWithoutLong;
-    }
-    else {
-        return constants_1.CompressionMethod.Zstd;
-    }
+    // zstd is installed but using a version earlier than v1.3.2
+    // v1.3.2 is required to use the `--long` options in zstd
+    return !version || semver.lt(version, 'v1.3.2') ? constants_1.CompressionMethod.ZstdWithoutLong : constants_1.CompressionMethod.Zstd;
 }
 exports.getCompressionMethod = getCompressionMethod;
 function getCacheFileName(compressionMethod) {
@@ -68353,6 +68344,16 @@ async function isGnuTarInstalled() {
     return versionOutput.toLowerCase().includes('gnu tar');
 }
 exports.isGnuTarInstalled = isGnuTarInstalled;
+async function isZstdInstalled() {
+    try {
+        await io.which('zstd', true);
+        return true;
+    }
+    catch (error) {
+        return false;
+    }
+}
+exports.isZstdInstalled = isZstdInstalled;
 function assertDefined(name, value) {
     if (value === undefined) {
         throw Error(`Expected ${name} but value was undefiend`);

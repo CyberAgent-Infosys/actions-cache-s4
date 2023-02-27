@@ -69225,6 +69225,14 @@ module.exports = eval("require")("aws-crt");
 
 /***/ }),
 
+/***/ 86577:
+/***/ ((module) => {
+
+module.exports = eval("require")("proto/actions_cache_gateway_pb");
+
+
+/***/ }),
+
 /***/ 39491:
 /***/ ((module) => {
 
@@ -69467,6 +69475,10 @@ const core_1 = __nccwpck_require__(58816);
 const cache_1 = __nccwpck_require__(38207);
 const utils_1 = __nccwpck_require__(34977);
 const inputs_1 = __nccwpck_require__(58163);
+const actions_cache_gateway_pb_1 = __nccwpck_require__(86577);
+console.log('--------------');
+console.log(actions_cache_gateway_pb_1.ObjectInfo);
+console.log('--------------');
 async function run() {
     try {
         if (!(0, utils_1.isValidEvent)())

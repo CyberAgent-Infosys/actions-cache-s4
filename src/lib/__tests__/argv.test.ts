@@ -28,9 +28,6 @@ describe('parseArgv', () => {
 
   test('parseArgvの値を受け取り、型変換されたオブジェクト返す', () => {
     expect(getArgv(input)).toEqual({
-      awsAccessKeyId: 'ABRACADABRA',
-      awsS3Bucket: 'mybucket',
-      awsSecretAccessKey: 'ABRACADABRA',
       key: 'LINUX-nodejs-ABRACADABRA',
       path: ['./node_modules', './package-lock.json'],
       restoreKeys: ['LINUX-nodejs-', 'LINUX-'],

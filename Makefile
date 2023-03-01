@@ -1,4 +1,4 @@
-NPM_BIN=$(shell npm bin)
+NPM_BIN="$(shell npm root)/.bin"
 OUT_DIR="./gen"
 
 # ツールのパス

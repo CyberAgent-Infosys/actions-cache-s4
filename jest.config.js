@@ -12,7 +12,6 @@ module.exports = {
   modulePaths: [compilerOptions.baseUrl],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^proto/(.*)$': '<rootDir>/gen/proto/$1',
   },
   verbose: true,
 };

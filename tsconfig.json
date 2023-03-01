@@ -3,8 +3,7 @@
     "target": "esnext",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "proto/*": ["gen/proto/*"]
+      "@/*": ["src/*"]
     },
     "module": "commonjs",
     "outDir": "./.cache",

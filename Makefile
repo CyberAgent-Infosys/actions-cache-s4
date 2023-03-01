@@ -1,5 +1,5 @@
 NPM_BIN="$(shell npm root)/.bin"
-OUT_DIR="./gen"
+OUT_DIR="./src/gen"
 
 # ツールのパス
 NODE_PROTOC=$(NPM_BIN)/grpc_tools_node_protoc

@@ -1,8 +1,8 @@
 import { credentials } from '@grpc/grpc-js';
-import { GatewayClient } from 'proto/actions_cache_gateway_grpc_pb';
-import { ObjectInfo, Chunk } from 'proto/actions_cache_gateway_pb';
-import { GatewayClientConfig } from '@/@types/input';
 import { getEnv } from '@/lib/env';
+import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
+import { ObjectInfo, Chunk } from '@/gen/proto/actions_cache_gateway_pb.js';
+import { GatewayClientConfig } from '@/@types/input';
 
 export const NO_MESSAGE_RECEIVED = 13;
 export const CHUNK_SIZE = 100 * 1024;

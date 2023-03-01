@@ -15,9 +15,9 @@ import {
 import { listTar, createTar, extractTar } from '@/lib/actions/tar';
 import { downloadS3Cache, getCacheEntry } from '@/lib/actions/cacheHttpClient';
 import { CHUNK_SIZE, NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
-import { GatewayClient } from 'proto/actions_cache_gateway_grpc_pb';
-import { UploadCacheRequest } from 'proto/actions_cache_gateway_pb';
 import { GatewayClientConfig } from '@/@types/input';
+import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
+import { UploadCacheRequest } from '@/gen/proto/actions_cache_gateway_pb.js';
 
 export class ValidationError extends Error {
   constructor(message: string) {

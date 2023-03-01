@@ -327,6 +327,7 @@ export async function uploadFileS3(
   return;
 }
 
+// TODO: remove it
 async function uploadFile(
   httpClient: HttpClient,
   cacheId: number,

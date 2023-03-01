@@ -19,3 +19,10 @@ export type Inputs = {
   awsAccessKeyId: string | undefined;
   awsSecretAccessKey: string | undefined;
 };
+
+export type GatewayClientConfig = {
+  paths: string[];
+  key: string;
+  githubUrl: string;
+  githubRepository: string;
+};

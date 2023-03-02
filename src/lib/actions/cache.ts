@@ -43,6 +43,22 @@ export class ApiRequestError extends Error {
   }
 }
 
+export class FileStreamError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'FileStreamError';
+    Object.setPrototypeOf(this, FileStreamError.prototype);
+  }
+}
+
+export class ArchiveFileError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ArchiveFileError';
+    Object.setPrototypeOf(this, ArchiveFileError.prototype);
+  }
+}
+
 function checkPaths(paths: string[]): void {
   if (!paths || paths.length === 0) {
     throw new ValidationError('Path Validation Error: At least one directory or file path is required');
@@ -87,7 +103,7 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
     // For GHES, this check will take place in ReserveCache API with enterprise file size limit
     if (archiveFileSize > fileSizeLimit && !isGhes()) {
       reject(
-        new Error(
+        new ArchiveFileError(
           `Cache size of ~${Math.round(
             archiveFileSize / (1024 * 1024),
           )} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`,
@@ -120,13 +136,14 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
     readFileStream
       .on('data', data => {
         // 100kB読み出す毎に呼ばれる
+        const uploadRequest = new UploadCacheRequest();
         const chunk = createChunk(data, chunkNum);
-        request.setChunk(chunk);
-        apiRequestStream.write(request);
+        uploadRequest.setChunk(chunk);
+        apiRequestStream.write(uploadRequest);
         chunkNum++;
       })
       .on('error', () => {
-        return reject(new Error('failed to read file.'));
+        return reject(new FileStreamError('failed to read file.'));
       });
 
     readFileStream.on('end', async () => {
@@ -213,7 +230,7 @@ export async function restoreCache(
       try {
         await unlinkFile(archivePath);
       } catch (error) {
-        reject(new Error(`Failed to delete archive: ${error}`));
+        reject(new FileStreamError(`Failed to delete archive: ${error}`));
       }
     }
 

@@ -22,4 +22,4 @@ export const DefaultRetryDelay = 5000;
 // is aborted.
 export const SocketTimeout = 5000;
 
-export const defaultUploadChunkSize = 1024 * 1000;
+export const defaultUploadChunkSize = 1 * 1024 * 1024;

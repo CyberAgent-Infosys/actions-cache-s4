@@ -1,8 +1,8 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { S3ClientConfig } from '@aws-sdk/client-s3';
+import fetch from 'node-fetch';
 import { isDebug, isSilent } from '@/lib/utils';
-import { logDebug, logInfo } from '@/lib/actions/core';
+import { logDebug, logInfo, setSecret } from '@/lib/actions/core';
 import {
   getCompressionMethod,
   resolvePaths,
@@ -13,11 +13,12 @@ import {
   unlinkFile,
 } from '@/lib/actions/cacheUtils';
 import { listTar, createTar, extractTar } from '@/lib/actions/tar';
-import { downloadS3Cache, getCacheEntry } from '@/lib/actions/cacheHttpClient';
+import { downloadCacheHttpClient } from '@/lib/actions/downloadUtils';
 import { NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
-import { GatewayClientConfig } from '@/@types/input';
+import { isSuccessStatusCode } from '@/lib/actions/requestUtils';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
-import { UploadCacheRequest } from '@/gen/proto/actions_cache_gateway_pb.js';
+import { UploadCacheRequest, RestoreCacheRequest, RestoreCacheResponse } from '@/gen/proto/actions_cache_gateway_pb.js';
+import { GatewayClientConfig } from '@/@types/input';
 
 export class ValidationError extends Error {
   constructor(message: string) {
@@ -119,7 +120,7 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
         return reject(new ApiRequestError('APIエラー'));
       }
 
-      logDebug('API完了');
+      logDebug('finished API request.');
       client.close();
       resolve();
     });
@@ -167,20 +168,14 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
   });
 }
 
-// TODO: これから直す
-export async function restoreCache(
-  paths: string[],
-  primaryKey: string,
-  restoreKeys?: string[],
-  s3Options?: S3ClientConfig,
-  s3BucketName?: string,
-): Promise<string | undefined> {
+export async function restoreCache(client: GatewayClient, config: GatewayClientConfig): Promise<string | undefined> {
   return new Promise(async (resolve, reject) => {
-    // 問題があればthrowされる
+    const { paths, key, restoreKeys } = config;
+
+    // 問題があればthrow
     checkPaths(paths);
 
-    restoreKeys = restoreKeys || [];
-    const keys = [primaryKey, ...restoreKeys];
+    const keys = [key, ...(restoreKeys ?? [])];
 
     logDebug('Resolved Keys:');
     logDebug(JSON.stringify(keys));
@@ -188,32 +183,44 @@ export async function restoreCache(
     if (keys.length > 10) {
       reject(new ValidationError('Key Validation Error: Keys are limited to a maximum of 10.'));
     }
-    for (const key of keys) {
-      checkKey(key);
+    for (const k of keys) {
+      checkKey(k);
     }
 
     const compressionMethod = await getCompressionMethod();
 
     // path are needed to compute version
-    const cacheEntry = await getCacheEntry(
-      keys,
-      paths,
-      {
-        compressionMethod,
-      },
-      s3Options,
-      s3BucketName,
+    const restoreCacheRequest = new RestoreCacheRequest();
+    const meta = createMeta(config);
+    restoreCacheRequest.setMeta(meta);
+    restoreCacheRequest.setRestoreKeysList(keys);
+
+    // APIからレスポンスがあった際に呼ばれる
+    const response = await new Promise<RestoreCacheResponse | undefined>((_resolve, _reject) =>
+      client.restoreCache(restoreCacheRequest, (err, res) => {
+        if (err) _reject(new ApiRequestError('APIエラー'));
+        _resolve(res);
+      }),
     );
-    if (!cacheEntry?.archiveLocation && !cacheEntry?.cacheKey) {
-      return resolve('Cache not found');
+
+    const presignUrl = response?.getPreSignedUrl() ?? '';
+    if (!presignUrl) reject(new ApiRequestError('データ取得エラー'));
+    // logDebug(`presignUrl: ${presignUrl}`);
+
+    // TODO: setSecretってなんだろう
+    setSecret(presignUrl);
+
+    const responseData = await fetch(presignUrl);
+
+    if (responseData.status === 204 || !isSuccessStatusCode(responseData.status)) {
+      return reject(new ApiRequestError('No Contents.'));
     }
 
     const archivePath = path.join(await createTempDirectory(), getCacheFileName(compressionMethod));
     logDebug(`Archive Path: ${archivePath}`);
 
     try {
-      // Download the cache from the cache entry
-      await downloadS3Cache(cacheEntry, archivePath, s3Options, s3BucketName);
+      await downloadCacheHttpClient(presignUrl, archivePath);
 
       if (isDebug && !isSilent) {
         await listTar(archivePath, compressionMethod);
@@ -224,8 +231,11 @@ export async function restoreCache(
 
       await extractTar(archivePath, compressionMethod);
       logInfo('Cache restored successfully');
+
+      // TODO: cacheKeyの代わりになる？
+      const etag = responseData.headers?.get('etag') ?? undefined;
+      resolve(etag);
     } finally {
-      // TODO:あとで消す
       // Try to delete the archive to save space
       try {
         await unlinkFile(archivePath);
@@ -234,6 +244,6 @@ export async function restoreCache(
       }
     }
 
-    return cacheEntry.cacheKey;
+    resolve('');
   });
 }

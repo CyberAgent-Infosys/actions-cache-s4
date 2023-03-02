@@ -7,6 +7,7 @@ import { createGatewayClient } from '@/lib/proto';
 export async function run(): Promise<void> {
   try {
     if (!isValidEvent()) return;
+
     const inputs = getInputs(process.argv);
     if (!inputs.path || !inputs.key) {
       logInfo('Please input required key.');

@@ -14,6 +14,7 @@ type PROCESS_ENV_KEY =
   | 'TMP'
   | 'TMPDIR'
   | 'windir'
+  | 'NODE_ENV'
   | 'DEBUG_MODE'
   | 'IS_SILENT';
 

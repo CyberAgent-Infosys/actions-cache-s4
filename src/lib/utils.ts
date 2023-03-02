@@ -4,8 +4,12 @@ import { strToBool } from '@/lib/strToBool';
 
 export const isDebug = strToBool(getEnv('DEBUG_MODE')) ?? false;
 export const isSilent = strToBool(getEnv('IS_SILENT')) ?? false;
+export const nodeEnv = getEnv('NODE_ENV');
 
 export function isValidEvent(): boolean {
+  // jest経由の実行だったら落とす
+  if (nodeEnv === 'test') return false;
+
   // CLI実行だったらスキップ
   if (isDebug) return true;
 

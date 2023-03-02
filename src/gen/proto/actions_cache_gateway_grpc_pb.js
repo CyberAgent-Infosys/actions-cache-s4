@@ -49,7 +49,6 @@ function deserialize_cycloudio_gateway_UploadCacheResponse(buffer_arg) {
 }
 
 
-// API定義
 var GatewayService = exports.GatewayService = {
   uploadCache: {
     path: '/cycloudio.gateway.Gateway/UploadCache',

@@ -3,27 +3,25 @@ syntax = "proto3";
 package cycloudio.gateway;
 option go_package = "github.com/cycloud-io/actions-cache-gateway/api/proto.go";
 
-// API定義
 service Gateway {
   rpc UploadCache(stream UploadCacheRequest) returns (UploadCacheResponse) {}
   rpc RestoreCache(RestoreCacheRequest) returns (RestoreCacheResponse) {}
 }
 
-// Model
 message ObjectInfo {
-  string github_url = 1;
-  string github_repository = 2;
+  string github_url      = 1;
+  string github_repository    = 2;
   string key = 3;
 }
 
 message Chunk {
-  bytes data = 1;
+  bytes data     = 1;
   int64 position = 2;
 }
 
 message UploadCacheRequest {
   oneof value {
-    ObjectInfo meta = 1;
+    ObjectInfo  meta  = 1;
     Chunk chunk = 2;
   }
 }

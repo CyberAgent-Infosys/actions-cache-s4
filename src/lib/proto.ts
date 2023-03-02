@@ -8,7 +8,8 @@ export const NO_MESSAGE_RECEIVED = 13;
 export const CHUNK_SIZE = 100 * 1024;
 
 export function createGatewayClient(): GatewayClient | undefined {
-  const endpoint = getEnv('GATEWAY_END_POINT');
+  // TODO: gatewayのエンドポイントわかったら書換
+  const endpoint = getEnv('GATEWAY_END_POINT') ?? '';
   return endpoint ? new GatewayClient(endpoint, credentials.createInsecure()) : undefined;
 }
 

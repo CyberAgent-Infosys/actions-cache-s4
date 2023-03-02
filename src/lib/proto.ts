@@ -5,7 +5,6 @@ import { ObjectInfo, Chunk } from '@/gen/proto/actions_cache_gateway_pb.js';
 import { GatewayClientConfig } from '@/@types/input';
 
 export const NO_MESSAGE_RECEIVED = 13;
-export const CHUNK_SIZE = 100 * 1024;
 
 export function createGatewayClient(): GatewayClient | undefined {
   // TODO: gatewayのエンドポイントわかったら書換

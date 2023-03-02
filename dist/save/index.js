@@ -94533,7 +94533,7 @@ function checkKey(key) {
 }
 async function saveCache(client, config) {
     return new Promise(async (resolve, reject) => {
-        const { paths, key } = config;
+        const { paths, key, uploadChunkSize } = config;
         // 問題があればthrow
         checkPaths(paths);
         checkKey(key);
@@ -94573,7 +94573,7 @@ async function saveCache(client, config) {
         request.setMeta(meta);
         apiRequestStream.write(request);
         let chunkNum = 0;
-        const readFileStream = fs.createReadStream(archivePath, { highWaterMark: proto_1.CHUNK_SIZE });
+        const readFileStream = fs.createReadStream(archivePath, { highWaterMark: uploadChunkSize });
         readFileStream
             .on('data', data => {
             // 100kB読み出す毎に呼ばれる
@@ -95173,8 +95173,7 @@ exports.DefaultRetryDelay = 5000;
 // over the socket during this period, the socket is destroyed and the download
 // is aborted.
 exports.SocketTimeout = 5000;
-// TODO: remove this.
-exports.defaultUploadChunkSize = 0;
+exports.defaultUploadChunkSize = 1024 * 1000;
 
 
 /***/ }),
@@ -95817,6 +95816,7 @@ function getClientConfigByInputs(inputs) {
         key: inputs.key,
         githubUrl: (0, env_1.getEnv)('GITHUB_ACTION_SERVER_URL'),
         githubRepository: (0, env_1.getEnv)('GITHUB_ACTION_REPOSITORY'),
+        uploadChunkSize: inputs.uploadChunkSize,
     };
 }
 exports.getClientConfigByInputs = getClientConfigByInputs;
@@ -95900,13 +95900,12 @@ exports.getUploadOptions = getUploadOptions;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createChunk = exports.createMeta = exports.createGatewayClient = exports.CHUNK_SIZE = exports.NO_MESSAGE_RECEIVED = void 0;
+exports.createChunk = exports.createMeta = exports.createGatewayClient = exports.NO_MESSAGE_RECEIVED = void 0;
 const grpc_js_1 = __nccwpck_require__(7025);
 const env_1 = __nccwpck_require__(92479);
 const actions_cache_gateway_grpc_pb_js_1 = __nccwpck_require__(2844);
 const actions_cache_gateway_pb_js_1 = __nccwpck_require__(84738);
 exports.NO_MESSAGE_RECEIVED = 13;
-exports.CHUNK_SIZE = 100 * 1024;
 function createGatewayClient() {
     // TODO: gatewayのエンドポイントわかったら書換
     const endpoint = (0, env_1.getEnv)('GATEWAY_END_POINT') ?? '';

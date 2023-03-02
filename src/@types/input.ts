@@ -25,4 +25,5 @@ export type GatewayClientConfig = {
   key: string;
   githubUrl: string;
   githubRepository: string;
+  uploadChunkSize: number;
 };

@@ -14,7 +14,7 @@ import {
 } from '@/lib/actions/cacheUtils';
 import { listTar, createTar, extractTar } from '@/lib/actions/tar';
 import { downloadS3Cache, getCacheEntry } from '@/lib/actions/cacheHttpClient';
-import { CHUNK_SIZE, NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
+import { NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
 import { GatewayClientConfig } from '@/@types/input';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
 import { UploadCacheRequest } from '@/gen/proto/actions_cache_gateway_pb.js';
@@ -77,7 +77,7 @@ function checkKey(key: string): void {
 
 export async function saveCache(client: GatewayClient, config: GatewayClientConfig): Promise<void> {
   return new Promise(async (resolve, reject) => {
-    const { paths, key } = config;
+    const { paths, key, uploadChunkSize } = config;
 
     // 問題があればthrow
     checkPaths(paths);
@@ -132,7 +132,7 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
     apiRequestStream.write(request);
 
     let chunkNum = 0;
-    const readFileStream = fs.createReadStream(archivePath, { highWaterMark: CHUNK_SIZE });
+    const readFileStream = fs.createReadStream(archivePath, { highWaterMark: uploadChunkSize });
     readFileStream
       .on('data', data => {
         // 100kB読み出す毎に呼ばれる

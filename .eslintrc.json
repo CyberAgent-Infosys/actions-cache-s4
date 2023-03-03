@@ -2,8 +2,13 @@
   "globals": {
     "NodeJS": true
   },
-  "plugins": ["jest", "@typescript-eslint"],
-  "extends": ["plugin:github/recommended"],
+  "plugins": [
+    "jest",
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "plugin:github/recommended"
+  ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 9,
@@ -15,9 +20,14 @@
     "eslint-comments/no-use": "off",
     "import/no-namespace": "off",
     "no-unused-vars": "off",
-    "filenames/match-regex": ["error", "^[a-zA-Z]+(.test|.mock|.config|.d)?$"],
+    "filenames/match-regex": [
+      "error",
+      "^[a-zA-Z]+(.test|.mock|.config|.d)?$"
+    ],
     "filenames/match-exported": "error",
     "no-console": "off",
+    "no-shadow": "off",
+    "@typescript-eslint/no-shadow": "warn",
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/explicit-member-accessibility": [
       "error",
@@ -37,7 +47,10 @@
         "allowExpressions": true
       }
     ],
-    "@typescript-eslint/func-call-spacing": ["error", "never"],
+    "@typescript-eslint/func-call-spacing": [
+      "error",
+      "never"
+    ],
     "@typescript-eslint/no-array-constructor": "error",
     "@typescript-eslint/no-empty-interface": "error",
     "@typescript-eslint/no-explicit-any": "error",
@@ -58,9 +71,18 @@
     "@typescript-eslint/promise-function-async": "error",
     "@typescript-eslint/require-array-sort-compare": "error",
     "@typescript-eslint/restrict-plus-operands": "error",
-    "semi": ["error", "always"],
-    "quotes": [2, "single"],
-    "@typescript-eslint/semi": ["error", "always"],
+    "semi": [
+      "error",
+      "always"
+    ],
+    "quotes": [
+      2,
+      "single"
+    ],
+    "@typescript-eslint/semi": [
+      "error",
+      "always"
+    ],
     "@typescript-eslint/type-annotation-spacing": "error",
     "@typescript-eslint/unbound-method": "error"
   },

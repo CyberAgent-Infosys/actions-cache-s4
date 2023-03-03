@@ -21,6 +21,8 @@ export async function run(): Promise<void> {
 
     // キャッシュの検証
     const state = getState('CACHE_RESULT');
+
+    // デバッグの時はgetStateを迂回
     const primaryKey = isDebug ? inputs.key : getState('CACHE_KEY');
 
     // Inputs are re-evaluted before the post action, so we want the original key used for restore

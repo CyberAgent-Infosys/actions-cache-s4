@@ -13,20 +13,6 @@ export interface ArtifactCacheEntry {
   archiveLocation?: string;
 }
 
-export interface CommitCacheRequest {
-  size: number;
-}
-
-export interface ReserveCacheRequest {
-  key: string;
-  version?: string;
-  cacheSize?: number;
-}
-
-export interface ReserveCacheResponse {
-  cacheId: number;
-}
-
 export interface InternalCacheOptions {
   compressionMethod?: CompressionMethod;
   cacheSize?: number;

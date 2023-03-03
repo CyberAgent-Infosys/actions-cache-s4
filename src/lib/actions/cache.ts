@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import fetch from 'node-fetch';
+import { fetchRetry as fetch } from '@/lib/fetch';
 import { isAnnoy } from '@/lib/utils';
 import { logDebug, logInfo, setSecret } from '@/lib/actions/core';
 import {
@@ -15,7 +15,7 @@ import {
 import { listTar, createTar, extractTar } from '@/lib/actions/tar';
 import { downloadCacheHttpClient } from '@/lib/actions/downloadUtils';
 import { NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
-import { isSuccessStatusCode } from '@/lib/actions/requestUtils';
+import { isSuccessStatusCode, isServerErrorStatusCode } from '@/lib/actions/requestUtils';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
 import { UploadCacheRequest, RestoreCacheRequest, RestoreCacheResponse } from '@/gen/proto/actions_cache_gateway_pb.js';
 import { GatewayClientConfig } from '@/@types/input';
@@ -123,7 +123,6 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
       resolve();
     });
 
-    // リクエストストリームに書き込む
     // Upload Request
     const request = new UploadCacheRequest();
     const meta = createMeta(config);
@@ -210,7 +209,11 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
 
     const responseData = await fetch(presignUrl);
 
-    if (responseData.status === 204 || !isSuccessStatusCode(responseData.status)) {
+    if (
+      responseData.status === 204 ||
+      !isSuccessStatusCode(responseData.status) ||
+      isServerErrorStatusCode(responseData.status)
+    ) {
       return reject(new ApiRequestError('No Contents.'));
     }
 
@@ -227,8 +230,7 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
       await extractTar(archivePath, compressionMethod);
       logInfo('Cache restored successfully');
 
-      // TODO: cacheKeyの代わりになる？
-      const etag = responseData.headers?.get('etag') ?? undefined;
+      const etag = responseData?.headers?.get('etag') ?? undefined;
       resolve(etag);
     } finally {
       // Try to delete the archive to save space

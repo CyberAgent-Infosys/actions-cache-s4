@@ -41,9 +41,6 @@
     "@actions/exec": "^1.1.1",
     "@actions/glob": "^0.4.0",
     "@actions/io": "^1.1.2",
-    "@aws-sdk/client-s3": "^3.282.0",
-    "@aws-sdk/lib-storage": "^3.282.0",
-    "@aws-sdk/types": "^3.272.0",
     "@grpc/grpc-js": "^1.8.11",
     "google-protobuf": "^3.21.2",
     "grpc-tools": "^1.12.4",
@@ -52,7 +49,7 @@
   },
   "devDependencies": {
     "@types/google-protobuf": "^3.15.6",
-    "@types/node": "^18.14.2",
+    "@types/node": "^18.14.5",
     "@types/node-fetch": "^2.6.2",
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/parser": "^5.54.0",

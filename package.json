@@ -45,7 +45,7 @@
     "@aws-sdk/types": "^3.272.0"
   },
   "devDependencies": {
-    "@types/node": "^18.14.2",
+    "@types/node": "^18.14.5",
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/parser": "^5.53.0",
     "@vercel/ncc": "^0.36.1",

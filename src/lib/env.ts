@@ -16,7 +16,7 @@ type PROCESS_ENV_KEY =
   | 'windir'
   | 'NODE_ENV'
   | 'DEBUG_MODE'
-  | 'IS_SILENT';
+  | 'IS_ANNOY';
 
 export function getEnv(key: PROCESS_ENV_KEY): string | undefined {
   return process.env?.[key] ?? undefined;

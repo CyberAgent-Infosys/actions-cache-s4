@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import fetch from 'node-fetch';
-import { isDebug, isSilent } from '@/lib/utils';
+import { isAnnoy } from '@/lib/utils';
 import { logDebug, logInfo, setSecret } from '@/lib/actions/core';
 import {
   getCompressionMethod,
@@ -94,9 +94,7 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
     logDebug(`Archive Path: ${archivePath}`);
 
     await createTar(archiveFolder, cachePaths, compressionMethod);
-    if (isDebug && !isSilent) {
-      await listTar(archivePath, compressionMethod);
-    }
+    if (isAnnoy) await listTar(archivePath, compressionMethod);
     const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
     const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
     logDebug(`File Size: ${archiveFileSize}`);
@@ -222,10 +220,7 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
     try {
       await downloadCacheHttpClient(presignUrl, archivePath);
 
-      if (isDebug && !isSilent) {
-        await listTar(archivePath, compressionMethod);
-      }
-
+      if (isAnnoy) await listTar(archivePath, compressionMethod);
       const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
       logInfo(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
 

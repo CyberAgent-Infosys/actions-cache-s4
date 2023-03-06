@@ -40941,7 +40941,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.restoreCache = exports.saveCache = exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ReserveCacheError = exports.ValidationError = void 0;
+exports.restoreCache = exports.saveCache = void 0;
 const path = __importStar(__nccwpck_require__(1017));
 const fs = __importStar(__nccwpck_require__(7147));
 const fetch_1 = __nccwpck_require__(9531);
@@ -40953,58 +40953,19 @@ const downloadUtils_1 = __nccwpck_require__(8076);
 const proto_1 = __nccwpck_require__(6188);
 const requestUtils_1 = __nccwpck_require__(8594);
 const actions_cache_gateway_pb_js_1 = __nccwpck_require__(4738);
-class ValidationError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ValidationError';
-        Object.setPrototypeOf(this, ValidationError.prototype);
-    }
-}
-exports.ValidationError = ValidationError;
-class ReserveCacheError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ReserveCacheError';
-        Object.setPrototypeOf(this, ReserveCacheError.prototype);
-    }
-}
-exports.ReserveCacheError = ReserveCacheError;
-class ApiRequestError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ApiRequestError';
-        Object.setPrototypeOf(this, ApiRequestError.prototype);
-    }
-}
-exports.ApiRequestError = ApiRequestError;
-class FileStreamError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'FileStreamError';
-        Object.setPrototypeOf(this, FileStreamError.prototype);
-    }
-}
-exports.FileStreamError = FileStreamError;
-class ArchiveFileError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ArchiveFileError';
-        Object.setPrototypeOf(this, ArchiveFileError.prototype);
-    }
-}
-exports.ArchiveFileError = ArchiveFileError;
+const error_1 = __nccwpck_require__(6798);
 function checkPaths(paths) {
     if (!paths || paths.length === 0) {
-        throw new ValidationError('Path Validation Error: At least one directory or file path is required');
+        throw new error_1.ValidationError('Path Validation Error: At least one directory or file path is required');
     }
 }
 function checkKey(key) {
     if (key.length > 512) {
-        throw new ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
+        throw new error_1.ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
     }
     const regex = /^[^,]*$/;
     if (!regex.test(key)) {
-        throw new ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
+        throw new error_1.ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
     }
 }
 async function saveCache(client, config) {
@@ -41028,14 +40989,14 @@ async function saveCache(client, config) {
         (0, core_1.logDebug)(`File Size: ${archiveFileSize}`);
         // For GHES, this check will take place in ReserveCache API with enterprise file size limit
         if (archiveFileSize > fileSizeLimit && !(0, cacheUtils_1.isGhes)()) {
-            reject(new ArchiveFileError(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`));
+            reject(new error_1.ArchiveFileError(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`));
         }
         // upload Cache API
         // APIからレスポンスがあった際に呼ばれる
         const apiRequestStream = client.uploadCache(err => {
             // NO_MESSAGE_RECEIVEDはスルー
             if (err && err?.code !== proto_1.NO_MESSAGE_RECEIVED) {
-                return reject(new ApiRequestError('APIエラー'));
+                return reject(new error_1.ApiRequestError('APIエラー'));
             }
             (0, core_1.logDebug)('finished API request.');
             client.close();
@@ -41058,7 +41019,7 @@ async function saveCache(client, config) {
             chunkNum++;
         })
             .on('error', () => {
-            return reject(new FileStreamError('failed to read file.'));
+            return reject(new error_1.FileStreamError('failed to read file.'));
         });
         readFileStream.on('end', async () => {
             (0, core_1.logDebug)('File loading complete.');
@@ -41088,7 +41049,7 @@ async function restoreCache(client, config) {
         (0, core_1.logDebug)('Resolved Keys:');
         (0, core_1.logDebug)(JSON.stringify(keys));
         if (keys.length > 10) {
-            reject(new ValidationError('Key Validation Error: Keys are limited to a maximum of 10.'));
+            reject(new error_1.ValidationError('Key Validation Error: Keys are limited to a maximum of 10.'));
         }
         for (const k of keys) {
             checkKey(k);
@@ -41102,19 +41063,19 @@ async function restoreCache(client, config) {
         // fetch Restore Cache API
         const response = await new Promise((_resolve, _reject) => client.restoreCache(restoreCacheRequest, (err, res) => {
             if (err)
-                _reject(new ApiRequestError('APIエラー'));
+                _reject(new error_1.ApiRequestError('APIエラー'));
             _resolve(res);
         }));
         const presignUrl = response?.getPreSignedUrl() ?? '';
         const cacheKey = response?.getCacheKey() ?? '';
         if (!presignUrl)
-            reject(new ApiRequestError('データ取得エラー'));
+            reject(new error_1.ApiRequestError('データ取得エラー'));
         (0, core_1.setSecret)(presignUrl);
         const cacheData = await (0, fetch_1.fetchRetry)(presignUrl);
         if (cacheData.status === 204 ||
             !(0, requestUtils_1.isSuccessStatusCode)(cacheData.status) ||
             (0, requestUtils_1.isServerErrorStatusCode)(cacheData.status)) {
-            return reject(new ApiRequestError('No Contents.'));
+            return reject(new error_1.ApiRequestError('No Contents.'));
         }
         const archivePath = path.join(await (0, cacheUtils_1.createTempDirectory)(), (0, cacheUtils_1.getCacheFileName)(compressionMethod));
         (0, core_1.logDebug)(`Archive Path: ${archivePath}`);
@@ -41134,7 +41095,7 @@ async function restoreCache(client, config) {
                 await (0, cacheUtils_1.unlinkFile)(archivePath);
             }
             catch (error) {
-                reject(new FileStreamError(`Failed to delete archive: ${error}`));
+                reject(new error_1.FileStreamError(`Failed to delete archive: ${error}`));
             }
         }
         resolve('');
@@ -41496,6 +41457,57 @@ async function downloadCacheHttpClient(archiveLocation, archivePath) {
     }
 }
 exports.downloadCacheHttpClient = downloadCacheHttpClient;
+
+
+/***/ }),
+
+/***/ 6798:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ReserveCacheError = exports.ValidationError = void 0;
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ValidationError';
+        Object.setPrototypeOf(this, ValidationError.prototype);
+    }
+}
+exports.ValidationError = ValidationError;
+class ReserveCacheError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ReserveCacheError';
+        Object.setPrototypeOf(this, ReserveCacheError.prototype);
+    }
+}
+exports.ReserveCacheError = ReserveCacheError;
+class ApiRequestError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ApiRequestError';
+        Object.setPrototypeOf(this, ApiRequestError.prototype);
+    }
+}
+exports.ApiRequestError = ApiRequestError;
+class FileStreamError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'FileStreamError';
+        Object.setPrototypeOf(this, FileStreamError.prototype);
+    }
+}
+exports.FileStreamError = FileStreamError;
+class ArchiveFileError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ArchiveFileError';
+        Object.setPrototypeOf(this, ArchiveFileError.prototype);
+    }
+}
+exports.ArchiveFileError = ArchiveFileError;
 
 
 /***/ }),
@@ -42309,6 +42321,7 @@ const utils_1 = __nccwpck_require__(4977);
 const inputs_1 = __nccwpck_require__(8163);
 const core_1 = __nccwpck_require__(8816);
 const cache_1 = __nccwpck_require__(8207);
+const error_1 = __nccwpck_require__(6798);
 const proto_1 = __nccwpck_require__(6188);
 async function run() {
     try {
@@ -42338,7 +42351,7 @@ async function run() {
         }
         catch (e) {
             if (e instanceof Error) {
-                if (e.name === cache_1.ValidationError.name) {
+                if (e.name === error_1.ValidationError.name) {
                     throw e;
                 }
                 else {

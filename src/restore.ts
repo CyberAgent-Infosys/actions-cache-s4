@@ -1,7 +1,8 @@
 import { isValidEvent, isExactKeyMatch } from '@/lib/utils';
 import { getInputs, getClientConfigByInputs } from '@/lib/inputs';
 import { setCacheHitOutput, saveState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
-import { restoreCache, ValidationError } from '@/lib/actions/cache';
+import { restoreCache } from '@/lib/actions/cache';
+import { ValidationError } from '@/lib/actions/error';
 import { createGatewayClient } from '@/lib/proto';
 
 export async function run(): Promise<void> {

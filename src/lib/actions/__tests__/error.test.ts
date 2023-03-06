@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { ValidationError, ReserveCacheError } from '@/lib/actions/cache';
+import { ValidationError, ReserveCacheError } from '@/lib/actions/error';
 
 describe('ValidationError', () => {
   test('初期化後、nameにValidationErrorが格納されている', () => {

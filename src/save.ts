@@ -1,4 +1,5 @@
-import { saveCache, ValidationError, ReserveCacheError } from '@/lib/actions/cache';
+import { saveCache } from '@/lib/actions/cache';
+import { ValidationError, ReserveCacheError } from '@/lib/actions/error';
 import { getState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { isExactKeyMatch, isValidEvent, isDebug } from '@/lib/utils';
 import { getInputs, getClientConfigByInputs } from '@/lib/inputs';

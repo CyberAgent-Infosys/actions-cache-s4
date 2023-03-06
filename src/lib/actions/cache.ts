@@ -18,47 +18,8 @@ import { NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
 import { isSuccessStatusCode, isServerErrorStatusCode } from '@/lib/actions/requestUtils';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
 import { UploadCacheRequest, RestoreCacheRequest, RestoreCacheResponse } from '@/gen/proto/actions_cache_gateway_pb.js';
+import { ValidationError, ApiRequestError, FileStreamError, ArchiveFileError } from '@/lib/actions/error';
 import { GatewayClientConfig } from '@/@types/input';
-
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-    Object.setPrototypeOf(this, ValidationError.prototype);
-  }
-}
-
-export class ReserveCacheError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ReserveCacheError';
-    Object.setPrototypeOf(this, ReserveCacheError.prototype);
-  }
-}
-
-export class ApiRequestError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ApiRequestError';
-    Object.setPrototypeOf(this, ApiRequestError.prototype);
-  }
-}
-
-export class FileStreamError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'FileStreamError';
-    Object.setPrototypeOf(this, FileStreamError.prototype);
-  }
-}
-
-export class ArchiveFileError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ArchiveFileError';
-    Object.setPrototypeOf(this, ArchiveFileError.prototype);
-  }
-}
 
 function checkPaths(paths: string[]): void {
   if (!paths || paths.length === 0) {

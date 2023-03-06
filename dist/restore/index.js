@@ -40098,7 +40098,8 @@ proto.cycloudio.gateway.RestoreCacheResponse.prototype.toObject = function(opt_i
  */
 proto.cycloudio.gateway.RestoreCacheResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    preSignedUrl: jspb.Message.getFieldWithDefault(msg, 1, "")
+    preSignedUrl: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    cacheKey: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -40139,6 +40140,10 @@ proto.cycloudio.gateway.RestoreCacheResponse.deserializeBinaryFromReader = funct
       var value = /** @type {string} */ (reader.readString());
       msg.setPreSignedUrl(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setCacheKey(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -40175,6 +40180,13 @@ proto.cycloudio.gateway.RestoreCacheResponse.serializeBinaryToWriter = function(
       f
     );
   }
+  f = message.getCacheKey();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -40193,6 +40205,24 @@ proto.cycloudio.gateway.RestoreCacheResponse.prototype.getPreSignedUrl = functio
  */
 proto.cycloudio.gateway.RestoreCacheResponse.prototype.setPreSignedUrl = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string cache_key = 2;
+ * @return {string}
+ */
+proto.cycloudio.gateway.RestoreCacheResponse.prototype.getCacheKey = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.RestoreCacheResponse} returns this
+ */
+proto.cycloudio.gateway.RestoreCacheResponse.prototype.setCacheKey = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -40319,9 +40349,9 @@ async function saveCache(client, config) {
         if (archiveFileSize > fileSizeLimit && !(0, cacheUtils_1.isGhes)()) {
             reject(new ArchiveFileError(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`));
         }
-        // API用のStream
+        // upload Cache API
+        // APIからレスポンスがあった際に呼ばれる
         const apiRequestStream = client.uploadCache(err => {
-            // APIからレスポンスがあった際に呼ばれる
             // NO_MESSAGE_RECEIVEDはスルー
             if (err && err?.code !== proto_1.NO_MESSAGE_RECEIVED) {
                 return reject(new ApiRequestError('APIエラー'));
@@ -40350,7 +40380,7 @@ async function saveCache(client, config) {
             return reject(new FileStreamError('failed to read file.'));
         });
         readFileStream.on('end', async () => {
-            (0, core_1.logDebug)('fileStream読込完了');
+            (0, core_1.logDebug)('File loading complete.');
             apiRequestStream.end();
             // Try to delete the archive to save space
             try {
@@ -40388,22 +40418,21 @@ async function restoreCache(client, config) {
         const meta = (0, proto_1.createMeta)(config);
         restoreCacheRequest.setMeta(meta);
         restoreCacheRequest.setRestoreKeysList(keys);
-        // APIからレスポンスがあった際に呼ばれる
+        // fetch Restore Cache API
         const response = await new Promise((_resolve, _reject) => client.restoreCache(restoreCacheRequest, (err, res) => {
             if (err)
                 _reject(new ApiRequestError('APIエラー'));
             _resolve(res);
         }));
         const presignUrl = response?.getPreSignedUrl() ?? '';
+        const cacheKey = response?.getCacheKey() ?? '';
         if (!presignUrl)
             reject(new ApiRequestError('データ取得エラー'));
-        // logDebug(`presignUrl: ${presignUrl}`);
-        // TODO: setSecretってなんだろう
         (0, core_1.setSecret)(presignUrl);
-        const responseData = await (0, fetch_1.fetchRetry)(presignUrl);
-        if (responseData.status === 204 ||
-            !(0, requestUtils_1.isSuccessStatusCode)(responseData.status) ||
-            (0, requestUtils_1.isServerErrorStatusCode)(responseData.status)) {
+        const cacheData = await (0, fetch_1.fetchRetry)(presignUrl);
+        if (cacheData.status === 204 ||
+            !(0, requestUtils_1.isSuccessStatusCode)(cacheData.status) ||
+            (0, requestUtils_1.isServerErrorStatusCode)(cacheData.status)) {
             return reject(new ApiRequestError('No Contents.'));
         }
         const archivePath = path.join(await (0, cacheUtils_1.createTempDirectory)(), (0, cacheUtils_1.getCacheFileName)(compressionMethod));
@@ -40416,8 +40445,7 @@ async function restoreCache(client, config) {
             (0, core_1.logInfo)(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
             await (0, tar_1.extractTar)(archivePath, compressionMethod);
             (0, core_1.logInfo)('Cache restored successfully');
-            const etag = responseData?.headers?.get('etag') ?? undefined;
-            resolve(etag);
+            resolve(cacheKey);
         }
         finally {
             // Try to delete the archive to save space
@@ -41618,7 +41646,6 @@ async function run() {
         (0, core_1.saveState)('CACHE_KEY', inputs.key);
         const clientConfig = (0, inputs_1.getClientConfigByInputs)(inputs);
         try {
-            // TODO: cacheKeyってなんだっけ
             const cacheKey = await (0, cache_1.restoreCache)(gatewayClient, clientConfig);
             if (!cacheKey) {
                 (0, core_1.logInfo)(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);

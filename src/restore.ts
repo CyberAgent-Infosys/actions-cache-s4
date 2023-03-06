@@ -23,7 +23,6 @@ export async function run(): Promise<void> {
 
     const clientConfig = getClientConfigByInputs(inputs);
     try {
-      // TODO: cacheKeyってなんだっけ
       const cacheKey = await restoreCache(gatewayClient, clientConfig);
       if (!cacheKey) {
         logInfo(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);

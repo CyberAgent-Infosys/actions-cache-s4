@@ -110,9 +110,9 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
       );
     }
 
-    // API用のStream
+    // upload Cache API
+    // APIからレスポンスがあった際に呼ばれる
     const apiRequestStream = client.uploadCache(err => {
-      // APIからレスポンスがあった際に呼ばれる
       // NO_MESSAGE_RECEIVEDはスルー
       if (err && err?.code !== NO_MESSAGE_RECEIVED) {
         return reject(new ApiRequestError('APIエラー'));
@@ -145,7 +145,7 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
       });
 
     readFileStream.on('end', async () => {
-      logDebug('fileStream読込完了');
+      logDebug('File loading complete.');
       apiRequestStream.end();
 
       // Try to delete the archive to save space
@@ -192,7 +192,7 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
     restoreCacheRequest.setMeta(meta);
     restoreCacheRequest.setRestoreKeysList(keys);
 
-    // APIからレスポンスがあった際に呼ばれる
+    // fetch Restore Cache API
     const response = await new Promise<RestoreCacheResponse | undefined>((_resolve, _reject) =>
       client.restoreCache(restoreCacheRequest, (err, res) => {
         if (err) _reject(new ApiRequestError('APIエラー'));
@@ -201,18 +201,15 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
     );
 
     const presignUrl = response?.getPreSignedUrl() ?? '';
+    const cacheKey = response?.getCacheKey() ?? '';
     if (!presignUrl) reject(new ApiRequestError('データ取得エラー'));
-    // logDebug(`presignUrl: ${presignUrl}`);
-
-    // TODO: setSecretってなんだろう
     setSecret(presignUrl);
 
-    const responseData = await fetch(presignUrl);
-
+    const cacheData = await fetch(presignUrl);
     if (
-      responseData.status === 204 ||
-      !isSuccessStatusCode(responseData.status) ||
-      isServerErrorStatusCode(responseData.status)
+      cacheData.status === 204 ||
+      !isSuccessStatusCode(cacheData.status) ||
+      isServerErrorStatusCode(cacheData.status)
     ) {
       return reject(new ApiRequestError('No Contents.'));
     }
@@ -230,8 +227,7 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
       await extractTar(archivePath, compressionMethod);
       logInfo('Cache restored successfully');
 
-      const etag = responseData?.headers?.get('etag') ?? undefined;
-      resolve(etag);
+      resolve(cacheKey);
     } finally {
       // Try to delete the archive to save space
       try {

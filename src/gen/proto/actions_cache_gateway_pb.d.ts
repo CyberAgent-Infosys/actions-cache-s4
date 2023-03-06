@@ -140,6 +140,9 @@ export class RestoreCacheResponse extends jspb.Message {
   getPreSignedUrl(): string;
   setPreSignedUrl(value: string): void;
 
+  getCacheKey(): string;
+  setCacheKey(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): RestoreCacheResponse.AsObject;
   static toObject(includeInstance: boolean, msg: RestoreCacheResponse): RestoreCacheResponse.AsObject;
@@ -153,6 +156,7 @@ export class RestoreCacheResponse extends jspb.Message {
 export namespace RestoreCacheResponse {
   export type AsObject = {
     preSignedUrl: string,
+    cacheKey: string,
   }
 }
 

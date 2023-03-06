@@ -35,4 +35,5 @@ message RestoreCacheRequest {
 
 message RestoreCacheResponse {
   string pre_signed_url = 1;
+  string cache_key = 2;
 }

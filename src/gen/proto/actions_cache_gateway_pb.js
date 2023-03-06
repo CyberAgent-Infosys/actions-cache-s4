@@ -1096,7 +1096,8 @@ proto.cycloudio.gateway.RestoreCacheResponse.prototype.toObject = function(opt_i
  */
 proto.cycloudio.gateway.RestoreCacheResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    preSignedUrl: jspb.Message.getFieldWithDefault(msg, 1, "")
+    preSignedUrl: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    cacheKey: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1137,6 +1138,10 @@ proto.cycloudio.gateway.RestoreCacheResponse.deserializeBinaryFromReader = funct
       var value = /** @type {string} */ (reader.readString());
       msg.setPreSignedUrl(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setCacheKey(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1173,6 +1178,13 @@ proto.cycloudio.gateway.RestoreCacheResponse.serializeBinaryToWriter = function(
       f
     );
   }
+  f = message.getCacheKey();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -1191,6 +1203,24 @@ proto.cycloudio.gateway.RestoreCacheResponse.prototype.getPreSignedUrl = functio
  */
 proto.cycloudio.gateway.RestoreCacheResponse.prototype.setPreSignedUrl = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string cache_key = 2;
+ * @return {string}
+ */
+proto.cycloudio.gateway.RestoreCacheResponse.prototype.getCacheKey = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.RestoreCacheResponse} returns this
+ */
+proto.cycloudio.gateway.RestoreCacheResponse.prototype.setCacheKey = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 

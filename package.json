@@ -6,6 +6,7 @@
   "description": "TypeScript template action",
   "main": "dist/save.js",
   "scripts": {
+    "depcruise": "depcruise -v .dependency-cruiser.js './src'",
     "proto:gen": "make gen",
     "build": "tsc",
     "package": "npm-run-all -p package:save package:restore",
@@ -40,12 +41,15 @@
     "@actions/core": "^1.10.0",
     "@actions/exec": "^1.1.1",
     "@actions/glob": "^0.4.0",
+    "@actions/http-client": "^2.0.1",
     "@actions/io": "^1.1.2",
     "@grpc/grpc-js": "^1.8.11",
     "google-protobuf": "^3.21.2",
     "grpc-tools": "^1.12.4",
     "node-fetch": "^2.6.9",
-    "ts-protoc-gen": "^0.15.0"
+    "semver": "^7.3.8",
+    "ts-protoc-gen": "^0.15.0",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@types/google-protobuf": "^3.15.6",
@@ -54,6 +58,7 @@
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/parser": "^5.54.0",
     "@vercel/ncc": "^0.36.1",
+    "dependency-cruiser": "^12.10.0",
     "eslint": "^8.35.0",
     "eslint-import-resolver-typescript": "^3.5.3",
     "eslint-plugin-github": "^4.6.1",

@@ -16,7 +16,7 @@
     "dev:save": "ts-node-dev --respawn -r tsconfig-paths/register src/save.ts",
     "dev:restore": "ts-node-dev --respawn -r tsconfig-paths/register src/restore.ts",
     "start": "npm dev",
-    "lint": "eslint --cache src/**/*.ts",
+    "lint": "eslint --ext='.ts,.js' ./src",
     "lint:fix": "eslint --cache --fix src/**/*.ts",
     "prettier": "prettier --write --ignore-path .prettierignore './**/*.ts'",
     "prettier:check": "prettier --check --ignore-path .prettierignore './**/*.ts'",

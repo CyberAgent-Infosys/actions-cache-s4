@@ -16,9 +16,9 @@ import { listTar, createTar, extractTar } from '@/lib/actions/tar';
 import { downloadCacheHttpClient } from '@/lib/actions/downloadUtils';
 import { NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
 import { isSuccessStatusCode, isServerErrorStatusCode } from '@/lib/actions/requestUtils';
+import { ValidationError, ApiRequestError, FileStreamError, ArchiveFileError } from '@/lib/actions/error';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
 import { UploadCacheRequest, RestoreCacheRequest, RestoreCacheResponse } from '@/gen/proto/actions_cache_gateway_pb.js';
-import { ValidationError, ApiRequestError, FileStreamError, ArchiveFileError } from '@/lib/actions/error';
 import { GatewayClientConfig } from '@/@types/input';
 
 function checkPaths(paths: string[]): void {

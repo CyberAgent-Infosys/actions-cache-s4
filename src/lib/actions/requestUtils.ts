@@ -1,7 +1,7 @@
 import { logDebug } from '@/lib/actions/core';
 import { HttpCodes, HttpClientError, HttpClientResponse } from '@actions/http-client';
 import { DefaultRetryDelay, DefaultRetryAttempts } from '@/lib/actions/constants';
-import { ITypedResponseWithError } from '@/lib/actions/contracts';
+import { sleep } from '@/lib/sleep';
 
 export function isSuccessStatusCode(statusCode?: number): boolean {
   if (!statusCode) {
@@ -23,10 +23,6 @@ export function isRetryableStatusCode(statusCode?: number): boolean {
   }
   const retryableStatusCodes = [HttpCodes.BadGateway, HttpCodes.ServiceUnavailable, HttpCodes.GatewayTimeout];
   return retryableStatusCodes.includes(statusCode);
-}
-
-async function sleep(milliseconds: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
 export async function retry<T>(

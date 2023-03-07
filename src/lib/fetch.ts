@@ -1,6 +1,6 @@
 import fetch, { RequestInfo, RequestInit, Response } from 'node-fetch';
 import { DefaultRetryAttempts } from '@/lib/actions/constants';
-import { wait } from '@/lib/wait';
+import { sleep } from '@/lib/sleep';
 
 export async function fetchRetry(url: RequestInfo, init: RequestInit | undefined = undefined): Promise<Response> {
   let error;
@@ -9,7 +9,7 @@ export async function fetchRetry(url: RequestInfo, init: RequestInit | undefined
       return fetch(url, init);
     } catch (e) {
       error = e;
-      await wait({ milliseconds: 3000 });
+      await sleep(3000);
     }
   }
   throw error;

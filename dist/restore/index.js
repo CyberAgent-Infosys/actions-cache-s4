@@ -4299,10 +4299,6 @@ function checkBypass(reqUrl) {
     if (!reqUrl.hostname) {
         return false;
     }
-    const reqHost = reqUrl.hostname;
-    if (isLoopbackAddress(reqHost)) {
-        return true;
-    }
     const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
     if (!noProxy) {
         return false;
@@ -4328,24 +4324,13 @@ function checkBypass(reqUrl) {
         .split(',')
         .map(x => x.trim().toUpperCase())
         .filter(x => x)) {
-        if (upperNoProxyItem === '*' ||
-            upperReqHosts.some(x => x === upperNoProxyItem ||
-                x.endsWith(`.${upperNoProxyItem}`) ||
-                (upperNoProxyItem.startsWith('.') &&
-                    x.endsWith(`${upperNoProxyItem}`)))) {
+        if (upperReqHosts.some(x => x === upperNoProxyItem)) {
             return true;
         }
     }
     return false;
 }
 exports.checkBypass = checkBypass;
-function isLoopbackAddress(host) {
-    const hostLower = host.toLowerCase();
-    return (hostLower === 'localhost' ||
-        hostLower.startsWith('127.') ||
-        hostLower.startsWith('[::1]') ||
-        hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
-}
 //# sourceMappingURL=proxy.js.map
 
 /***/ }),
@@ -36525,24 +36510,6 @@ exports.debug = debug; // for test
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
-Object.defineProperty(exports, "NIL", ({
-  enumerable: true,
-  get: function () {
-    return _nil.default;
-  }
-}));
-Object.defineProperty(exports, "parse", ({
-  enumerable: true,
-  get: function () {
-    return _parse.default;
-  }
-}));
-Object.defineProperty(exports, "stringify", ({
-  enumerable: true,
-  get: function () {
-    return _stringify.default;
-  }
-}));
 Object.defineProperty(exports, "v1", ({
   enumerable: true,
   get: function () {
@@ -36567,16 +36534,34 @@ Object.defineProperty(exports, "v5", ({
     return _v4.default;
   }
 }));
-Object.defineProperty(exports, "validate", ({
+Object.defineProperty(exports, "NIL", ({
   enumerable: true,
   get: function () {
-    return _validate.default;
+    return _nil.default;
   }
 }));
 Object.defineProperty(exports, "version", ({
   enumerable: true,
   get: function () {
     return _version.default;
+  }
+}));
+Object.defineProperty(exports, "validate", ({
+  enumerable: true,
+  get: function () {
+    return _validate.default;
+  }
+}));
+Object.defineProperty(exports, "stringify", ({
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+}));
+Object.defineProperty(exports, "parse", ({
+  enumerable: true,
+  get: function () {
+    return _parse.default;
   }
 }));
 
@@ -36628,28 +36613,6 @@ function md5(bytes) {
 }
 
 var _default = md5;
-exports["default"] = _default;
-
-/***/ }),
-
-/***/ 2054:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({
-  value: true
-}));
-exports["default"] = void 0;
-
-var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var _default = {
-  randomUUID: _crypto.default.randomUUID
-};
 exports["default"] = _default;
 
 /***/ }),
@@ -36807,7 +36770,6 @@ Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
 exports["default"] = void 0;
-exports.unsafeStringify = unsafeStringify;
 
 var _validate = _interopRequireDefault(__nccwpck_require__(6900));
 
@@ -36820,17 +36782,13 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const byteToHex = [];
 
 for (let i = 0; i < 256; ++i) {
-  byteToHex.push((i + 0x100).toString(16).slice(1));
-}
-
-function unsafeStringify(arr, offset = 0) {
-  // Note: Be careful editing this code!  It's been tuned for performance
-  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
-  return (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase();
+  byteToHex.push((i + 0x100).toString(16).substr(1));
 }
 
 function stringify(arr, offset = 0) {
-  const uuid = unsafeStringify(arr, offset); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
   // of the following:
   // - One or more input array values don't map to a hex octet (leading to
   // "undefined" in the uuid)
@@ -36861,7 +36819,7 @@ exports["default"] = void 0;
 
 var _rng = _interopRequireDefault(__nccwpck_require__(807));
 
-var _stringify = __nccwpck_require__(8950);
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -36954,7 +36912,7 @@ function v1(options, buf, offset) {
     b[i + n] = node[n];
   }
 
-  return buf || (0, _stringify.unsafeStringify)(b);
+  return buf || (0, _stringify.default)(b);
 }
 
 var _default = v1;
@@ -36994,10 +36952,10 @@ exports["default"] = _default;
 Object.defineProperty(exports, "__esModule", ({
   value: true
 }));
+exports["default"] = _default;
 exports.URL = exports.DNS = void 0;
-exports["default"] = v35;
 
-var _stringify = __nccwpck_require__(8950);
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
 
 var _parse = _interopRequireDefault(__nccwpck_require__(2746));
 
@@ -37020,10 +36978,8 @@ exports.DNS = DNS;
 const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
 exports.URL = URL;
 
-function v35(name, version, hashfunc) {
+function _default(name, version, hashfunc) {
   function generateUUID(value, namespace, buf, offset) {
-    var _namespace;
-
     if (typeof value === 'string') {
       value = stringToBytes(value);
     }
@@ -37032,7 +36988,7 @@ function v35(name, version, hashfunc) {
       namespace = (0, _parse.default)(namespace);
     }
 
-    if (((_namespace = namespace) === null || _namespace === void 0 ? void 0 : _namespace.length) !== 16) {
+    if (namespace.length !== 16) {
       throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
     } // Compute hash of namespace and value, Per 4.3
     // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
@@ -37056,7 +37012,7 @@ function v35(name, version, hashfunc) {
       return buf;
     }
 
-    return (0, _stringify.unsafeStringify)(bytes);
+    return (0, _stringify.default)(bytes);
   } // Function#name is not settable on some platforms (#270)
 
 
@@ -37083,19 +37039,13 @@ Object.defineProperty(exports, "__esModule", ({
 }));
 exports["default"] = void 0;
 
-var _native = _interopRequireDefault(__nccwpck_require__(2054));
-
 var _rng = _interopRequireDefault(__nccwpck_require__(807));
 
-var _stringify = __nccwpck_require__(8950);
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function v4(options, buf, offset) {
-  if (_native.default.randomUUID && !buf && !options) {
-    return _native.default.randomUUID();
-  }
-
   options = options || {};
 
   const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
@@ -37114,7 +37064,7 @@ function v4(options, buf, offset) {
     return buf;
   }
 
-  return (0, _stringify.unsafeStringify)(rnds);
+  return (0, _stringify.default)(rnds);
 }
 
 var _default = v4;
@@ -37189,7 +37139,7 @@ function version(uuid) {
     throw TypeError('Invalid UUID');
   }
 
-  return parseInt(uuid.slice(14, 15), 16);
+  return parseInt(uuid.substr(14, 1), 16);
 }
 
 var _default = version;
@@ -41533,10 +41483,11 @@ exports.ArchiveFileError = ArchiveFileError;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.retryHttpClientResponse = exports.retryTypedResponse = exports.retry = exports.isRetryableStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
+exports.retryHttpClientResponse = exports.retry = exports.isRetryableStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
 const core_1 = __nccwpck_require__(8816);
 const http_client_1 = __nccwpck_require__(6255);
 const constants_1 = __nccwpck_require__(7151);
+const sleep_1 = __nccwpck_require__(7082);
 function isSuccessStatusCode(statusCode) {
     if (!statusCode) {
         return false;
@@ -41559,9 +41510,6 @@ function isRetryableStatusCode(statusCode) {
     return retryableStatusCodes.includes(statusCode);
 }
 exports.isRetryableStatusCode = isRetryableStatusCode;
-async function sleep(milliseconds) {
-    return new Promise(resolve => setTimeout(resolve, milliseconds));
-}
 async function retry(name, method, getStatusCode, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay, onError = undefined) {
     let errorMessage = '';
     let attempt = 1;
@@ -41596,33 +41544,14 @@ async function retry(name, method, getStatusCode, maxAttempts = constants_1.Defa
             (0, core_1.logDebug)(`${name} - Error is not retryable`);
             break;
         }
-        await sleep(delay);
+        await (0, sleep_1.sleep)(delay);
         attempt++;
     }
     throw Error(`${name} failed: ${errorMessage}`);
 }
 exports.retry = retry;
-async function retryTypedResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
-    return await retry(name, method, (response) => response.statusCode, maxAttempts, delay, 
-    // If the error object contains the statusCode property, extract it and return
-    // an TypedResponse<T> so it can be processed by the retry logic.
-    (error) => {
-        if (error instanceof http_client_1.HttpClientError) {
-            return {
-                statusCode: error.statusCode,
-                result: null,
-                headers: {},
-                error,
-            };
-        }
-        else {
-            return undefined;
-        }
-    });
-}
-exports.retryTypedResponse = retryTypedResponse;
 async function retryHttpClientResponse(name, method, maxAttempts = constants_1.DefaultRetryAttempts, delay = constants_1.DefaultRetryDelay) {
-    return await retry(name, method, (response) => response.message.statusCode, maxAttempts, delay);
+    return retry(name, method, (response) => response.message.statusCode, maxAttempts, delay);
 }
 exports.retryHttpClientResponse = retryHttpClientResponse;
 
@@ -41695,7 +41624,8 @@ async function getTarPath(args, compressionMethod) {
         default:
             break;
     }
-    return await io.which('tar', true);
+    const tarPath = await io.which('tar', true);
+    return tarPath;
 }
 async function execTar(args, compressionMethod, cwd) {
     try {
@@ -41856,7 +41786,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.fetchRetry = void 0;
 const node_fetch_1 = __importDefault(__nccwpck_require__(467));
 const constants_1 = __nccwpck_require__(7151);
-const wait_1 = __nccwpck_require__(8224);
+const sleep_1 = __nccwpck_require__(7082);
 async function fetchRetry(url, init = undefined) {
     let error;
     for (let i = 0; i < constants_1.DefaultRetryAttempts; i++) {
@@ -41865,7 +41795,7 @@ async function fetchRetry(url, init = undefined) {
         }
         catch (e) {
             error = e;
-            await (0, wait_1.wait)({ milliseconds: 3000 });
+            await (0, sleep_1.sleep)(3000);
         }
     }
     throw error;
@@ -41975,6 +41905,21 @@ exports.createChunk = createChunk;
 
 /***/ }),
 
+/***/ 7082:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.sleep = void 0;
+async function sleep(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+exports.sleep = sleep;
+
+
+/***/ }),
+
 /***/ 7602:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -42046,26 +41991,6 @@ function isExactKeyMatch(key, cacheKey) {
         }) === 0);
 }
 exports.isExactKeyMatch = isExactKeyMatch;
-
-
-/***/ }),
-
-/***/ 8224:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.wait = void 0;
-async function wait({ milliseconds }) {
-    return new Promise(resolve => {
-        if (isNaN(milliseconds)) {
-            throw new Error('milliseconds not a number');
-        }
-        setTimeout(() => resolve('done!'), milliseconds);
-    });
-}
-exports.wait = wait;
 
 
 /***/ }),

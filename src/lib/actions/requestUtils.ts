@@ -1,7 +1,7 @@
-import { HttpCodes, HttpClientError, HttpClientResponse } from '@actions/http-client';
-import { DefaultRetryDelay, DefaultRetryAttempts } from '@/lib/actions/constants';
-import { ITypedResponseWithError } from '@/lib/actions/contracts';
 import { logDebug } from '@/lib/actions/core';
+import { HttpCodes, HttpClientResponse } from '@actions/http-client';
+import { DefaultRetryDelay, DefaultRetryAttempts } from '@/lib/actions/constants';
+import { sleep } from '@/lib/sleep';
 
 export function isSuccessStatusCode(statusCode?: number): boolean {
   if (!statusCode) {
@@ -23,10 +23,6 @@ export function isRetryableStatusCode(statusCode?: number): boolean {
   }
   const retryableStatusCodes = [HttpCodes.BadGateway, HttpCodes.ServiceUnavailable, HttpCodes.GatewayTimeout];
   return retryableStatusCodes.includes(statusCode);
-}
-
-async function sleep(milliseconds: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, milliseconds));
 }
 
 export async function retry<T>(
@@ -85,40 +81,11 @@ export async function retry<T>(
   throw Error(`${name} failed: ${errorMessage}`);
 }
 
-export async function retryTypedResponse<T>(
-  name: string,
-  method: () => Promise<ITypedResponseWithError<T>>,
-  maxAttempts = DefaultRetryAttempts,
-  delay = DefaultRetryDelay,
-): Promise<ITypedResponseWithError<T>> {
-  return await retry(
-    name,
-    method,
-    (response: ITypedResponseWithError<T>) => response.statusCode,
-    maxAttempts,
-    delay,
-    // If the error object contains the statusCode property, extract it and return
-    // an TypedResponse<T> so it can be processed by the retry logic.
-    (error: Error) => {
-      if (error instanceof HttpClientError) {
-        return {
-          statusCode: error.statusCode,
-          result: null,
-          headers: {},
-          error,
-        };
-      } else {
-        return undefined;
-      }
-    },
-  );
-}
-
 export async function retryHttpClientResponse(
   name: string,
   method: () => Promise<HttpClientResponse>,
   maxAttempts = DefaultRetryAttempts,
   delay = DefaultRetryDelay,
 ): Promise<HttpClientResponse> {
-  return await retry(name, method, (response: HttpClientResponse) => response.message.statusCode, maxAttempts, delay);
+  return retry(name, method, (response: HttpClientResponse) => response.message.statusCode, maxAttempts, delay);
 }

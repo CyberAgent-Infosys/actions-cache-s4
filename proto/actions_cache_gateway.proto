@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package cycloudio.gateway;
+option go_package = "github.com/cycloud-io/actions-cache-gateway/api/proto.go";
+
+service Gateway {
+  rpc UploadCache(UploadCacheRequest) returns (UploadCacheResponse) {}
+  rpc RestoreCache(RestoreCacheRequest) returns (RestoreCacheResponse) {}
+}
+
+message ObjectInfo {
+  string github_url      = 1;
+  string github_repository    = 2;
+  string key = 3;
+}
+
+message UploadCacheRequest {
+    ObjectInfo  meta  = 1;
+}
+
+message UploadCacheResponse {
+  string pre_signed_url = 1;
+}
+
+message RestoreCacheRequest {
+  ObjectInfo meta = 1;
+  repeated string restore_keys = 2;
+}
+
+message RestoreCacheResponse {
+  string pre_signed_url = 1;
+  string cache_key = 2;
+}

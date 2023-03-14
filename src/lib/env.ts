@@ -1,4 +1,7 @@
 type PROCESS_ENV_KEY =
+  | 'GITHUB_ACTION_SERVER_URL'
+  | 'GITHUB_ACTION_REPOSITORY'
+  | 'GATEWAY_END_POINT'
   | 'GITHUB_REF'
   | 'GITHUB_EVENT_NAME'
   | 'GITHUB_SERVER_URL'
@@ -11,8 +14,9 @@ type PROCESS_ENV_KEY =
   | 'TMP'
   | 'TMPDIR'
   | 'windir'
+  | 'NODE_ENV'
   | 'DEBUG_MODE'
-  | 'IS_SILENT';
+  | 'IS_ANNOY';
 
 export function getEnv(key: PROCESS_ENV_KEY): string | undefined {
   return process.env?.[key] ?? undefined;

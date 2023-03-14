@@ -25,9 +25,6 @@ beforeEach(() => {
   jest.spyOn(actions, 'setCacheHitOutput');
   jest.spyOn(cache, 'restoreCache').mockImplementation(async () => '');
   jest.spyOn(inputs, 'getInputs').mockImplementation(() => ({
-    awsAccessKeyId: 'ABRACADABRA',
-    awsS3Bucket: 'mybucket',
-    awsSecretAccessKey: 'ABRACADABRA',
     key: 'LINUX-nodejs-ABRACADABRA',
     path: ['./node_modules', './package-lock.json'],
     restoreKeys: ['LINUX-nodejs-', 'LINUX-'],

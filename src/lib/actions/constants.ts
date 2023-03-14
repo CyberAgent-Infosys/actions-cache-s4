@@ -22,6 +22,4 @@ export const DefaultRetryDelay = 5000;
 // is aborted.
 export const SocketTimeout = 5000;
 
-export const defaultEndpoint = 'https://s4.cycloud.io';
-
-export const defaultUploadChunkSize = 0;
+export const defaultUploadChunkSize = 1 * 1024 * 1024;

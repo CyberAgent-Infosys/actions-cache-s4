@@ -33,7 +33,8 @@ async function getTarPath(args: string[], compressionMethod: CompressionMethod):
     default:
       break;
   }
-  return await io.which('tar', true);
+  const tarPath = await io.which('tar', true);
+  return tarPath;
 }
 
 async function execTar(args: string[], compressionMethod: CompressionMethod, cwd?: string): Promise<void> {

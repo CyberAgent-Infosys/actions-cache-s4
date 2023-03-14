@@ -1,31 +1,30 @@
 import { isValidEvent, isExactKeyMatch } from '@/lib/utils';
-import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
+import { getInputs, getClientConfigByInputs } from '@/lib/inputs';
 import { setCacheHitOutput, saveState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
-import { restoreCache, ValidationError } from '@/lib/actions/cache';
+import { restoreCache } from '@/lib/actions/cache';
+import { ValidationError } from '@/lib/actions/error';
+import { createGatewayClient } from '@/lib/proto';
 
 export async function run(): Promise<void> {
   try {
     if (!isValidEvent()) return;
 
     const inputs = getInputs(process.argv);
-
-    if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
+    if (!inputs.path || !inputs.key) {
       logInfo('Please input required key.');
       return;
     }
-    const s3ClientConfig = getS3ClientConfigByInputs(inputs);
+    const gatewayClient = createGatewayClient();
+    if (!gatewayClient) {
+      logInfo('failed to init gatewayClient.');
+      return;
+    }
 
     saveState('CACHE_KEY', inputs.key);
 
+    const clientConfig = getClientConfigByInputs(inputs);
     try {
-      const cacheKey = await restoreCache(
-        inputs.path,
-        inputs.key,
-        inputs.restoreKeys,
-        s3ClientConfig,
-        inputs.awsS3Bucket,
-      );
-
+      const cacheKey = await restoreCache(gatewayClient, clientConfig);
       if (!cacheKey) {
         logInfo(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);
         return;

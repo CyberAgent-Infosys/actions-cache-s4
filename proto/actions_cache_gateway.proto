@@ -4,7 +4,7 @@ package cycloudio.gateway;
 option go_package = "github.com/cycloud-io/actions-cache-gateway/api/proto.go";
 
 service Gateway {
-  rpc UploadCache(stream UploadCacheRequest) returns (UploadCacheResponse) {}
+  rpc UploadCache(UploadCacheRequest) returns (UploadCacheResponse) {}
   rpc RestoreCache(RestoreCacheRequest) returns (RestoreCacheResponse) {}
 }
 
@@ -14,19 +14,13 @@ message ObjectInfo {
   string key = 3;
 }
 
-message Chunk {
-  bytes data     = 1;
-  int64 position = 2;
-}
-
 message UploadCacheRequest {
-  oneof value {
     ObjectInfo  meta  = 1;
-    Chunk chunk = 2;
-  }
 }
 
-message UploadCacheResponse {}
+message UploadCacheResponse {
+  string pre_signed_url = 1;
+}
 
 message RestoreCacheRequest {
   ObjectInfo meta = 1;

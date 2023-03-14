@@ -31,44 +31,12 @@ export namespace ObjectInfo {
   }
 }
 
-export class Chunk extends jspb.Message {
-  getData(): Uint8Array | string;
-  getData_asU8(): Uint8Array;
-  getData_asB64(): string;
-  setData(value: Uint8Array | string): void;
-
-  getPosition(): number;
-  setPosition(value: number): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): Chunk.AsObject;
-  static toObject(includeInstance: boolean, msg: Chunk): Chunk.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Chunk, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): Chunk;
-  static deserializeBinaryFromReader(message: Chunk, reader: jspb.BinaryReader): Chunk;
-}
-
-export namespace Chunk {
-  export type AsObject = {
-    data: Uint8Array | string,
-    position: number,
-  }
-}
-
 export class UploadCacheRequest extends jspb.Message {
   hasMeta(): boolean;
   clearMeta(): void;
   getMeta(): ObjectInfo | undefined;
   setMeta(value?: ObjectInfo): void;
 
-  hasChunk(): boolean;
-  clearChunk(): void;
-  getChunk(): Chunk | undefined;
-  setChunk(value?: Chunk): void;
-
-  getValueCase(): UploadCacheRequest.ValueCase;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UploadCacheRequest.AsObject;
   static toObject(includeInstance: boolean, msg: UploadCacheRequest): UploadCacheRequest.AsObject;
@@ -82,17 +50,13 @@ export class UploadCacheRequest extends jspb.Message {
 export namespace UploadCacheRequest {
   export type AsObject = {
     meta?: ObjectInfo.AsObject,
-    chunk?: Chunk.AsObject,
-  }
-
-  export enum ValueCase {
-    VALUE_NOT_SET = 0,
-    META = 1,
-    CHUNK = 2,
   }
 }
 
 export class UploadCacheResponse extends jspb.Message {
+  getPreSignedUrl(): string;
+  setPreSignedUrl(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UploadCacheResponse.AsObject;
   static toObject(includeInstance: boolean, msg: UploadCacheResponse): UploadCacheResponse.AsObject;
@@ -105,6 +69,7 @@ export class UploadCacheResponse extends jspb.Message {
 
 export namespace UploadCacheResponse {
   export type AsObject = {
+    preSignedUrl: string,
   }
 }
 

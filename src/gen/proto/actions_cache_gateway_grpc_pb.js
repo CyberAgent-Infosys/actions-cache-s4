@@ -52,7 +52,7 @@ function deserialize_cycloudio_gateway_UploadCacheResponse(buffer_arg) {
 var GatewayService = exports.GatewayService = {
   uploadCache: {
     path: '/cycloudio.gateway.Gateway/UploadCache',
-    requestStream: true,
+    requestStream: false,
     responseStream: false,
     requestType: proto_actions_cache_gateway_pb.UploadCacheRequest,
     responseType: proto_actions_cache_gateway_pb.UploadCacheResponse,

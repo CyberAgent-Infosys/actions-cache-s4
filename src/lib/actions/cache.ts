@@ -14,12 +14,13 @@ import {
 } from '@/lib/actions/cacheUtils';
 import { listTar, createTar, extractTar } from '@/lib/actions/tar';
 import { downloadCacheHttpClient } from '@/lib/actions/downloadUtils';
-import { NO_MESSAGE_RECEIVED, createMeta, createChunk } from '@/lib/proto';
+import { createMeta } from '@/lib/proto';
 import { isSuccessStatusCode, isServerErrorStatusCode } from '@/lib/actions/requestUtils';
 import { ValidationError, ApiRequestError, FileStreamError, ArchiveFileError } from '@/lib/actions/error';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
 import { UploadCacheRequest, RestoreCacheRequest, RestoreCacheResponse } from '@/gen/proto/actions_cache_gateway_pb.js';
 import { GatewayClientConfig } from '@/@types/input';
+import { Headers } from 'node-fetch';
 
 function checkPaths(paths: string[]): void {
   if (!paths || paths.length === 0) {
@@ -71,58 +72,33 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
       );
     }
 
-    // upload Cache API
-    // APIからレスポンスがあった際に呼ばれる
-    const apiRequestStream = client.uploadCache(err => {
-      // NO_MESSAGE_RECEIVEDはスルー
-      if (err && err?.code !== NO_MESSAGE_RECEIVED) {
-        return reject(new ApiRequestError('APIエラー'));
-      }
-
-      logDebug('finished API request.');
-      client.close();
-      resolve();
-    });
-
     // Upload Request
     const request = new UploadCacheRequest();
     const meta = createMeta(config);
     request.setMeta(meta);
-    apiRequestStream.write(request);
 
-    let chunkNum = 0;
+    // upload Cache API
+    const presignedUrl = await new Promise<string | undefined>((_resolve, _reject) =>
+      client.uploadCache(request, (err, res) => {
+        if (err) _reject(new ApiRequestError('APIエラー'));
+        const url = res?.getPreSignedUrl();
+        if (!url) reject(new ApiRequestError('presignedUrl not found.'));
+        _resolve(url);
+      }),
+    );
+    if (!presignedUrl) return reject(new ApiRequestError('undefined presignedUrl.'));
+
     const readFileStream = fs.createReadStream(archivePath, { highWaterMark: uploadChunkSize });
-    readFileStream
-      .on('data', data => {
-        // 100kB読み出す毎に呼ばれる
-        const uploadRequest = new UploadCacheRequest();
-        const chunk = createChunk(data, chunkNum);
-        uploadRequest.setChunk(chunk);
-        apiRequestStream.write(uploadRequest);
-        chunkNum++;
-      })
-      .on('error', () => {
-        return reject(new FileStreamError('failed to read file.'));
-      });
-
-    readFileStream.on('end', async () => {
-      logDebug('File loading complete.');
-      apiRequestStream.end();
-
-      // Try to delete the archive to save space
-      try {
-        await unlinkFile(archivePath);
-      } catch (error) {
-        logDebug(`Failed to delete archive: ${error}`);
-      }
-
-      // APIに終了を伝える
-      apiRequestStream.end();
+    const uploadResponse = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: new Headers({ 'Content-Length': `${archiveFileSize}` }),
+      body: readFileStream,
     });
+    if (!isSuccessStatusCode(uploadResponse.status) || isServerErrorStatusCode(uploadResponse.status)) {
+      reject(new ApiRequestError('Upload failed.'));
+    }
 
-    readFileStream.on('error', e => {
-      logDebug(`Failed to read archive: ${e}`);
-    });
+    return resolve();
   });
 }
 
@@ -161,12 +137,12 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
       }),
     );
 
-    const presignUrl = response?.getPreSignedUrl() ?? '';
+    const preSignedUrl = response?.getPreSignedUrl() ?? '';
     const cacheKey = response?.getCacheKey() ?? '';
-    if (!presignUrl) reject(new ApiRequestError('データ取得エラー'));
-    setSecret(presignUrl);
+    if (!preSignedUrl) reject(new ApiRequestError('データ取得エラー'));
+    setSecret(preSignedUrl);
 
-    const cacheData = await fetch(presignUrl);
+    const cacheData = await fetch(preSignedUrl);
     if (
       cacheData.status === 204 ||
       !isSuccessStatusCode(cacheData.status) ||
@@ -179,7 +155,7 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
     logDebug(`Archive Path: ${archivePath}`);
 
     try {
-      await downloadCacheHttpClient(presignUrl, archivePath);
+      await downloadCacheHttpClient(preSignedUrl, archivePath);
 
       if (isAnnoy) await listTar(archivePath, compressionMethod);
       const archiveFileSize = getArchiveFileSizeInBytes(archivePath);

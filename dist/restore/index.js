@@ -10085,7 +10085,8 @@ class PickFirstLoadBalancer {
          * if we're not currently trying to establish a connection, or if the new
          * address list is different from the existing one */
         if (this.subchannels.length === 0 ||
-            !this.latestAddressList.every((value, index) => (0, subchannel_address_1.subchannelAddressEqual)(addressList[index], value))) {
+            this.latestAddressList.length !== addressList.length ||
+            !this.latestAddressList.every((value, index) => addressList[index] && (0, subchannel_address_1.subchannelAddressEqual)(addressList[index], value))) {
             this.latestAddressList = addressList;
             this.connectToAddressList();
         }
@@ -10521,6 +10522,7 @@ class LoadBalancingCall {
         if (!this.metadata) {
             throw new Error('doPick called before start');
         }
+        this.trace('Pick called');
         const pickResult = this.channel.doPick(this.metadata, this.callConfig.pickInformation);
         const subchannelString = pickResult.subchannel ?
             '(' + pickResult.subchannel.getChannelzRef().id + ') ' + pickResult.subchannel.getAddress() :
@@ -13637,10 +13639,10 @@ class Http2ServerCallStream extends events_1.EventEmitter {
         let readsDone = false;
         let pendingMessageProcessing = false;
         let pushedEnd = false;
-        const maybePushEnd = () => {
+        const maybePushEnd = async () => {
             if (!pushedEnd && readsDone && !pendingMessageProcessing) {
                 pushedEnd = true;
-                this.pushOrBufferMessage(readable, null);
+                await this.pushOrBufferMessage(readable, null);
             }
         };
         this.stream.on('data', async (data) => {
@@ -13664,15 +13666,15 @@ class Http2ServerCallStream extends events_1.EventEmitter {
                 // Just return early
                 if (!decompressedMessage)
                     return;
-                this.pushOrBufferMessage(readable, decompressedMessage);
+                await this.pushOrBufferMessage(readable, decompressedMessage);
             }
             pendingMessageProcessing = false;
             this.stream.resume();
-            maybePushEnd();
+            await maybePushEnd();
         });
-        this.stream.once('end', () => {
+        this.stream.once('end', async () => {
             readsDone = true;
-            maybePushEnd();
+            await maybePushEnd();
         });
     }
     consumeUnpushedMessages(readable) {
@@ -13687,12 +13689,12 @@ class Http2ServerCallStream extends events_1.EventEmitter {
         }
         return this.canPush;
     }
-    pushOrBufferMessage(readable, messageBytes) {
+    async pushOrBufferMessage(readable, messageBytes) {
         if (this.isPushPending) {
             this.bufferedMessages.push(messageBytes);
         }
         else {
-            this.pushMessage(readable, messageBytes);
+            await this.pushMessage(readable, messageBytes);
         }
     }
     async pushMessage(readable, messageBytes) {
@@ -13734,7 +13736,7 @@ class Http2ServerCallStream extends events_1.EventEmitter {
         }
         this.isPushPending = false;
         if (this.bufferedMessages.length > 0) {
-            this.pushMessage(readable, this.bufferedMessages.shift());
+            await this.pushMessage(readable, this.bufferedMessages.shift());
         }
     }
     getPeer() {
@@ -15326,6 +15328,12 @@ function isTcpSubchannelAddress(address) {
 }
 exports.isTcpSubchannelAddress = isTcpSubchannelAddress;
 function subchannelAddressEqual(address1, address2) {
+    if (!address1 && !address2) {
+        return true;
+    }
+    if (!address1 || !address2) {
+        return false;
+    }
     if (isTcpSubchannelAddress(address1)) {
         return (isTcpSubchannelAddress(address2) &&
             address1.host === address2.host &&
@@ -39666,7 +39674,7 @@ function deserialize_cycloudio_gateway_UploadCacheResponse(buffer_arg) {
 var GatewayService = exports.GatewayService = {
   uploadCache: {
     path: '/cycloudio.gateway.Gateway/UploadCache',
-    requestStream: true,
+    requestStream: false,
     responseStream: false,
     requestType: proto_actions_cache_gateway_pb.UploadCacheRequest,
     responseType: proto_actions_cache_gateway_pb.UploadCacheResponse,
@@ -39719,12 +39727,10 @@ var global = (function() {
   return Function('return this')();
 }.call(null));
 
-goog.exportSymbol('proto.cycloudio.gateway.Chunk', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.ObjectInfo', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.RestoreCacheRequest', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.RestoreCacheResponse', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.UploadCacheRequest', null, global);
-goog.exportSymbol('proto.cycloudio.gateway.UploadCacheRequest.ValueCase', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.UploadCacheResponse', null, global);
 /**
  * Generated by JsPbCodeGenerator.
@@ -39757,29 +39763,8 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.cycloudio.gateway.Chunk = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
-};
-goog.inherits(proto.cycloudio.gateway.Chunk, jspb.Message);
-if (goog.DEBUG && !COMPILED) {
-  /**
-   * @public
-   * @override
-   */
-  proto.cycloudio.gateway.Chunk.displayName = 'proto.cycloudio.gateway.Chunk';
-}
-/**
- * Generated by JsPbCodeGenerator.
- * @param {Array=} opt_data Optional initial data array, typically from a
- * server response, or constructed directly in Javascript. The array is used
- * in place and becomes part of the constructed object. It is not cloned.
- * If no data is provided, the constructed object will be empty, but still
- * valid.
- * @extends {jspb.Message}
- * @constructor
- */
 proto.cycloudio.gateway.UploadCacheRequest = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, proto.cycloudio.gateway.UploadCacheRequest.oneofGroups_);
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.cycloudio.gateway.UploadCacheRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -40058,216 +40043,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
  *     http://goto/soy-param-migration
  * @return {!Object}
  */
-proto.cycloudio.gateway.Chunk.prototype.toObject = function(opt_includeInstance) {
-  return proto.cycloudio.gateway.Chunk.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.cycloudio.gateway.Chunk} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.cycloudio.gateway.Chunk.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    data: msg.getData_asB64(),
-    position: jspb.Message.getFieldWithDefault(msg, 2, 0)
-  };
-
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
-
-
-/**
- * Deserializes binary data (in protobuf wire format).
- * @param {jspb.ByteSource} bytes The bytes to deserialize.
- * @return {!proto.cycloudio.gateway.Chunk}
- */
-proto.cycloudio.gateway.Chunk.deserializeBinary = function(bytes) {
-  var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.cycloudio.gateway.Chunk;
-  return proto.cycloudio.gateway.Chunk.deserializeBinaryFromReader(msg, reader);
-};
-
-
-/**
- * Deserializes binary data (in protobuf wire format) from the
- * given reader into the given message object.
- * @param {!proto.cycloudio.gateway.Chunk} msg The message object to deserialize into.
- * @param {!jspb.BinaryReader} reader The BinaryReader to use.
- * @return {!proto.cycloudio.gateway.Chunk}
- */
-proto.cycloudio.gateway.Chunk.deserializeBinaryFromReader = function(msg, reader) {
-  while (reader.nextField()) {
-    if (reader.isEndGroup()) {
-      break;
-    }
-    var field = reader.getFieldNumber();
-    switch (field) {
-    case 1:
-      var value = /** @type {!Uint8Array} */ (reader.readBytes());
-      msg.setData(value);
-      break;
-    case 2:
-      var value = /** @type {number} */ (reader.readInt64());
-      msg.setPosition(value);
-      break;
-    default:
-      reader.skipField();
-      break;
-    }
-  }
-  return msg;
-};
-
-
-/**
- * Serializes the message to binary data (in protobuf wire format).
- * @return {!Uint8Array}
- */
-proto.cycloudio.gateway.Chunk.prototype.serializeBinary = function() {
-  var writer = new jspb.BinaryWriter();
-  proto.cycloudio.gateway.Chunk.serializeBinaryToWriter(this, writer);
-  return writer.getResultBuffer();
-};
-
-
-/**
- * Serializes the given message to binary data (in protobuf wire
- * format), writing to the given BinaryWriter.
- * @param {!proto.cycloudio.gateway.Chunk} message
- * @param {!jspb.BinaryWriter} writer
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.cycloudio.gateway.Chunk.serializeBinaryToWriter = function(message, writer) {
-  var f = undefined;
-  f = message.getData_asU8();
-  if (f.length > 0) {
-    writer.writeBytes(
-      1,
-      f
-    );
-  }
-  f = message.getPosition();
-  if (f !== 0) {
-    writer.writeInt64(
-      2,
-      f
-    );
-  }
-};
-
-
-/**
- * optional bytes data = 1;
- * @return {!(string|Uint8Array)}
- */
-proto.cycloudio.gateway.Chunk.prototype.getData = function() {
-  return /** @type {!(string|Uint8Array)} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/**
- * optional bytes data = 1;
- * This is a type-conversion wrapper around `getData()`
- * @return {string}
- */
-proto.cycloudio.gateway.Chunk.prototype.getData_asB64 = function() {
-  return /** @type {string} */ (jspb.Message.bytesAsB64(
-      this.getData()));
-};
-
-
-/**
- * optional bytes data = 1;
- * Note that Uint8Array is not supported on all browsers.
- * @see http://caniuse.com/Uint8Array
- * This is a type-conversion wrapper around `getData()`
- * @return {!Uint8Array}
- */
-proto.cycloudio.gateway.Chunk.prototype.getData_asU8 = function() {
-  return /** @type {!Uint8Array} */ (jspb.Message.bytesAsU8(
-      this.getData()));
-};
-
-
-/**
- * @param {!(string|Uint8Array)} value
- * @return {!proto.cycloudio.gateway.Chunk} returns this
- */
-proto.cycloudio.gateway.Chunk.prototype.setData = function(value) {
-  return jspb.Message.setProto3BytesField(this, 1, value);
-};
-
-
-/**
- * optional int64 position = 2;
- * @return {number}
- */
-proto.cycloudio.gateway.Chunk.prototype.getPosition = function() {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
-};
-
-
-/**
- * @param {number} value
- * @return {!proto.cycloudio.gateway.Chunk} returns this
- */
-proto.cycloudio.gateway.Chunk.prototype.setPosition = function(value) {
-  return jspb.Message.setProto3IntField(this, 2, value);
-};
-
-
-
-/**
- * Oneof group definitions for this message. Each group defines the field
- * numbers belonging to that group. When of these fields' value is set, all
- * other fields in the group are cleared. During deserialization, if multiple
- * fields are encountered for a group, only the last value seen will be kept.
- * @private {!Array<!Array<number>>}
- * @const
- */
-proto.cycloudio.gateway.UploadCacheRequest.oneofGroups_ = [[1,2]];
-
-/**
- * @enum {number}
- */
-proto.cycloudio.gateway.UploadCacheRequest.ValueCase = {
-  VALUE_NOT_SET: 0,
-  META: 1,
-  CHUNK: 2
-};
-
-/**
- * @return {proto.cycloudio.gateway.UploadCacheRequest.ValueCase}
- */
-proto.cycloudio.gateway.UploadCacheRequest.prototype.getValueCase = function() {
-  return /** @type {proto.cycloudio.gateway.UploadCacheRequest.ValueCase} */(jspb.Message.computeOneofCase(this, proto.cycloudio.gateway.UploadCacheRequest.oneofGroups_[0]));
-};
-
-
-
-if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
 proto.cycloudio.gateway.UploadCacheRequest.prototype.toObject = function(opt_includeInstance) {
   return proto.cycloudio.gateway.UploadCacheRequest.toObject(opt_includeInstance, this);
 };
@@ -40284,8 +40059,7 @@ proto.cycloudio.gateway.UploadCacheRequest.prototype.toObject = function(opt_inc
  */
 proto.cycloudio.gateway.UploadCacheRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    meta: (f = msg.getMeta()) && proto.cycloudio.gateway.ObjectInfo.toObject(includeInstance, f),
-    chunk: (f = msg.getChunk()) && proto.cycloudio.gateway.Chunk.toObject(includeInstance, f)
+    meta: (f = msg.getMeta()) && proto.cycloudio.gateway.ObjectInfo.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -40327,11 +40101,6 @@ proto.cycloudio.gateway.UploadCacheRequest.deserializeBinaryFromReader = functio
       reader.readMessage(value,proto.cycloudio.gateway.ObjectInfo.deserializeBinaryFromReader);
       msg.setMeta(value);
       break;
-    case 2:
-      var value = new proto.cycloudio.gateway.Chunk;
-      reader.readMessage(value,proto.cycloudio.gateway.Chunk.deserializeBinaryFromReader);
-      msg.setChunk(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -40369,14 +40138,6 @@ proto.cycloudio.gateway.UploadCacheRequest.serializeBinaryToWriter = function(me
       proto.cycloudio.gateway.ObjectInfo.serializeBinaryToWriter
     );
   }
-  f = message.getChunk();
-  if (f != null) {
-    writer.writeMessage(
-      2,
-      f,
-      proto.cycloudio.gateway.Chunk.serializeBinaryToWriter
-    );
-  }
 };
 
 
@@ -40395,7 +40156,7 @@ proto.cycloudio.gateway.UploadCacheRequest.prototype.getMeta = function() {
  * @return {!proto.cycloudio.gateway.UploadCacheRequest} returns this
 */
 proto.cycloudio.gateway.UploadCacheRequest.prototype.setMeta = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 1, proto.cycloudio.gateway.UploadCacheRequest.oneofGroups_[0], value);
+  return jspb.Message.setWrapperField(this, 1, value);
 };
 
 
@@ -40414,43 +40175,6 @@ proto.cycloudio.gateway.UploadCacheRequest.prototype.clearMeta = function() {
  */
 proto.cycloudio.gateway.UploadCacheRequest.prototype.hasMeta = function() {
   return jspb.Message.getField(this, 1) != null;
-};
-
-
-/**
- * optional Chunk chunk = 2;
- * @return {?proto.cycloudio.gateway.Chunk}
- */
-proto.cycloudio.gateway.UploadCacheRequest.prototype.getChunk = function() {
-  return /** @type{?proto.cycloudio.gateway.Chunk} */ (
-    jspb.Message.getWrapperField(this, proto.cycloudio.gateway.Chunk, 2));
-};
-
-
-/**
- * @param {?proto.cycloudio.gateway.Chunk|undefined} value
- * @return {!proto.cycloudio.gateway.UploadCacheRequest} returns this
-*/
-proto.cycloudio.gateway.UploadCacheRequest.prototype.setChunk = function(value) {
-  return jspb.Message.setOneofWrapperField(this, 2, proto.cycloudio.gateway.UploadCacheRequest.oneofGroups_[0], value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.cycloudio.gateway.UploadCacheRequest} returns this
- */
-proto.cycloudio.gateway.UploadCacheRequest.prototype.clearChunk = function() {
-  return this.setChunk(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.cycloudio.gateway.UploadCacheRequest.prototype.hasChunk = function() {
-  return jspb.Message.getField(this, 2) != null;
 };
 
 
@@ -40486,7 +40210,7 @@ proto.cycloudio.gateway.UploadCacheResponse.prototype.toObject = function(opt_in
  */
 proto.cycloudio.gateway.UploadCacheResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    preSignedUrl: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -40523,6 +40247,10 @@ proto.cycloudio.gateway.UploadCacheResponse.deserializeBinaryFromReader = functi
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setPreSignedUrl(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -40552,6 +40280,31 @@ proto.cycloudio.gateway.UploadCacheResponse.prototype.serializeBinary = function
  */
 proto.cycloudio.gateway.UploadCacheResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getPreSignedUrl();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string pre_signed_url = 1;
+ * @return {string}
+ */
+proto.cycloudio.gateway.UploadCacheResponse.prototype.getPreSignedUrl = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.UploadCacheResponse} returns this
+ */
+proto.cycloudio.gateway.UploadCacheResponse.prototype.setPreSignedUrl = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -40969,6 +40722,7 @@ const proto_1 = __nccwpck_require__(6188);
 const requestUtils_1 = __nccwpck_require__(8594);
 const error_1 = __nccwpck_require__(6798);
 const actions_cache_gateway_pb_js_1 = __nccwpck_require__(4738);
+const node_fetch_1 = __nccwpck_require__(467);
 function checkPaths(paths) {
     if (!paths || paths.length === 0) {
         throw new error_1.ValidationError('Path Validation Error: At least one directory or file path is required');
@@ -41006,52 +40760,31 @@ async function saveCache(client, config) {
         if (archiveFileSize > fileSizeLimit && !(0, cacheUtils_1.isGhes)()) {
             reject(new error_1.ArchiveFileError(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`));
         }
-        // upload Cache API
-        // APIからレスポンスがあった際に呼ばれる
-        const apiRequestStream = client.uploadCache(err => {
-            // NO_MESSAGE_RECEIVEDはスルー
-            if (err && err?.code !== proto_1.NO_MESSAGE_RECEIVED) {
-                return reject(new error_1.ApiRequestError('APIエラー'));
-            }
-            (0, core_1.logDebug)('finished API request.');
-            client.close();
-            resolve();
-        });
         // Upload Request
         const request = new actions_cache_gateway_pb_js_1.UploadCacheRequest();
         const meta = (0, proto_1.createMeta)(config);
         request.setMeta(meta);
-        apiRequestStream.write(request);
-        let chunkNum = 0;
+        // upload Cache API
+        const presignedUrl = await new Promise((_resolve, _reject) => client.uploadCache(request, (err, res) => {
+            if (err)
+                _reject(new error_1.ApiRequestError('APIエラー'));
+            const url = res?.getPreSignedUrl();
+            if (!url)
+                reject(new error_1.ApiRequestError('presignedUrl not found.'));
+            _resolve(url);
+        }));
+        if (!presignedUrl)
+            return reject(new error_1.ApiRequestError('undefined presignedUrl.'));
         const readFileStream = fs.createReadStream(archivePath, { highWaterMark: uploadChunkSize });
-        readFileStream
-            .on('data', data => {
-            // 100kB読み出す毎に呼ばれる
-            const uploadRequest = new actions_cache_gateway_pb_js_1.UploadCacheRequest();
-            const chunk = (0, proto_1.createChunk)(data, chunkNum);
-            uploadRequest.setChunk(chunk);
-            apiRequestStream.write(uploadRequest);
-            chunkNum++;
-        })
-            .on('error', () => {
-            return reject(new error_1.FileStreamError('failed to read file.'));
+        const uploadResponse = await (0, fetch_1.fetchRetry)(presignedUrl, {
+            method: 'PUT',
+            headers: new node_fetch_1.Headers({ 'Content-Length': `${archiveFileSize}` }),
+            body: readFileStream,
         });
-        readFileStream.on('end', async () => {
-            (0, core_1.logDebug)('File loading complete.');
-            apiRequestStream.end();
-            // Try to delete the archive to save space
-            try {
-                await (0, cacheUtils_1.unlinkFile)(archivePath);
-            }
-            catch (error) {
-                (0, core_1.logDebug)(`Failed to delete archive: ${error}`);
-            }
-            // APIに終了を伝える
-            apiRequestStream.end();
-        });
-        readFileStream.on('error', e => {
-            (0, core_1.logDebug)(`Failed to read archive: ${e}`);
-        });
+        if (!(0, requestUtils_1.isSuccessStatusCode)(uploadResponse.status) || (0, requestUtils_1.isServerErrorStatusCode)(uploadResponse.status)) {
+            reject(new error_1.ApiRequestError('Upload failed.'));
+        }
+        return resolve();
     });
 }
 exports.saveCache = saveCache;
@@ -41081,12 +40814,12 @@ async function restoreCache(client, config) {
                 _reject(new error_1.ApiRequestError('APIエラー'));
             _resolve(res);
         }));
-        const presignUrl = response?.getPreSignedUrl() ?? '';
+        const preSignedUrl = response?.getPreSignedUrl() ?? '';
         const cacheKey = response?.getCacheKey() ?? '';
-        if (!presignUrl)
+        if (!preSignedUrl)
             reject(new error_1.ApiRequestError('データ取得エラー'));
-        (0, core_1.setSecret)(presignUrl);
-        const cacheData = await (0, fetch_1.fetchRetry)(presignUrl);
+        (0, core_1.setSecret)(preSignedUrl);
+        const cacheData = await (0, fetch_1.fetchRetry)(preSignedUrl);
         if (cacheData.status === 204 ||
             !(0, requestUtils_1.isSuccessStatusCode)(cacheData.status) ||
             (0, requestUtils_1.isServerErrorStatusCode)(cacheData.status)) {
@@ -41095,7 +40828,7 @@ async function restoreCache(client, config) {
         const archivePath = path.join(await (0, cacheUtils_1.createTempDirectory)(), (0, cacheUtils_1.getCacheFileName)(compressionMethod));
         (0, core_1.logDebug)(`Archive Path: ${archivePath}`);
         try {
-            await (0, downloadUtils_1.downloadCacheHttpClient)(presignUrl, archivePath);
+            await (0, downloadUtils_1.downloadCacheHttpClient)(preSignedUrl, archivePath);
             if (utils_1.isAnnoy)
                 await (0, tar_1.listTar)(archivePath, compressionMethod);
             const archiveFileSize = (0, cacheUtils_1.getArchiveFileSizeInBytes)(archivePath);
@@ -41923,12 +41656,11 @@ exports.isNumber = isNumber;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createChunk = exports.createMeta = exports.createGatewayClient = exports.NO_MESSAGE_RECEIVED = void 0;
+exports.createMeta = exports.createGatewayClient = void 0;
 const grpc_js_1 = __nccwpck_require__(7025);
 const env_1 = __nccwpck_require__(2479);
 const actions_cache_gateway_grpc_pb_js_1 = __nccwpck_require__(2844);
 const actions_cache_gateway_pb_js_1 = __nccwpck_require__(4738);
-exports.NO_MESSAGE_RECEIVED = 13;
 function createGatewayClient() {
     // TODO: gatewayのエンドポイントわかったら書換
     const endpoint = (0, env_1.getEnv)('GATEWAY_END_POINT') ?? '';
@@ -41944,13 +41676,6 @@ function createMeta(config) {
     return meta;
 }
 exports.createMeta = createMeta;
-function createChunk(data, position) {
-    const chunk = new actions_cache_gateway_pb_js_1.Chunk();
-    chunk.setData(data);
-    chunk.setPosition(position);
-    return chunk;
-}
-exports.createChunk = createChunk;
 
 
 /***/ }),
@@ -42217,7 +41942,7 @@ module.exports = require("zlib");
 /***/ ((module) => {
 
 "use strict";
-module.exports = {"i8":"1.8.11"};
+module.exports = {"i8":"1.8.12"};
 
 /***/ }),
 

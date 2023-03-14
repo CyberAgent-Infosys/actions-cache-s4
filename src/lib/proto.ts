@@ -1,10 +1,8 @@
 import { credentials } from '@grpc/grpc-js';
 import { getEnv } from '@/lib/env';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
-import { ObjectInfo, Chunk } from '@/gen/proto/actions_cache_gateway_pb.js';
+import { ObjectInfo } from '@/gen/proto/actions_cache_gateway_pb.js';
 import { GatewayClientConfig } from '@/@types/input';
-
-export const NO_MESSAGE_RECEIVED = 13;
 
 export function createGatewayClient(): GatewayClient | undefined {
   // TODO: gatewayのエンドポイントわかったら書換
@@ -19,11 +17,4 @@ export function createMeta(config: GatewayClientConfig): ObjectInfo {
   meta.setGithubUrl(githubUrl);
   meta.setKey(key);
   return meta;
-}
-
-export function createChunk(data: string | Uint8Array, position: number): Chunk {
-  const chunk = new Chunk();
-  chunk.setData(data);
-  chunk.setPosition(position);
-  return chunk;
 }

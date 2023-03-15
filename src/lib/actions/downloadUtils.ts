@@ -1,11 +1,11 @@
-import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as fs from 'fs';
 import * as stream from 'stream';
 import * as util from 'util';
+import { HttpClient, HttpClientResponse } from '@actions/http-client';
 import * as utils from '@/lib/actions/cacheUtils';
 import { SocketTimeout } from '@/lib/actions/constants';
-import { retryHttpClientResponse } from '@/lib/actions/requestUtils';
 import { logDebug } from '@/lib/actions/core';
+import { retryHttpClientResponse } from '@/lib/actions/requestUtils';
 
 /**
  * Pipes the body of a HTTP response to a stream

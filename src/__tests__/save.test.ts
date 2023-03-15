@@ -1,10 +1,12 @@
 import * as process from 'process';
+
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import * as utils from '@/lib/utils';
+
+import * as cache from '@/lib/actions/cache';
 import * as cacheUtils from '@/lib/actions/cacheUtils';
 import * as actions from '@/lib/actions/core';
-import * as cache from '@/lib/actions/cache';
 import * as inputs from '@/lib/inputs';
+import * as utils from '@/lib/utils';
 import { run } from '@/save';
 
 jest.mock('@/lib/utils');

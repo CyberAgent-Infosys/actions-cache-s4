@@ -1,10 +1,10 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as util from 'util';
 import * as exec from '@actions/exec';
 import * as glob from '@actions/glob';
 import * as io from '@actions/io';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as semver from 'semver';
-import * as util from 'util';
 import { v4 as uuidV4 } from 'uuid';
 import { CacheFilename, CompressionMethod } from '@/lib/actions/constants';
 import { logInfo, logDebug } from '@/lib/actions/core';

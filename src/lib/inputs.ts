@@ -1,8 +1,9 @@
-import { Inputs, GatewayClientConfig } from '@/@types/input';
+import { Inputs } from '@/@types/input';
+import { GatewayClientConfig } from '@/@types/proto';
+import { DefaultUploadChunkSize } from '@/lib/actions/constants';
+import { getInput, getInputAsInt, getInputAsArray } from '@/lib/actions/core';
 import { getArgv } from '@/lib/argv';
 import { getEnv } from '@/lib/env';
-import { getInput, getInputAsInt, getInputAsArray } from '@/lib/actions/core';
-import { defaultUploadChunkSize } from '@/lib/actions/constants';
 
 export function getInputs(argv: string[]): Inputs {
   const inputArgv = getArgv(argv);

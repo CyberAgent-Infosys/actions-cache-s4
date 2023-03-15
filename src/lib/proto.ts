@@ -1,8 +1,8 @@
 import { credentials } from '@grpc/grpc-js';
-import { getEnv } from '@/lib/env';
+import { GatewayClientConfig } from '@/@types/proto';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
 import { ObjectInfo } from '@/gen/proto/actions_cache_gateway_pb.js';
-import { GatewayClientConfig } from '@/@types/input';
+import { getEnv } from '@/lib/env';
 
 export function createGatewayClient(): GatewayClient | undefined {
   // TODO: gatewayのエンドポイントわかったら書換

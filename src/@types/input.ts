@@ -13,12 +13,3 @@ export type Inputs = {
   restoreKeys: string[] | undefined;
   uploadChunkSize: number | undefined;
 };
-
-export type GatewayClientConfig = {
-  paths: string[];
-  key: string;
-  restoreKeys: string[] | undefined;
-  githubUrl: string;
-  githubRepository: string;
-  uploadChunkSize: number;
-};

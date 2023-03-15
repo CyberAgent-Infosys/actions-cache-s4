@@ -1,7 +1,7 @@
-import { exec } from '@actions/exec';
-import * as io from '@actions/io';
 import { existsSync, writeFileSync } from 'fs';
 import * as path from 'path';
+import { exec } from '@actions/exec';
+import * as io from '@actions/io';
 import * as utils from '@/lib/actions/cacheUtils';
 import { CompressionMethod } from '@/lib/actions/constants';
 import { getEnv } from '@/lib/env';

@@ -41,7 +41,7 @@
     "@actions/glob": "^0.4.0",
     "@actions/io": "^1.1.2",
     "@aws-sdk/client-s3": "^3.279.0",
-    "@aws-sdk/lib-storage": "^3.279.0",
+    "@aws-sdk/lib-storage": "^3.294.0",
     "@aws-sdk/types": "^3.272.0"
   },
   "devDependencies": {

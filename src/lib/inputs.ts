@@ -13,7 +13,7 @@ export function getInputs(argv: string[]): Inputs {
   const path = inputArgv.path ?? getInputAsArray('path', requiredOption);
   const key = inputArgv.key ?? getInput('key', requiredOption);
   const restoreKeys = inputArgv.restoreKeys ?? getInputAsArray('restore-keys');
-  const uploadChunkSize = inputArgv.uploadChunkSize ?? getInputAsInt('upload-chunk-size') ?? defaultUploadChunkSize;
+  const uploadChunkSize = inputArgv.uploadChunkSize ?? getInputAsInt('upload-chunk-size') ?? DefaultUploadChunkSize;
 
   return {
     path,

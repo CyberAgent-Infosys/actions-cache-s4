@@ -1,7 +1,7 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 7351:
+/***/ 5241:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -135,7 +135,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getIDToken = exports.getState = exports.saveState = exports.group = exports.endGroup = exports.startGroup = exports.info = exports.notice = exports.warning = exports.error = exports.debug = exports.isDebug = exports.setFailed = exports.setCommandEcho = exports.setOutput = exports.getBooleanInput = exports.getMultilineInput = exports.getInput = exports.addPath = exports.setSecret = exports.exportVariable = exports.ExitCode = void 0;
-const command_1 = __nccwpck_require__(7351);
+const command_1 = __nccwpck_require__(5241);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
 const os = __importStar(__nccwpck_require__(2037));
@@ -1789,7 +1789,7 @@ const os = __importStar(__nccwpck_require__(2037));
 const events = __importStar(__nccwpck_require__(2361));
 const child = __importStar(__nccwpck_require__(2081));
 const path = __importStar(__nccwpck_require__(1017));
-const io = __importStar(__nccwpck_require__(7436));
+const io = __importStar(__nccwpck_require__(7351));
 const ioUtil = __importStar(__nccwpck_require__(1962));
 const timers_1 = __nccwpck_require__(9512);
 /* eslint-disable @typescript-eslint/unbound-method */
@@ -4385,11 +4385,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 var _a;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getCmdPath = exports.tryGetExecutablePath = exports.isRooted = exports.isDirectory = exports.exists = exports.IS_WINDOWS = exports.unlink = exports.symlink = exports.stat = exports.rmdir = exports.rename = exports.readlink = exports.readdir = exports.mkdir = exports.lstat = exports.copyFile = exports.chmod = void 0;
+exports.getCmdPath = exports.tryGetExecutablePath = exports.isRooted = exports.isDirectory = exports.exists = exports.READONLY = exports.UV_FS_O_EXLOCK = exports.IS_WINDOWS = exports.unlink = exports.symlink = exports.stat = exports.rmdir = exports.rm = exports.rename = exports.readlink = exports.readdir = exports.open = exports.mkdir = exports.lstat = exports.copyFile = exports.chmod = void 0;
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
-_a = fs.promises, exports.chmod = _a.chmod, exports.copyFile = _a.copyFile, exports.lstat = _a.lstat, exports.mkdir = _a.mkdir, exports.readdir = _a.readdir, exports.readlink = _a.readlink, exports.rename = _a.rename, exports.rmdir = _a.rmdir, exports.stat = _a.stat, exports.symlink = _a.symlink, exports.unlink = _a.unlink;
+_a = fs.promises
+// export const {open} = 'fs'
+, exports.chmod = _a.chmod, exports.copyFile = _a.copyFile, exports.lstat = _a.lstat, exports.mkdir = _a.mkdir, exports.open = _a.open, exports.readdir = _a.readdir, exports.readlink = _a.readlink, exports.rename = _a.rename, exports.rm = _a.rm, exports.rmdir = _a.rmdir, exports.stat = _a.stat, exports.symlink = _a.symlink, exports.unlink = _a.unlink;
+// export const {open} = 'fs'
 exports.IS_WINDOWS = process.platform === 'win32';
+// See https://github.com/nodejs/node/blob/d0153aee367422d0858105abec186da4dff0a0c5/deps/uv/include/uv/win.h#L691
+exports.UV_FS_O_EXLOCK = 0x10000000;
+exports.READONLY = fs.constants.O_RDONLY;
 function exists(fsPath) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -4534,7 +4540,7 @@ exports.getCmdPath = getCmdPath;
 
 /***/ }),
 
-/***/ 7436:
+/***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -4570,12 +4576,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.findInPath = exports.which = exports.mkdirP = exports.rmRF = exports.mv = exports.cp = void 0;
 const assert_1 = __nccwpck_require__(9491);
-const childProcess = __importStar(__nccwpck_require__(2081));
 const path = __importStar(__nccwpck_require__(1017));
-const util_1 = __nccwpck_require__(3837);
 const ioUtil = __importStar(__nccwpck_require__(1962));
-const exec = util_1.promisify(childProcess.exec);
-const execFile = util_1.promisify(childProcess.execFile);
 /**
  * Copies a file or folder.
  * Based off of shelljs - https://github.com/shelljs/shelljs/blob/9237f66c52e5daa40458f94f9565e18e8132f5a6/src/cp.js
@@ -4656,61 +4658,23 @@ exports.mv = mv;
 function rmRF(inputPath) {
     return __awaiter(this, void 0, void 0, function* () {
         if (ioUtil.IS_WINDOWS) {
-            // Node doesn't provide a delete operation, only an unlink function. This means that if the file is being used by another
-            // program (e.g. antivirus), it won't be deleted. To address this, we shell out the work to rd/del.
             // Check for invalid characters
             // https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
             if (/[*"<>|]/.test(inputPath)) {
                 throw new Error('File path must not contain `*`, `"`, `<`, `>` or `|` on Windows');
             }
-            try {
-                const cmdPath = ioUtil.getCmdPath();
-                if (yield ioUtil.isDirectory(inputPath, true)) {
-                    yield exec(`${cmdPath} /s /c "rd /s /q "%inputPath%""`, {
-                        env: { inputPath }
-                    });
-                }
-                else {
-                    yield exec(`${cmdPath} /s /c "del /f /a "%inputPath%""`, {
-                        env: { inputPath }
-                    });
-                }
-            }
-            catch (err) {
-                // if you try to delete a file that doesn't exist, desired result is achieved
-                // other errors are valid
-                if (err.code !== 'ENOENT')
-                    throw err;
-            }
-            // Shelling out fails to remove a symlink folder with missing source, this unlink catches that
-            try {
-                yield ioUtil.unlink(inputPath);
-            }
-            catch (err) {
-                // if you try to delete a file that doesn't exist, desired result is achieved
-                // other errors are valid
-                if (err.code !== 'ENOENT')
-                    throw err;
-            }
         }
-        else {
-            let isDir = false;
-            try {
-                isDir = yield ioUtil.isDirectory(inputPath);
-            }
-            catch (err) {
-                // if you try to delete a file that doesn't exist, desired result is achieved
-                // other errors are valid
-                if (err.code !== 'ENOENT')
-                    throw err;
-                return;
-            }
-            if (isDir) {
-                yield execFile(`rm`, [`-rf`, `${inputPath}`]);
-            }
-            else {
-                yield ioUtil.unlink(inputPath);
-            }
+        try {
+            // note if path does not exist, error is silent
+            yield ioUtil.rm(inputPath, {
+                force: true,
+                maxRetries: 3,
+                recursive: true,
+                retryDelay: 300
+            });
+        }
+        catch (err) {
+            throw new Error(`File was unable to be removed ${err}`);
         }
     });
 }
@@ -12128,13 +12092,17 @@ class ResolvingCall {
         this.filterStack = this.filterStackFactory.createFilter();
         this.filterStack.sendMetadata(Promise.resolve(this.metadata)).then(filteredMetadata => {
             this.child = this.channel.createInnerCall(config, this.method, this.host, this.credentials, this.deadline);
+            this.trace('Created child [' + this.child.getCallNumber() + ']');
             this.child.start(filteredMetadata, {
                 onReceiveMetadata: metadata => {
+                    this.trace('Received metadata');
                     this.listener.onReceiveMetadata(this.filterStack.receiveMetadata(metadata));
                 },
                 onReceiveMessage: message => {
+                    this.trace('Received message');
                     this.readFilterPending = true;
                     this.filterStack.receiveMessage(message).then(filteredMesssage => {
+                        this.trace('Finished filtering received message');
                         this.readFilterPending = false;
                         this.listener.onReceiveMessage(filteredMesssage);
                         if (this.pendingChildStatus) {
@@ -12145,6 +12113,7 @@ class ResolvingCall {
                     });
                 },
                 onReceiveStatus: status => {
+                    this.trace('Received status');
                     if (this.readFilterPending) {
                         this.pendingChildStatus = status;
                     }
@@ -16825,6 +16794,7 @@ class Http2Transport {
     }
     shutdown() {
         this.session.close();
+        (0, channelz_1.unregisterChannelzRef)(this.channelzRef);
     }
 }
 class Http2SubchannelConnector {
@@ -19429,6 +19399,160 @@ jspb.Message.prototype.cloneMessage=function(){return jspb.Message.cloneMessage(
 jspb.Message.copyInto=function(a,b){jspb.asserts.assertInstanceof(a,jspb.Message);jspb.asserts.assertInstanceof(b,jspb.Message);jspb.asserts.assert(a.constructor==b.constructor,"Copy source and target message should have the same type.");a=jspb.Message.clone(a);for(var c=b.toArray(),d=a.toArray(),e=c.length=0;e<d.length;e++)c[e]=d[e];b.wrappers_=a.wrappers_;b.extensionObject_=a.extensionObject_};goog.exportProperty(jspb.Message,"copyInto",jspb.Message.copyInto);
 jspb.Message.clone_=function(a){if(Array.isArray(a)){for(var b=Array(a.length),c=0;c<a.length;c++){var d=a[c];null!=d&&(b[c]="object"==typeof d?jspb.Message.clone_(jspb.asserts.assert(d)):d)}return b}if(jspb.Message.SUPPORTS_UINT8ARRAY_&&a instanceof Uint8Array)return new Uint8Array(a);b={};for(c in a)d=a[c],null!=d&&(b[c]="object"==typeof d?jspb.Message.clone_(jspb.asserts.assert(d)):d);return b};jspb.Message.registerMessageType=function(a,b){b.messageId=a};
 goog.exportProperty(jspb.Message,"registerMessageType",jspb.Message.registerMessageType);jspb.Message.messageSetExtensions={};jspb.Message.messageSetExtensionsBinary={};jspb.Export={}; true&&(exports.Map=jspb.Map,exports.Message=jspb.Message,exports.BinaryReader=jspb.BinaryReader,exports.BinaryWriter=jspb.BinaryWriter,exports.ExtensionFieldInfo=jspb.ExtensionFieldInfo,exports.ExtensionFieldBinaryInfo=jspb.ExtensionFieldBinaryInfo,exports.exportSymbol=goog.exportSymbol,exports.inherits=goog.inherits,exports.object={extend:goog.object.extend},exports.typeOf=goog.typeOf);
+
+
+/***/ }),
+
+/***/ 291:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+// source: google/protobuf/empty.proto
+/**
+ * @fileoverview
+ * @enhanceable
+ * @suppress {missingRequire} reports error on implicit type usages.
+ * @suppress {messageConventions} JS Compiler reports an error if a variable or
+ *     field starts with 'MSG_' and isn't a translatable message.
+ * @public
+ */
+// GENERATED CODE -- DO NOT EDIT!
+/* eslint-disable */
+// @ts-nocheck
+
+var jspb = __nccwpck_require__(9917);
+var goog = jspb;
+var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof window !== 'undefined' && window) ||
+    (typeof global !== 'undefined' && global) ||
+    (typeof self !== 'undefined' && self) ||
+    (function () { return this; }).call(null) ||
+    Function('return this')();
+
+goog.exportSymbol('proto.google.protobuf.Empty', null, global);
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.google.protobuf.Empty = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.google.protobuf.Empty, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.google.protobuf.Empty.displayName = 'proto.google.protobuf.Empty';
+}
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.google.protobuf.Empty.prototype.toObject = function(opt_includeInstance) {
+  return proto.google.protobuf.Empty.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.google.protobuf.Empty} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.google.protobuf.Empty.toObject = function(includeInstance, msg) {
+  var f, obj = {
+
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.google.protobuf.Empty}
+ */
+proto.google.protobuf.Empty.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.google.protobuf.Empty;
+  return proto.google.protobuf.Empty.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.google.protobuf.Empty} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.google.protobuf.Empty}
+ */
+proto.google.protobuf.Empty.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.google.protobuf.Empty.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.google.protobuf.Empty.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.google.protobuf.Empty} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.google.protobuf.Empty.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+};
+
+
+goog.object.extend(exports, proto.google.protobuf);
 
 
 /***/ }),
@@ -24456,6 +24580,85 @@ exports.Headers = Headers;
 exports.Request = Request;
 exports.Response = Response;
 exports.FetchError = FetchError;
+
+
+/***/ }),
+
+/***/ 7684:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+const Queue = __nccwpck_require__(5185);
+
+const pLimit = concurrency => {
+	if (!((Number.isInteger(concurrency) || concurrency === Infinity) && concurrency > 0)) {
+		throw new TypeError('Expected `concurrency` to be a number from 1 and up');
+	}
+
+	const queue = new Queue();
+	let activeCount = 0;
+
+	const next = () => {
+		activeCount--;
+
+		if (queue.size > 0) {
+			queue.dequeue()();
+		}
+	};
+
+	const run = async (fn, resolve, ...args) => {
+		activeCount++;
+
+		const result = (async () => fn(...args))();
+
+		resolve(result);
+
+		try {
+			await result;
+		} catch {}
+
+		next();
+	};
+
+	const enqueue = (fn, resolve, ...args) => {
+		queue.enqueue(run.bind(null, fn, resolve, ...args));
+
+		(async () => {
+			// This function needs to wait until the next microtask before comparing
+			// `activeCount` to `concurrency`, because `activeCount` is updated asynchronously
+			// when the run function is dequeued and called. The comparison in the if-statement
+			// needs to happen asynchronously as well to get an up-to-date value for `activeCount`.
+			await Promise.resolve();
+
+			if (activeCount < concurrency && queue.size > 0) {
+				queue.dequeue()();
+			}
+		})();
+	};
+
+	const generator = (fn, ...args) => new Promise(resolve => {
+		enqueue(fn, resolve, ...args);
+	});
+
+	Object.defineProperties(generator, {
+		activeCount: {
+			get: () => activeCount
+		},
+		pendingCount: {
+			get: () => queue.size
+		},
+		clearQueue: {
+			value: () => {
+				queue.clear();
+			}
+		}
+	});
+
+	return generator;
+};
+
+module.exports = pLimit;
 
 
 /***/ }),
@@ -39616,6 +39819,81 @@ try {
 
 /***/ }),
 
+/***/ 5185:
+/***/ ((module) => {
+
+class Node {
+	/// value;
+	/// next;
+
+	constructor(value) {
+		this.value = value;
+
+		// TODO: Remove this when targeting Node.js 12.
+		this.next = undefined;
+	}
+}
+
+class Queue {
+	// TODO: Use private class fields when targeting Node.js 12.
+	// #_head;
+	// #_tail;
+	// #_size;
+
+	constructor() {
+		this.clear();
+	}
+
+	enqueue(value) {
+		const node = new Node(value);
+
+		if (this._head) {
+			this._tail.next = node;
+			this._tail = node;
+		} else {
+			this._head = node;
+			this._tail = node;
+		}
+
+		this._size++;
+	}
+
+	dequeue() {
+		const current = this._head;
+		if (!current) {
+			return;
+		}
+
+		this._head = this._head.next;
+		this._size--;
+		return current.value;
+	}
+
+	clear() {
+		this._head = undefined;
+		this._tail = undefined;
+		this._size = 0;
+	}
+
+	get size() {
+		return this._size;
+	}
+
+	* [Symbol.iterator]() {
+		let current = this._head;
+
+		while (current) {
+			yield current.value;
+			current = current.next;
+		}
+	}
+}
+
+module.exports = Queue;
+
+
+/***/ }),
+
 /***/ 2844:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -39625,6 +39903,29 @@ try {
 
 var grpc = __nccwpck_require__(7025);
 var proto_actions_cache_gateway_pb = __nccwpck_require__(4738);
+var google_protobuf_empty_pb = __nccwpck_require__(291);
+
+function serialize_cycloudio_gateway_AbortMultipartUploadCacheRequest(arg) {
+  if (!(arg instanceof proto_actions_cache_gateway_pb.AbortMultipartUploadCacheRequest)) {
+    throw new Error('Expected argument of type cycloudio.gateway.AbortMultipartUploadCacheRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_cycloudio_gateway_AbortMultipartUploadCacheRequest(buffer_arg) {
+  return proto_actions_cache_gateway_pb.AbortMultipartUploadCacheRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_cycloudio_gateway_CompleteMultipartUploadCacheRequest(arg) {
+  if (!(arg instanceof proto_actions_cache_gateway_pb.CompleteMultipartUploadCacheRequest)) {
+    throw new Error('Expected argument of type cycloudio.gateway.CompleteMultipartUploadCacheRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_cycloudio_gateway_CompleteMultipartUploadCacheRequest(buffer_arg) {
+  return proto_actions_cache_gateway_pb.CompleteMultipartUploadCacheRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
 
 function serialize_cycloudio_gateway_RestoreCacheRequest(arg) {
   if (!(arg instanceof proto_actions_cache_gateway_pb.RestoreCacheRequest)) {
@@ -39648,6 +39949,28 @@ function deserialize_cycloudio_gateway_RestoreCacheResponse(buffer_arg) {
   return proto_actions_cache_gateway_pb.RestoreCacheResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_cycloudio_gateway_StartMultipartUploadCacheRequest(arg) {
+  if (!(arg instanceof proto_actions_cache_gateway_pb.StartMultipartUploadCacheRequest)) {
+    throw new Error('Expected argument of type cycloudio.gateway.StartMultipartUploadCacheRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_cycloudio_gateway_StartMultipartUploadCacheRequest(buffer_arg) {
+  return proto_actions_cache_gateway_pb.StartMultipartUploadCacheRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_cycloudio_gateway_StartMultipartUploadCacheResponse(arg) {
+  if (!(arg instanceof proto_actions_cache_gateway_pb.StartMultipartUploadCacheResponse)) {
+    throw new Error('Expected argument of type cycloudio.gateway.StartMultipartUploadCacheResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_cycloudio_gateway_StartMultipartUploadCacheResponse(buffer_arg) {
+  return proto_actions_cache_gateway_pb.StartMultipartUploadCacheResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_cycloudio_gateway_UploadCacheRequest(arg) {
   if (!(arg instanceof proto_actions_cache_gateway_pb.UploadCacheRequest)) {
     throw new Error('Expected argument of type cycloudio.gateway.UploadCacheRequest');
@@ -39668,6 +39991,17 @@ function serialize_cycloudio_gateway_UploadCacheResponse(arg) {
 
 function deserialize_cycloudio_gateway_UploadCacheResponse(buffer_arg) {
   return proto_actions_cache_gateway_pb.UploadCacheResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_google_protobuf_Empty(arg) {
+  if (!(arg instanceof google_protobuf_empty_pb.Empty)) {
+    throw new Error('Expected argument of type google.protobuf.Empty');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_google_protobuf_Empty(buffer_arg) {
+  return google_protobuf_empty_pb.Empty.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 
@@ -39693,6 +40027,39 @@ var GatewayService = exports.GatewayService = {
     requestDeserialize: deserialize_cycloudio_gateway_RestoreCacheRequest,
     responseSerialize: serialize_cycloudio_gateway_RestoreCacheResponse,
     responseDeserialize: deserialize_cycloudio_gateway_RestoreCacheResponse,
+  },
+  startMultipartUploadCache: {
+    path: '/cycloudio.gateway.Gateway/StartMultipartUploadCache',
+    requestStream: false,
+    responseStream: false,
+    requestType: proto_actions_cache_gateway_pb.StartMultipartUploadCacheRequest,
+    responseType: proto_actions_cache_gateway_pb.StartMultipartUploadCacheResponse,
+    requestSerialize: serialize_cycloudio_gateway_StartMultipartUploadCacheRequest,
+    requestDeserialize: deserialize_cycloudio_gateway_StartMultipartUploadCacheRequest,
+    responseSerialize: serialize_cycloudio_gateway_StartMultipartUploadCacheResponse,
+    responseDeserialize: deserialize_cycloudio_gateway_StartMultipartUploadCacheResponse,
+  },
+  completeMultipartUploadCache: {
+    path: '/cycloudio.gateway.Gateway/CompleteMultipartUploadCache',
+    requestStream: false,
+    responseStream: false,
+    requestType: proto_actions_cache_gateway_pb.CompleteMultipartUploadCacheRequest,
+    responseType: google_protobuf_empty_pb.Empty,
+    requestSerialize: serialize_cycloudio_gateway_CompleteMultipartUploadCacheRequest,
+    requestDeserialize: deserialize_cycloudio_gateway_CompleteMultipartUploadCacheRequest,
+    responseSerialize: serialize_google_protobuf_Empty,
+    responseDeserialize: deserialize_google_protobuf_Empty,
+  },
+  abortMultipartUploadCache: {
+    path: '/cycloudio.gateway.Gateway/AbortMultipartUploadCache',
+    requestStream: false,
+    responseStream: false,
+    requestType: proto_actions_cache_gateway_pb.AbortMultipartUploadCacheRequest,
+    responseType: google_protobuf_empty_pb.Empty,
+    requestSerialize: serialize_cycloudio_gateway_AbortMultipartUploadCacheRequest,
+    requestDeserialize: deserialize_cycloudio_gateway_AbortMultipartUploadCacheRequest,
+    responseSerialize: serialize_google_protobuf_Empty,
+    responseDeserialize: deserialize_google_protobuf_Empty,
   },
 };
 
@@ -39727,11 +40094,18 @@ var global = (function() {
   return Function('return this')();
 }.call(null));
 
+var google_protobuf_empty_pb = __nccwpck_require__(291);
+goog.object.extend(proto, google_protobuf_empty_pb);
+goog.exportSymbol('proto.cycloudio.gateway.AbortMultipartUploadCacheRequest', null, global);
+goog.exportSymbol('proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.ObjectInfo', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.RestoreCacheRequest', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.RestoreCacheResponse', null, global);
+goog.exportSymbol('proto.cycloudio.gateway.StartMultipartUploadCacheRequest', null, global);
+goog.exportSymbol('proto.cycloudio.gateway.StartMultipartUploadCacheResponse', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.UploadCacheRequest', null, global);
 goog.exportSymbol('proto.cycloudio.gateway.UploadCacheResponse', null, global);
+goog.exportSymbol('proto.cycloudio.gateway.UploadedParts', null, global);
 /**
  * Generated by JsPbCodeGenerator.
  * @param {Array=} opt_data Optional initial data array, typically from a
@@ -39752,6 +40126,90 @@ if (goog.DEBUG && !COMPILED) {
    * @override
    */
   proto.cycloudio.gateway.ObjectInfo.displayName = 'proto.cycloudio.gateway.ObjectInfo';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.cycloudio.gateway.UploadedParts = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.cycloudio.gateway.UploadedParts, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.cycloudio.gateway.UploadedParts.displayName = 'proto.cycloudio.gateway.UploadedParts';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.cycloudio.gateway.StartMultipartUploadCacheRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.cycloudio.gateway.StartMultipartUploadCacheRequest.displayName = 'proto.cycloudio.gateway.StartMultipartUploadCacheRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.cycloudio.gateway.StartMultipartUploadCacheResponse.repeatedFields_, null);
+};
+goog.inherits(proto.cycloudio.gateway.StartMultipartUploadCacheResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.cycloudio.gateway.StartMultipartUploadCacheResponse.displayName = 'proto.cycloudio.gateway.StartMultipartUploadCacheResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.repeatedFields_, null);
+};
+goog.inherits(proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.displayName = 'proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest';
 }
 /**
  * Generated by JsPbCodeGenerator.
@@ -39836,6 +40294,27 @@ if (goog.DEBUG && !COMPILED) {
    * @override
    */
   proto.cycloudio.gateway.RestoreCacheResponse.displayName = 'proto.cycloudio.gateway.RestoreCacheResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest = function(opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.cycloudio.gateway.AbortMultipartUploadCacheRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.displayName = 'proto.cycloudio.gateway.AbortMultipartUploadCacheRequest';
 }
 
 
@@ -40024,6 +40503,864 @@ proto.cycloudio.gateway.ObjectInfo.prototype.getKey = function() {
  */
 proto.cycloudio.gateway.ObjectInfo.prototype.setKey = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.cycloudio.gateway.UploadedParts.prototype.toObject = function(opt_includeInstance) {
+  return proto.cycloudio.gateway.UploadedParts.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.cycloudio.gateway.UploadedParts} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.UploadedParts.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    partNumber: jspb.Message.getFieldWithDefault(msg, 1, 0),
+    eTag: jspb.Message.getFieldWithDefault(msg, 2, "")
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.cycloudio.gateway.UploadedParts}
+ */
+proto.cycloudio.gateway.UploadedParts.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.cycloudio.gateway.UploadedParts;
+  return proto.cycloudio.gateway.UploadedParts.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.cycloudio.gateway.UploadedParts} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.cycloudio.gateway.UploadedParts}
+ */
+proto.cycloudio.gateway.UploadedParts.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {number} */ (reader.readInt64());
+      msg.setPartNumber(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setETag(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.cycloudio.gateway.UploadedParts.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.cycloudio.gateway.UploadedParts.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.cycloudio.gateway.UploadedParts} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.UploadedParts.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getPartNumber();
+  if (f !== 0) {
+    writer.writeInt64(
+      1,
+      f
+    );
+  }
+  f = message.getETag();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional int64 part_number = 1;
+ * @return {number}
+ */
+proto.cycloudio.gateway.UploadedParts.prototype.getPartNumber = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.cycloudio.gateway.UploadedParts} returns this
+ */
+proto.cycloudio.gateway.UploadedParts.prototype.setPartNumber = function(value) {
+  return jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+/**
+ * optional string e_tag = 2;
+ * @return {string}
+ */
+proto.cycloudio.gateway.UploadedParts.prototype.getETag = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.UploadedParts} returns this
+ */
+proto.cycloudio.gateway.UploadedParts.prototype.setETag = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.cycloudio.gateway.StartMultipartUploadCacheRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    meta: (f = msg.getMeta()) && proto.cycloudio.gateway.ObjectInfo.toObject(includeInstance, f),
+    totalPart: jspb.Message.getFieldWithDefault(msg, 2, 0)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.cycloudio.gateway.StartMultipartUploadCacheRequest;
+  return proto.cycloudio.gateway.StartMultipartUploadCacheRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = new proto.cycloudio.gateway.ObjectInfo;
+      reader.readMessage(value,proto.cycloudio.gateway.ObjectInfo.deserializeBinaryFromReader);
+      msg.setMeta(value);
+      break;
+    case 2:
+      var value = /** @type {number} */ (reader.readInt64());
+      msg.setTotalPart(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.cycloudio.gateway.StartMultipartUploadCacheRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getMeta();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto.cycloudio.gateway.ObjectInfo.serializeBinaryToWriter
+    );
+  }
+  f = message.getTotalPart();
+  if (f !== 0) {
+    writer.writeInt64(
+      2,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional ObjectInfo meta = 1;
+ * @return {?proto.cycloudio.gateway.ObjectInfo}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.getMeta = function() {
+  return /** @type{?proto.cycloudio.gateway.ObjectInfo} */ (
+    jspb.Message.getWrapperField(this, proto.cycloudio.gateway.ObjectInfo, 1));
+};
+
+
+/**
+ * @param {?proto.cycloudio.gateway.ObjectInfo|undefined} value
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest} returns this
+*/
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.setMeta = function(value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.clearMeta = function() {
+  return this.setMeta(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.hasMeta = function() {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+
+/**
+ * optional int64 total_part = 2;
+ * @return {number}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.getTotalPart = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheRequest.prototype.setTotalPart = function(value) {
+  return jspb.Message.setProto3IntField(this, 2, value);
+};
+
+
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.repeatedFields_ = [4];
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.toObject = function(opt_includeInstance) {
+  return proto.cycloudio.gateway.StartMultipartUploadCacheResponse.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    uploadId: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    uploadKey: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    contentType: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    preSignedUrlsList: (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.cycloudio.gateway.StartMultipartUploadCacheResponse;
+  return proto.cycloudio.gateway.StartMultipartUploadCacheResponse.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUploadId(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUploadKey(value);
+      break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setContentType(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addPreSignedUrls(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.cycloudio.gateway.StartMultipartUploadCacheResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getUploadId();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getUploadKey();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getContentType();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
+  f = message.getPreSignedUrlsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      4,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string upload_id = 1;
+ * @return {string}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.getUploadId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.setUploadId = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string upload_key = 2;
+ * @return {string}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.getUploadKey = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.setUploadKey = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string content_type = 3;
+ * @return {string}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.getContentType = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.setContentType = function(value) {
+  return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * repeated string pre_signed_urls = 4;
+ * @return {!Array<string>}
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.getPreSignedUrlsList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 4));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.setPreSignedUrlsList = function(value) {
+  return jspb.Message.setField(this, 4, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.addPreSignedUrls = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 4, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.cycloudio.gateway.StartMultipartUploadCacheResponse} returns this
+ */
+proto.cycloudio.gateway.StartMultipartUploadCacheResponse.prototype.clearPreSignedUrlsList = function() {
+  return this.setPreSignedUrlsList([]);
+};
+
+
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.repeatedFields_ = [3];
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    uploadId: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    uploadKey: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    partsList: jspb.Message.toObjectList(msg.getPartsList(),
+    proto.cycloudio.gateway.UploadedParts.toObject, includeInstance),
+    meta: (f = msg.getMeta()) && proto.cycloudio.gateway.ObjectInfo.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest;
+  return proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUploadId(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUploadKey(value);
+      break;
+    case 3:
+      var value = new proto.cycloudio.gateway.UploadedParts;
+      reader.readMessage(value,proto.cycloudio.gateway.UploadedParts.deserializeBinaryFromReader);
+      msg.addParts(value);
+      break;
+    case 4:
+      var value = new proto.cycloudio.gateway.ObjectInfo;
+      reader.readMessage(value,proto.cycloudio.gateway.ObjectInfo.deserializeBinaryFromReader);
+      msg.setMeta(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getUploadId();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getUploadKey();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getPartsList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      3,
+      f,
+      proto.cycloudio.gateway.UploadedParts.serializeBinaryToWriter
+    );
+  }
+  f = message.getMeta();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto.cycloudio.gateway.ObjectInfo.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string upload_id = 1;
+ * @return {string}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.getUploadId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.setUploadId = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string upload_key = 2;
+ * @return {string}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.getUploadKey = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.setUploadKey = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * repeated UploadedParts parts = 3;
+ * @return {!Array<!proto.cycloudio.gateway.UploadedParts>}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.getPartsList = function() {
+  return /** @type{!Array<!proto.cycloudio.gateway.UploadedParts>} */ (
+    jspb.Message.getRepeatedWrapperField(this, proto.cycloudio.gateway.UploadedParts, 3));
+};
+
+
+/**
+ * @param {!Array<!proto.cycloudio.gateway.UploadedParts>} value
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} returns this
+*/
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.setPartsList = function(value) {
+  return jspb.Message.setRepeatedWrapperField(this, 3, value);
+};
+
+
+/**
+ * @param {!proto.cycloudio.gateway.UploadedParts=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.cycloudio.gateway.UploadedParts}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.addParts = function(opt_value, opt_index) {
+  return jspb.Message.addToRepeatedWrapperField(this, 3, opt_value, proto.cycloudio.gateway.UploadedParts, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.clearPartsList = function() {
+  return this.setPartsList([]);
+};
+
+
+/**
+ * optional ObjectInfo meta = 4;
+ * @return {?proto.cycloudio.gateway.ObjectInfo}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.getMeta = function() {
+  return /** @type{?proto.cycloudio.gateway.ObjectInfo} */ (
+    jspb.Message.getWrapperField(this, proto.cycloudio.gateway.ObjectInfo, 4));
+};
+
+
+/**
+ * @param {?proto.cycloudio.gateway.ObjectInfo|undefined} value
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} returns this
+*/
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.setMeta = function(value) {
+  return jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.clearMeta = function() {
+  return this.setMeta(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.cycloudio.gateway.CompleteMultipartUploadCacheRequest.prototype.hasMeta = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 
@@ -40675,6 +42012,217 @@ proto.cycloudio.gateway.RestoreCacheResponse.prototype.setCacheKey = function(va
 };
 
 
+
+
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+/**
+ * Creates an object representation of this proto.
+ * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
+ * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+ * For the list of reserved names please see:
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @return {!Object}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.toObject = function(opt_includeInstance) {
+  return proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.toObject(opt_includeInstance, this);
+};
+
+
+/**
+ * Static version of the {@see toObject} method.
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
+ * @param {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest} msg The msg instance to transform.
+ * @return {!Object}
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.toObject = function(includeInstance, msg) {
+  var f, obj = {
+    uploadId: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    uploadKey: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    meta: (f = msg.getMeta()) && proto.cycloudio.gateway.ObjectInfo.toObject(includeInstance, f)
+  };
+
+  if (includeInstance) {
+    obj.$jspbMessageInstance = msg;
+  }
+  return obj;
+};
+}
+
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.deserializeBinary = function(bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.cycloudio.gateway.AbortMultipartUploadCacheRequest;
+  return proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.deserializeBinaryFromReader(msg, reader);
+};
+
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.deserializeBinaryFromReader = function(msg, reader) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUploadId(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setUploadKey(value);
+      break;
+    case 3:
+      var value = new proto.cycloudio.gateway.ObjectInfo;
+      reader.readMessage(value,proto.cycloudio.gateway.ObjectInfo.deserializeBinaryFromReader);
+      msg.setMeta(value);
+      break;
+    default:
+      reader.skipField();
+      break;
+    }
+  }
+  return msg;
+};
+
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.serializeBinary = function() {
+  var writer = new jspb.BinaryWriter();
+  proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.serializeBinaryToWriter = function(message, writer) {
+  var f = undefined;
+  f = message.getUploadId();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getUploadKey();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getMeta();
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      proto.cycloudio.gateway.ObjectInfo.serializeBinaryToWriter
+    );
+  }
+};
+
+
+/**
+ * optional string upload_id = 1;
+ * @return {string}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.getUploadId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.setUploadId = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string upload_key = 2;
+ * @return {string}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.getUploadKey = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.setUploadKey = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional ObjectInfo meta = 3;
+ * @return {?proto.cycloudio.gateway.ObjectInfo}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.getMeta = function() {
+  return /** @type{?proto.cycloudio.gateway.ObjectInfo} */ (
+    jspb.Message.getWrapperField(this, proto.cycloudio.gateway.ObjectInfo, 3));
+};
+
+
+/**
+ * @param {?proto.cycloudio.gateway.ObjectInfo|undefined} value
+ * @return {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest} returns this
+*/
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.setMeta = function(value) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.cycloudio.gateway.AbortMultipartUploadCacheRequest} returns this
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.clearMeta = function() {
+  return this.setMeta(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.cycloudio.gateway.AbortMultipartUploadCacheRequest.prototype.hasMeta = function() {
+  return jspb.Message.getField(this, 3) != null;
+};
+
+
 goog.object.extend(exports, proto.cycloudio.gateway);
 
 
@@ -40708,21 +42256,24 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.restoreCache = exports.saveCache = void 0;
-const path = __importStar(__nccwpck_require__(1017));
+exports.restoreCacheProc = exports.saveCacheProc = void 0;
 const fs = __importStar(__nccwpck_require__(7147));
-const fetch_1 = __nccwpck_require__(9531);
-const utils_1 = __nccwpck_require__(4977);
-const core_1 = __nccwpck_require__(8816);
+const path = __importStar(__nccwpck_require__(1017));
+const p_limit_1 = __importDefault(__nccwpck_require__(7684));
 const cacheUtils_1 = __nccwpck_require__(2534);
-const tar_1 = __nccwpck_require__(266);
+const constants_1 = __nccwpck_require__(7151);
+const core_1 = __nccwpck_require__(8816);
 const downloadUtils_1 = __nccwpck_require__(8076);
-const proto_1 = __nccwpck_require__(6188);
-const requestUtils_1 = __nccwpck_require__(8594);
 const error_1 = __nccwpck_require__(6798);
-const actions_cache_gateway_pb_js_1 = __nccwpck_require__(4738);
-const node_fetch_1 = __nccwpck_require__(467);
+const requestUtils_1 = __nccwpck_require__(8594);
+const tar_1 = __nccwpck_require__(266);
+const fetch_1 = __nccwpck_require__(9531);
+const proto_1 = __nccwpck_require__(6188);
+const utils_1 = __nccwpck_require__(4977);
 function checkPaths(paths) {
     if (!paths || paths.length === 0) {
         throw new error_1.ValidationError('Path Validation Error: At least one directory or file path is required');
@@ -40737,7 +42288,7 @@ function checkKey(key) {
         throw new error_1.ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
     }
 }
-async function saveCache(client, config) {
+async function saveCacheProc(client, config) {
     return new Promise(async (resolve, reject) => {
         const { paths, key, uploadChunkSize } = config;
         // 問題があればthrow
@@ -40753,42 +42304,80 @@ async function saveCache(client, config) {
         await (0, tar_1.createTar)(archiveFolder, cachePaths, compressionMethod);
         if (utils_1.isAnnoy)
             await (0, tar_1.listTar)(archivePath, compressionMethod);
-        const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
         const archiveFileSize = (0, cacheUtils_1.getArchiveFileSizeInBytes)(archivePath);
+        const totalPart = Math.ceil(archiveFileSize / uploadChunkSize);
         (0, core_1.logDebug)(`File Size: ${archiveFileSize}`);
+        (0, core_1.logDebug)(`Total Part: ${totalPart}`);
         // For GHES, this check will take place in ReserveCache API with enterprise file size limit
-        if (archiveFileSize > fileSizeLimit && !(0, cacheUtils_1.isGhes)()) {
-            reject(new error_1.ArchiveFileError(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`));
+        if (archiveFileSize > constants_1.FileSizeLimit && !(0, cacheUtils_1.isGhes)()) {
+            return reject(new error_1.ArchiveFileError(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`));
         }
         // Upload Request
-        const request = new actions_cache_gateway_pb_js_1.UploadCacheRequest();
-        const meta = (0, proto_1.createMeta)(config);
-        request.setMeta(meta);
-        // upload Cache API
-        const presignedUrl = await new Promise((_resolve, _reject) => client.uploadCache(request, (err, res) => {
-            if (err)
-                _reject(new error_1.ApiRequestError('APIエラー'));
-            const url = res?.getPreSignedUrl();
-            if (!url)
-                reject(new error_1.ApiRequestError('presignedUrl not found.'));
-            _resolve(url);
-        }));
-        if (!presignedUrl)
-            return reject(new error_1.ApiRequestError('undefined presignedUrl.'));
+        const uploadRequest = (0, proto_1.startMultipartUploadCacheRequest)(config, totalPart);
+        const multipartUploadResponse = await (0, proto_1.startMultipartUploadCache)(client, uploadRequest);
+        if (!multipartUploadResponse)
+            return reject(new error_1.ApiRequestError('Failed multipartUpload Request.'));
+        const uploadId = multipartUploadResponse.uploadId;
+        const uploadKey = multipartUploadResponse.uploadKey;
+        const presignedUrls = multipartUploadResponse.preSignedUrlsList;
+        let i = 0;
+        const uploadPromises = [];
         const readFileStream = fs.createReadStream(archivePath, { highWaterMark: uploadChunkSize });
-        const uploadResponse = await (0, fetch_1.fetchRetry)(presignedUrl, {
-            method: 'PUT',
-            headers: new node_fetch_1.Headers({ 'Content-Length': `${archiveFileSize}` }),
-            body: readFileStream,
+        readFileStream
+            .on('data', data => {
+            // chunkSize読み出す毎に呼ばれる
+            const start = i * uploadChunkSize;
+            const end = Math.min(start + uploadChunkSize, archiveFileSize) - 1;
+            const partSize = end - start + 1;
+            uploadPromises.push((0, fetch_1.fetchRetry)(presignedUrls[i], {
+                method: 'PUT',
+                headers: { 'Content-Length': `${partSize}` },
+                body: data,
+            }));
+            i++;
+        })
+            .on('error', () => {
+            return reject(new error_1.FileStreamError('failed to read file.'));
         });
-        if (!(0, requestUtils_1.isSuccessStatusCode)(uploadResponse.status) || (0, requestUtils_1.isServerErrorStatusCode)(uploadResponse.status)) {
-            reject(new error_1.ApiRequestError('Upload failed.'));
-        }
-        return resolve();
+        readFileStream.on('end', async () => {
+            (0, core_1.logDebug)('File load completed.');
+            (0, core_1.logDebug)(`Concurrenct uploads: ${constants_1.ConcurrentUploads}`);
+            const plimit = (0, p_limit_1.default)(constants_1.ConcurrentUploads);
+            const uploadedPartPromises = uploadPromises.map(async (req) => plimit(async () => (0, proto_1.uploadProc)(req)));
+            let etags;
+            try {
+                const uploadedInfos = await Promise.all(uploadedPartPromises);
+                etags = uploadedInfos.filter((v) => v !== null);
+                if (!etags)
+                    throw new Error('No ETags.');
+            }
+            catch (error) {
+                if (error instanceof Error) {
+                    // Abort Request
+                    const abortRequest = (0, proto_1.abortMultipartUploadCacheRequest)(config, uploadId, uploadKey);
+                    await (0, proto_1.abortMultipartUploadCache)(client, abortRequest);
+                }
+                // abort後rejectをなげる
+                return reject(error);
+            }
+            // Complete Request
+            const partsList = (0, proto_1.createUploadedParts)(etags);
+            const completeUploadRequest = (0, proto_1.completeMultipartUploadCacheRequest)(config, uploadId, uploadKey, partsList);
+            await (0, proto_1.completeMultipartUploadCache)(client, completeUploadRequest);
+            // Try to delete the archive to save space
+            try {
+                (0, core_1.logDebug)('Removed archive file.');
+                await (0, cacheUtils_1.unlinkFile)(archivePath);
+            }
+            catch (error) {
+                (0, core_1.logDebug)(`Failed to delete archive: ${error} `);
+            }
+            return resolve();
+        });
     });
 }
-exports.saveCache = saveCache;
-async function restoreCache(client, config) {
+exports.saveCacheProc = saveCacheProc;
+async function restoreCacheProc(client, config) {
     return new Promise(async (resolve, reject) => {
         const { paths, key, restoreKeys } = config;
         // 問題があればthrow
@@ -40799,43 +42388,35 @@ async function restoreCache(client, config) {
         if (keys.length > 10) {
             reject(new error_1.ValidationError('Key Validation Error: Keys are limited to a maximum of 10.'));
         }
-        for (const k of keys) {
+        for (const k of keys)
             checkKey(k);
-        }
         const compressionMethod = await (0, cacheUtils_1.getCompressionMethod)();
-        // path are needed to compute version
-        const restoreCacheRequest = new actions_cache_gateway_pb_js_1.RestoreCacheRequest();
-        const meta = (0, proto_1.createMeta)(config);
-        restoreCacheRequest.setMeta(meta);
-        restoreCacheRequest.setRestoreKeysList(keys);
         // fetch Restore Cache API
-        const response = await new Promise((_resolve, _reject) => client.restoreCache(restoreCacheRequest, (err, res) => {
-            if (err)
-                _reject(new error_1.ApiRequestError('APIエラー'));
-            _resolve(res);
-        }));
-        const preSignedUrl = response?.getPreSignedUrl() ?? '';
-        const cacheKey = response?.getCacheKey() ?? '';
-        if (!preSignedUrl)
-            reject(new error_1.ApiRequestError('データ取得エラー'));
-        (0, core_1.setSecret)(preSignedUrl);
-        const cacheData = await (0, fetch_1.fetchRetry)(preSignedUrl);
-        if (cacheData.status === 204 ||
-            !(0, requestUtils_1.isSuccessStatusCode)(cacheData.status) ||
-            (0, requestUtils_1.isServerErrorStatusCode)(cacheData.status)) {
+        const restoreCacheRequest = (0, proto_1.createRestoreCacheRequest)(config, keys);
+        const response = await (0, proto_1.restoreCache)(client, restoreCacheRequest);
+        if (!response)
+            reject(new error_1.ApiRequestError('Failed Restore Cache Request.'));
+        const presignedUrl = response?.preSignedUrl;
+        const cacheKey = response?.cacheKey;
+        if (!presignedUrl || !cacheKey)
+            return reject(new error_1.ApiRequestError('データ取得エラー'));
+        if (presignedUrl)
+            (0, core_1.setSecret)(presignedUrl);
+        const cacheData = await (0, fetch_1.fetchRetry)(presignedUrl);
+        if (cacheData.status === 204 || (0, requestUtils_1.isErrorStatusCode)(cacheData.status)) {
             return reject(new error_1.ApiRequestError('No Contents.'));
         }
         const archivePath = path.join(await (0, cacheUtils_1.createTempDirectory)(), (0, cacheUtils_1.getCacheFileName)(compressionMethod));
-        (0, core_1.logDebug)(`Archive Path: ${archivePath}`);
+        (0, core_1.logDebug)(`Archive Path: ${archivePath} `);
         try {
-            await (0, downloadUtils_1.downloadCacheHttpClient)(preSignedUrl, archivePath);
+            await (0, downloadUtils_1.downloadCacheHttpClient)(presignedUrl, archivePath);
             if (utils_1.isAnnoy)
                 await (0, tar_1.listTar)(archivePath, compressionMethod);
             const archiveFileSize = (0, cacheUtils_1.getArchiveFileSizeInBytes)(archivePath);
-            (0, core_1.logInfo)(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+            (0, core_1.logInfo)(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB(${archiveFileSize} B)`);
             await (0, tar_1.extractTar)(archivePath, compressionMethod);
             (0, core_1.logInfo)('Cache restored successfully');
-            resolve(cacheKey);
+            return resolve(cacheKey);
         }
         finally {
             // Try to delete the archive to save space
@@ -40843,13 +42424,12 @@ async function restoreCache(client, config) {
                 await (0, cacheUtils_1.unlinkFile)(archivePath);
             }
             catch (error) {
-                reject(new error_1.FileStreamError(`Failed to delete archive: ${error}`));
+                reject(new error_1.FileStreamError(`Failed to delete archive: ${error} `));
             }
         }
-        resolve('');
     });
 }
-exports.restoreCache = restoreCache;
+exports.restoreCacheProc = restoreCacheProc;
 
 
 /***/ }),
@@ -40884,13 +42464,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isGhes = exports.assertDefined = exports.isZstdInstalled = exports.isGnuTarInstalled = exports.getCacheFileName = exports.getCompressionMethod = exports.unlinkFile = exports.resolvePaths = exports.getArchiveFileSizeInBytes = exports.createTempDirectory = void 0;
-const exec = __importStar(__nccwpck_require__(1514));
-const glob = __importStar(__nccwpck_require__(8090));
-const io = __importStar(__nccwpck_require__(7436));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
-const semver = __importStar(__nccwpck_require__(1383));
 const util = __importStar(__nccwpck_require__(3837));
+const exec = __importStar(__nccwpck_require__(1514));
+const glob = __importStar(__nccwpck_require__(8090));
+const io = __importStar(__nccwpck_require__(7351));
+const semver = __importStar(__nccwpck_require__(1383));
 const uuid_1 = __nccwpck_require__(5840);
 const constants_1 = __nccwpck_require__(7151);
 const core_1 = __nccwpck_require__(8816);
@@ -41024,7 +42604,7 @@ exports.isGhes = isGhes;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.defaultUploadChunkSize = exports.SocketTimeout = exports.DefaultRetryDelay = exports.DefaultRetryAttempts = exports.CompressionMethod = exports.CacheFilename = void 0;
+exports.FileSizeLimit = exports.ConcurrentUploads = exports.DefaultUploadChunkSize = exports.SocketTimeout = exports.DefaultRetryDelay = exports.DefaultRetryAttempts = exports.CompressionMethod = exports.CacheFilename = void 0;
 var CacheFilename;
 (function (CacheFilename) {
     CacheFilename["Gzip"] = "cache.tgz";
@@ -41046,7 +42626,11 @@ exports.DefaultRetryDelay = 5000;
 // over the socket during this period, the socket is destroyed and the download
 // is aborted.
 exports.SocketTimeout = 5000;
-exports.defaultUploadChunkSize = 1 * 1024 * 1024;
+// 5MB
+exports.DefaultUploadChunkSize = 5 * 1024 * 1024;
+exports.ConcurrentUploads = 10;
+// 10GB per repo limit
+exports.FileSizeLimit = 10 * 1024 * 1024 * 1024;
 
 
 /***/ }),
@@ -41157,14 +42741,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadCacheHttpClient = void 0;
-const http_client_1 = __nccwpck_require__(6255);
 const fs = __importStar(__nccwpck_require__(7147));
 const stream = __importStar(__nccwpck_require__(2781));
 const util = __importStar(__nccwpck_require__(3837));
+const http_client_1 = __nccwpck_require__(6255);
 const utils = __importStar(__nccwpck_require__(2534));
 const constants_1 = __nccwpck_require__(7151);
-const requestUtils_1 = __nccwpck_require__(8594);
 const core_1 = __nccwpck_require__(8816);
+const requestUtils_1 = __nccwpck_require__(8594);
 /**
  * Pipes the body of a HTTP response to a stream
  *
@@ -41266,10 +42850,10 @@ exports.ArchiveFileError = ArchiveFileError;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.retryHttpClientResponse = exports.retry = exports.isRetryableStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
-const core_1 = __nccwpck_require__(8816);
+exports.retryHttpClientResponse = exports.retry = exports.isRetryableStatusCode = exports.isErrorStatusCode = exports.isServerErrorStatusCode = exports.isSuccessStatusCode = void 0;
 const http_client_1 = __nccwpck_require__(6255);
 const constants_1 = __nccwpck_require__(7151);
+const core_1 = __nccwpck_require__(8816);
 const sleep_1 = __nccwpck_require__(7082);
 function isSuccessStatusCode(statusCode) {
     if (!statusCode) {
@@ -41285,6 +42869,10 @@ function isServerErrorStatusCode(statusCode) {
     return statusCode >= 500;
 }
 exports.isServerErrorStatusCode = isServerErrorStatusCode;
+function isErrorStatusCode(statusCode) {
+    return !isSuccessStatusCode(statusCode) || isServerErrorStatusCode(statusCode);
+}
+exports.isErrorStatusCode = isErrorStatusCode;
 function isRetryableStatusCode(statusCode) {
     if (!statusCode) {
         return false;
@@ -41371,10 +42959,10 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.listTar = exports.createTar = exports.extractTar = void 0;
-const exec_1 = __nccwpck_require__(1514);
-const io = __importStar(__nccwpck_require__(7436));
 const fs_1 = __nccwpck_require__(7147);
 const path = __importStar(__nccwpck_require__(1017));
+const exec_1 = __nccwpck_require__(1514);
+const io = __importStar(__nccwpck_require__(7351));
 const utils = __importStar(__nccwpck_require__(2534));
 const constants_1 = __nccwpck_require__(7151);
 const env_1 = __nccwpck_require__(2479);
@@ -41595,10 +43183,10 @@ exports.fetchRetry = fetchRetry;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getClientConfigByInputs = exports.getInputs = void 0;
+const constants_1 = __nccwpck_require__(7151);
+const core_1 = __nccwpck_require__(8816);
 const argv_1 = __nccwpck_require__(6955);
 const env_1 = __nccwpck_require__(2479);
-const core_1 = __nccwpck_require__(8816);
-const constants_1 = __nccwpck_require__(7151);
 function getInputs(argv) {
     const inputArgv = (0, argv_1.getArgv)(argv);
     const requiredOption = { required: true };
@@ -41606,7 +43194,7 @@ function getInputs(argv) {
     const path = inputArgv.path ?? (0, core_1.getInputAsArray)('path', requiredOption);
     const key = inputArgv.key ?? (0, core_1.getInput)('key', requiredOption);
     const restoreKeys = inputArgv.restoreKeys ?? (0, core_1.getInputAsArray)('restore-keys');
-    const uploadChunkSize = inputArgv.uploadChunkSize ?? (0, core_1.getInputAsInt)('upload-chunk-size') ?? constants_1.defaultUploadChunkSize;
+    const uploadChunkSize = inputArgv.uploadChunkSize ?? (0, core_1.getInputAsInt)('upload-chunk-size') ?? constants_1.DefaultUploadChunkSize;
     return {
         path,
         key,
@@ -41651,19 +43239,24 @@ exports.isNumber = isNumber;
 /***/ }),
 
 /***/ 6188:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createMeta = exports.createGatewayClient = void 0;
+exports.uploadProc = exports.completeMultipartUploadCache = exports.abortMultipartUploadCache = exports.startMultipartUploadCache = exports.restoreCache = exports.createRestoreCacheRequest = exports.abortMultipartUploadCacheRequest = exports.completeMultipartUploadCacheRequest = exports.startMultipartUploadCacheRequest = exports.createUploadedParts = exports.createMeta = exports.createGatewayClient = void 0;
+const node_querystring_1 = __importDefault(__nccwpck_require__(9630));
 const grpc_js_1 = __nccwpck_require__(7025);
-const env_1 = __nccwpck_require__(2479);
 const actions_cache_gateway_grpc_pb_js_1 = __nccwpck_require__(2844);
 const actions_cache_gateway_pb_js_1 = __nccwpck_require__(4738);
+const error_1 = __nccwpck_require__(6798);
+const env_1 = __nccwpck_require__(2479);
+// TODO: gatewayのエンドポイントわかったら書換
+const endpoint = (0, env_1.getEnv)('GATEWAY_END_POINT') ?? '';
 function createGatewayClient() {
-    // TODO: gatewayのエンドポイントわかったら書換
-    const endpoint = (0, env_1.getEnv)('GATEWAY_END_POINT') ?? '';
     return endpoint ? new actions_cache_gateway_grpc_pb_js_1.GatewayClient(endpoint, grpc_js_1.credentials.createInsecure()) : undefined;
 }
 exports.createGatewayClient = createGatewayClient;
@@ -41676,6 +43269,108 @@ function createMeta(config) {
     return meta;
 }
 exports.createMeta = createMeta;
+function createUploadedParts(etags) {
+    return etags.map(etag => {
+        const parts = new actions_cache_gateway_pb_js_1.UploadedParts();
+        parts.setETag(etag.eTag);
+        parts.setPartNumber(etag.partNumber);
+        return parts;
+    });
+}
+exports.createUploadedParts = createUploadedParts;
+function startMultipartUploadCacheRequest(config, totalPart) {
+    const request = new actions_cache_gateway_pb_js_1.StartMultipartUploadCacheRequest();
+    const meta = createMeta(config);
+    request.setMeta(meta);
+    request.setTotalPart(totalPart);
+    return request;
+}
+exports.startMultipartUploadCacheRequest = startMultipartUploadCacheRequest;
+function completeMultipartUploadCacheRequest(config, uploadId, uploadKey, partsList) {
+    const request = new actions_cache_gateway_pb_js_1.CompleteMultipartUploadCacheRequest();
+    request.setUploadId(uploadId);
+    request.setUploadKey(uploadKey);
+    request.setPartsList(partsList);
+    const meta = createMeta(config);
+    request.setMeta(meta);
+    return request;
+}
+exports.completeMultipartUploadCacheRequest = completeMultipartUploadCacheRequest;
+function abortMultipartUploadCacheRequest(config, uploadId, uploadKey) {
+    const request = new actions_cache_gateway_pb_js_1.AbortMultipartUploadCacheRequest();
+    request.setUploadId(uploadId);
+    request.setUploadKey(uploadKey);
+    const meta = createMeta(config);
+    request.setMeta(meta);
+    return request;
+}
+exports.abortMultipartUploadCacheRequest = abortMultipartUploadCacheRequest;
+// path are needed to compute version
+function createRestoreCacheRequest(config, keys) {
+    const request = new actions_cache_gateway_pb_js_1.RestoreCacheRequest();
+    const meta = createMeta(config);
+    request.setMeta(meta);
+    request.setRestoreKeysList(keys);
+    return request;
+}
+exports.createRestoreCacheRequest = createRestoreCacheRequest;
+async function restoreCache(client, request) {
+    return new Promise((resolve, reject) => client.restoreCache(request, (err, res) => {
+        if (err) {
+            reject(err instanceof Error
+                ? new error_1.ApiRequestError(`Resotre Cache Request Error: ${err?.details ?? err.message}.`)
+                : err);
+        }
+        resolve(res?.toObject());
+    }));
+}
+exports.restoreCache = restoreCache;
+async function startMultipartUploadCache(client, request) {
+    return new Promise((resolve, reject) => client.startMultipartUploadCache(request, (err, res) => {
+        if (err) {
+            reject(err instanceof Error
+                ? new error_1.ApiRequestError(`Multipart Uplaod Cache Request Error: ${err?.details ?? err.message}.`)
+                : err);
+        }
+        resolve(res?.toObject());
+    }));
+}
+exports.startMultipartUploadCache = startMultipartUploadCache;
+async function abortMultipartUploadCache(client, request) {
+    return new Promise((resolve, reject) => client.abortMultipartUploadCache(request, err => {
+        if (err) {
+            reject(err instanceof Error ? new error_1.ApiRequestError(`Abort Request Error: ${err?.details ?? err.message}.`) : err);
+        }
+        return resolve();
+    }));
+}
+exports.abortMultipartUploadCache = abortMultipartUploadCache;
+async function completeMultipartUploadCache(client, request) {
+    return new Promise((resolve, reject) => client.completeMultipartUploadCache(request, err => {
+        if (err) {
+            reject(err instanceof Error ? new error_1.ApiRequestError(`Complete Request Error: ${err?.details ?? err.message}.`) : err);
+        }
+        resolve();
+    }));
+}
+exports.completeMultipartUploadCache = completeMultipartUploadCache;
+async function uploadProc(request) {
+    return new Promise(async (resolve, reject) => {
+        const res = await request;
+        if (!res.ok) {
+            reject(new error_1.ApiRequestError(`Failed to complete multipart upload: ${res.status} ${res.statusText} `));
+        }
+        const query = node_querystring_1.default.parse(res.url);
+        const partNumber = query.partNumber;
+        if (!partNumber)
+            return reject(new error_1.ApiRequestError(`Failed to get partNumber for part ${partNumber}.`));
+        const eTag = (res.headers.get('ETag') ?? '').replaceAll('"', '');
+        if (!eTag)
+            return reject(new error_1.ApiRequestError(`Failed to get eTag for part ${partNumber}.`));
+        return resolve({ partNumber: Number(partNumber), eTag });
+    });
+}
+exports.uploadProc = uploadProc;
 
 
 /***/ }),
@@ -41738,8 +43433,8 @@ exports.strToBool = strToBool;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.isExactKeyMatch = exports.isValidEvent = exports.nodeEnv = exports.isAnnoy = exports.isDebug = void 0;
-const env_1 = __nccwpck_require__(2479);
 const core_1 = __nccwpck_require__(8816);
+const env_1 = __nccwpck_require__(2479);
 const strToBool_1 = __nccwpck_require__(6278);
 exports.isDebug = (0, strToBool_1.strToBool)((0, env_1.getEnv)('DEBUG_MODE')) ?? false;
 exports.isAnnoy = exports.isDebug && ((0, strToBool_1.strToBool)((0, env_1.getEnv)('IS_ANNOY')) ?? false);
@@ -41858,6 +43553,14 @@ module.exports = require("net");
 
 /***/ }),
 
+/***/ 9630:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:querystring");
+
+/***/ }),
+
 /***/ 2037:
 /***/ ((module) => {
 
@@ -41942,7 +43645,7 @@ module.exports = require("zlib");
 /***/ ((module) => {
 
 "use strict";
-module.exports = {"i8":"1.8.12"};
+module.exports = {"i8":"1.8.13"};
 
 /***/ }),
 
@@ -42033,11 +43736,11 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const cache_1 = __nccwpck_require__(8207);
-const error_1 = __nccwpck_require__(6798);
 const core_1 = __nccwpck_require__(8816);
-const utils_1 = __nccwpck_require__(4977);
+const error_1 = __nccwpck_require__(6798);
 const inputs_1 = __nccwpck_require__(8163);
 const proto_1 = __nccwpck_require__(6188);
+const utils_1 = __nccwpck_require__(4977);
 async function run() {
     try {
         if (!(0, utils_1.isValidEvent)())
@@ -42067,7 +43770,7 @@ async function run() {
         }
         const clientConfig = (0, inputs_1.getClientConfigByInputs)(inputs);
         try {
-            await (0, cache_1.saveCache)(gatewayClient, clientConfig);
+            await (0, cache_1.saveCacheProc)(gatewayClient, clientConfig);
             (0, core_1.logInfo)(`Cache saved with key: ${primaryKey}`);
         }
         catch (e) {
@@ -42086,7 +43789,6 @@ async function run() {
     }
     catch (error) {
         if (error instanceof Error) {
-            (0, core_1.logWarning)(error.message);
             (0, core_1.setFailed)(error.message);
         }
         else {

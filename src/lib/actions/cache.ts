@@ -1,10 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { Response, Headers } from 'node-fetch';
+import { Response } from 'node-fetch';
 import pLimit from 'p-limit';
-import { GatewayClientConfig, UploadPromise, PartInfo } from '@/@types/proto';
+import { GatewayClientConfig } from '@/@types/proto';
 import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
-import { UploadCacheRequest, RestoreCacheRequest, RestoreCacheResponse } from '@/gen/proto/actions_cache_gateway_pb.js';
+import { UploadedParts } from '@/gen/proto/actions_cache_gateway_pb.js';
 import {
   getCompressionMethod,
   resolvePaths,
@@ -14,14 +14,25 @@ import {
   isGhes,
   unlinkFile,
 } from '@/lib/actions/cacheUtils';
-import { ProcConcurrencyOfRequest } from '@/lib/actions/constants';
+import { ConcurrentUploads, FileSizeLimit } from '@/lib/actions/constants';
 import { logDebug, logInfo, setSecret } from '@/lib/actions/core';
 import { downloadCacheHttpClient } from '@/lib/actions/downloadUtils';
 import { ValidationError, ApiRequestError, FileStreamError, ArchiveFileError } from '@/lib/actions/error';
-import { isSuccessStatusCode, isServerErrorStatusCode } from '@/lib/actions/requestUtils';
+import { isErrorStatusCode } from '@/lib/actions/requestUtils';
 import { listTar, createTar, extractTar } from '@/lib/actions/tar';
 import { fetchRetry as fetch } from '@/lib/fetch';
-import { createMeta } from '@/lib/proto';
+import {
+  startMultipartUploadCacheRequest,
+  completeMultipartUploadCacheRequest,
+  createRestoreCacheRequest,
+  createUploadedParts,
+  abortMultipartUploadCacheRequest,
+  restoreCache,
+  startMultipartUploadCache,
+  abortMultipartUploadCache,
+  completeMultipartUploadCache,
+  uploadProc,
+} from '@/lib/proto';
 import { isAnnoy } from '@/lib/utils';
 
 function checkPaths(paths: string[]): void {
@@ -40,7 +51,7 @@ function checkKey(key: string): void {
   }
 }
 
-export async function saveCache(client: GatewayClient, config: GatewayClientConfig): Promise<void> {
+export async function saveCacheProc(client: GatewayClient, config: GatewayClientConfig): Promise<void> {
   return new Promise(async (resolve, reject) => {
     const { paths, key, uploadChunkSize } = config;
 
@@ -59,13 +70,14 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
 
     await createTar(archiveFolder, cachePaths, compressionMethod);
     if (isAnnoy) await listTar(archivePath, compressionMethod);
-    const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
     const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
+    const totalPart = Math.ceil(archiveFileSize / uploadChunkSize);
     logDebug(`File Size: ${archiveFileSize}`);
+    logDebug(`Total Part: ${totalPart}`);
 
     // For GHES, this check will take place in ReserveCache API with enterprise file size limit
-    if (archiveFileSize > fileSizeLimit && !isGhes()) {
-      reject(
+    if (archiveFileSize > FileSizeLimit && !isGhes()) {
+      return reject(
         new ArchiveFileError(
           `Cache size of ~${Math.round(
             archiveFileSize / (1024 * 1024),
@@ -75,36 +87,82 @@ export async function saveCache(client: GatewayClient, config: GatewayClientConf
     }
 
     // Upload Request
-    const request = new UploadCacheRequest();
-    const meta = createMeta(config);
-    request.setMeta(meta);
+    const uploadRequest = startMultipartUploadCacheRequest(config, totalPart);
+    const multipartUploadResponse = await startMultipartUploadCache(client, uploadRequest);
+    if (!multipartUploadResponse) return reject(new ApiRequestError('Failed multipartUpload Request.'));
 
-    // upload Cache API
-    const presignedUrl = await new Promise<string | undefined>((_resolve, _reject) =>
-      client.uploadCache(request, (err, res) => {
-        if (err) _reject(new ApiRequestError('APIエラー'));
-        const url = res?.getPreSignedUrl();
-        if (!url) reject(new ApiRequestError('presignedUrl not found.'));
-        _resolve(url);
-      }),
-    );
-    if (!presignedUrl) return reject(new ApiRequestError('undefined presignedUrl.'));
+    const uploadId = multipartUploadResponse.uploadId;
+    const uploadKey = multipartUploadResponse.uploadKey;
+    const presignedUrls: string[] = multipartUploadResponse.preSignedUrlsList;
 
+    let i = 0;
+    const uploadPromises: Promise<Response>[] = [];
     const readFileStream = fs.createReadStream(archivePath, { highWaterMark: uploadChunkSize });
-    const uploadResponse = await fetch(presignedUrl, {
-      method: 'PUT',
-      headers: new Headers({ 'Content-Length': `${archiveFileSize}` }),
-      body: readFileStream,
-    });
-    if (!isSuccessStatusCode(uploadResponse.status) || isServerErrorStatusCode(uploadResponse.status)) {
-      reject(new ApiRequestError('Upload failed.'));
-    }
+    readFileStream
+      .on('data', data => {
+        // chunkSize読み出す毎に呼ばれる
+        const start = i * uploadChunkSize;
+        const end = Math.min(start + uploadChunkSize, archiveFileSize) - 1;
+        const partSize = end - start + 1;
 
-    return resolve();
+        uploadPromises.push(
+          fetch(presignedUrls[i], {
+            method: 'PUT',
+            headers: { 'Content-Length': `${partSize}` },
+            body: data,
+          }),
+        );
+
+        i++;
+      })
+      .on('error', () => {
+        return reject(new FileStreamError('failed to read file.'));
+      });
+
+    readFileStream.on('end', async () => {
+      logDebug('File load completed.');
+      logDebug(`Concurrenct uploads: ${ConcurrentUploads}`);
+
+      const plimit = pLimit(ConcurrentUploads);
+      const uploadedPartPromises = uploadPromises.map(async req => plimit(async () => uploadProc(req)));
+
+      let etags;
+      try {
+        const uploadedInfos = await Promise.all(uploadedPartPromises);
+        etags = uploadedInfos.filter((v): v is UploadedParts.AsObject => v !== null);
+        if (!etags) throw new Error('No ETags.');
+      } catch (error) {
+        if (error instanceof Error) {
+          // Abort Request
+          const abortRequest = abortMultipartUploadCacheRequest(config, uploadId, uploadKey);
+          await abortMultipartUploadCache(client, abortRequest);
+        }
+        // abort後rejectをなげる
+        return reject(error);
+      }
+
+      // Complete Request
+      const partsList = createUploadedParts(etags);
+      const completeUploadRequest = completeMultipartUploadCacheRequest(config, uploadId, uploadKey, partsList);
+      await completeMultipartUploadCache(client, completeUploadRequest);
+
+      // Try to delete the archive to save space
+      try {
+        logDebug('Removed archive file.');
+        await unlinkFile(archivePath);
+      } catch (error) {
+        logDebug(`Failed to delete archive: ${error} `);
+      }
+
+      return resolve();
+    });
   });
 }
 
-export async function restoreCache(client: GatewayClient, config: GatewayClientConfig): Promise<string | undefined> {
+export async function restoreCacheProc(
+  client: GatewayClient,
+  config: GatewayClientConfig,
+): Promise<string | undefined> {
   return new Promise(async (resolve, reject) => {
     const { paths, key, restoreKeys } = config;
 
@@ -119,63 +177,47 @@ export async function restoreCache(client: GatewayClient, config: GatewayClientC
     if (keys.length > 10) {
       reject(new ValidationError('Key Validation Error: Keys are limited to a maximum of 10.'));
     }
-    for (const k of keys) {
-      checkKey(k);
-    }
+    for (const k of keys) checkKey(k);
 
     const compressionMethod = await getCompressionMethod();
 
-    // path are needed to compute version
-    const restoreCacheRequest = new RestoreCacheRequest();
-    const meta = createMeta(config);
-    restoreCacheRequest.setMeta(meta);
-    restoreCacheRequest.setRestoreKeysList(keys);
-
     // fetch Restore Cache API
-    const response = await new Promise<RestoreCacheResponse | undefined>((_resolve, _reject) =>
-      client.restoreCache(restoreCacheRequest, (err, res) => {
-        if (err) _reject(new ApiRequestError('APIエラー'));
-        _resolve(res);
-      }),
-    );
+    const restoreCacheRequest = createRestoreCacheRequest(config, keys);
+    const response = await restoreCache(client, restoreCacheRequest);
+    if (!response) reject(new ApiRequestError('Failed Restore Cache Request.'));
 
-    const preSignedUrl = response?.getPreSignedUrl() ?? '';
-    const cacheKey = response?.getCacheKey() ?? '';
-    if (!preSignedUrl) reject(new ApiRequestError('データ取得エラー'));
-    setSecret(preSignedUrl);
+    const presignedUrl = response?.preSignedUrl;
+    const cacheKey = response?.cacheKey;
 
-    const cacheData = await fetch(preSignedUrl);
-    if (
-      cacheData.status === 204 ||
-      !isSuccessStatusCode(cacheData.status) ||
-      isServerErrorStatusCode(cacheData.status)
-    ) {
+    if (!presignedUrl || !cacheKey) return reject(new ApiRequestError('データ取得エラー'));
+    if (presignedUrl) setSecret(presignedUrl);
+
+    const cacheData = await fetch(presignedUrl);
+    if (cacheData.status === 204 || isErrorStatusCode(cacheData.status)) {
       return reject(new ApiRequestError('No Contents.'));
     }
 
     const archivePath = path.join(await createTempDirectory(), getCacheFileName(compressionMethod));
-    logDebug(`Archive Path: ${archivePath}`);
+    logDebug(`Archive Path: ${archivePath} `);
 
     try {
-      await downloadCacheHttpClient(preSignedUrl, archivePath);
+      await downloadCacheHttpClient(presignedUrl, archivePath);
 
       if (isAnnoy) await listTar(archivePath, compressionMethod);
       const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
-      logInfo(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+      logInfo(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB(${archiveFileSize} B)`);
 
       await extractTar(archivePath, compressionMethod);
       logInfo('Cache restored successfully');
 
-      resolve(cacheKey);
+      return resolve(cacheKey);
     } finally {
       // Try to delete the archive to save space
       try {
         await unlinkFile(archivePath);
       } catch (error) {
-        reject(new FileStreamError(`Failed to delete archive: ${error}`));
+        reject(new FileStreamError(`Failed to delete archive: ${error} `));
       }
     }
-
-    resolve('');
   });
 }

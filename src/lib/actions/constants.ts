@@ -22,4 +22,10 @@ export const DefaultRetryDelay = 5000;
 // is aborted.
 export const SocketTimeout = 5000;
 
-export const defaultUploadChunkSize = 1 * 1024 * 1024;
+// 5MB
+export const DefaultUploadChunkSize = 5 * 1024 * 1024;
+
+export const ConcurrentUploads = 10;
+
+// 10GB per repo limit
+export const FileSizeLimit = 10 * 1024 * 1024 * 1024;

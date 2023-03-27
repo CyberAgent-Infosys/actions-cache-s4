@@ -23,7 +23,7 @@ beforeEach(() => {
   jest.spyOn(actions, 'getInputAsInt').mockImplementation(() => 9999);
   jest.spyOn(actions, 'getBooleanInput').mockImplementation(() => true);
   jest.spyOn(actions, 'getInputAsArray').mockImplementation(() => ['XXX']);
-  jest.spyOn(cache, 'saveCache').mockImplementation(async () => {});
+  jest.spyOn(cache, 'saveCacheProc').mockImplementation(async () => {});
   jest.spyOn(inputs, 'getInputs').mockImplementation(() => ({
     key: 'LINUX-nodejs-ABRACADABRA',
     path: ['./node_modules', './package-lock.json'],

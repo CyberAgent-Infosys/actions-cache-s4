@@ -3,31 +3,65 @@ syntax = "proto3";
 package cycloudio.gateway;
 option go_package = "github.com/cycloud-io/actions-cache-gateway/api/proto.go";
 
+import "google/protobuf/empty.proto";
+
 service Gateway {
-  rpc UploadCache(UploadCacheRequest) returns (UploadCacheResponse) {}
-  rpc RestoreCache(RestoreCacheRequest) returns (RestoreCacheResponse) {}
+    rpc UploadCache(UploadCacheRequest) returns (UploadCacheResponse) {}
+    rpc RestoreCache(RestoreCacheRequest) returns (RestoreCacheResponse) {}
+    rpc StartMultipartUploadCache(StartMultipartUploadCacheRequest)
+        returns (StartMultipartUploadCacheResponse) {}
+    rpc CompleteMultipartUploadCache(CompleteMultipartUploadCacheRequest)
+        returns (google.protobuf.Empty) {}
+    rpc AbortMultipartUploadCache(AbortMultipartUploadCacheRequest)
+        returns (google.protobuf.Empty) {}
 }
 
 message ObjectInfo {
-  string github_url      = 1;
-  string github_repository    = 2;
-  string key = 3;
+    string github_url = 1;
+    string github_repository = 2;
+    string key = 3;
 }
 
-message UploadCacheRequest {
-    ObjectInfo  meta  = 1;
+message UploadedParts {
+    int64 part_number = 1;
+    string e_tag = 2;
 }
 
-message UploadCacheResponse {
-  string pre_signed_url = 1;
+message StartMultipartUploadCacheRequest {
+    ObjectInfo meta = 1;
+    int64 total_part = 2;
 }
+
+message StartMultipartUploadCacheResponse {
+    string upload_id = 1;
+    string upload_key = 2;
+    string content_type = 3;
+    repeated string pre_signed_urls = 4;
+}
+
+message CompleteMultipartUploadCacheRequest {
+    string upload_id = 1;
+    string upload_key = 2;
+    repeated UploadedParts parts = 3;
+    ObjectInfo meta = 4;
+}
+
+message UploadCacheRequest { ObjectInfo meta = 1; }
+
+message UploadCacheResponse { string pre_signed_url = 1; }
 
 message RestoreCacheRequest {
-  ObjectInfo meta = 1;
-  repeated string restore_keys = 2;
+    ObjectInfo meta = 1;
+    repeated string restore_keys = 2;
 }
 
 message RestoreCacheResponse {
-  string pre_signed_url = 1;
-  string cache_key = 2;
+    string pre_signed_url = 1;
+    string cache_key = 2;
+}
+
+message AbortMultipartUploadCacheRequest {
+    string upload_id = 1;
+    string upload_key = 2;
+    ObjectInfo meta = 3;
 }

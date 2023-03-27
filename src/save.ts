@@ -1,4 +1,4 @@
-import { saveCache } from '@/lib/actions/cache';
+import { saveCacheProc } from '@/lib/actions/cache';
 import { getState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { ValidationError, ReserveCacheError } from '@/lib/actions/error';
 import { getInputs, getClientConfigByInputs } from '@/lib/inputs';
@@ -38,7 +38,7 @@ export async function run(): Promise<void> {
     }
     const clientConfig = getClientConfigByInputs(inputs);
     try {
-      await saveCache(gatewayClient, clientConfig);
+      await saveCacheProc(gatewayClient, clientConfig);
       logInfo(`Cache saved with key: ${primaryKey}`);
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -53,7 +53,6 @@ export async function run(): Promise<void> {
     }
   } catch (error) {
     if (error instanceof Error) {
-      logWarning(error.message);
       setFailed(error.message);
     } else {
       console.error(error);

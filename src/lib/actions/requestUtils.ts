@@ -17,6 +17,10 @@ export function isServerErrorStatusCode(statusCode?: number): boolean {
   return statusCode >= 500;
 }
 
+export function isErrorStatusCode(statusCode?: number): boolean {
+  return !isSuccessStatusCode(statusCode) || isServerErrorStatusCode(statusCode);
+}
+
 export function isRetryableStatusCode(statusCode?: number): boolean {
   if (!statusCode) {
     return false;

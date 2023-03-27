@@ -1,4 +1,4 @@
-import { restoreCache } from '@/lib/actions/cache';
+import { restoreCacheProc } from '@/lib/actions/cache';
 import { setCacheHitOutput, saveState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { ValidationError } from '@/lib/actions/error';
 import { getInputs, getClientConfigByInputs } from '@/lib/inputs';
@@ -24,7 +24,7 @@ export async function run(): Promise<void> {
 
     const clientConfig = getClientConfigByInputs(inputs);
     try {
-      const cacheKey = await restoreCache(gatewayClient, clientConfig);
+      const cacheKey = await restoreCacheProc(gatewayClient, clientConfig);
       if (!cacheKey) {
         logInfo(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);
         return;
@@ -44,7 +44,11 @@ export async function run(): Promise<void> {
       }
     }
   } catch (error) {
-    if (error instanceof Error) setFailed(error.message);
+    if (error instanceof Error) {
+      setFailed(error.message);
+    } else {
+      console.error(error);
+    }
   }
 }
 

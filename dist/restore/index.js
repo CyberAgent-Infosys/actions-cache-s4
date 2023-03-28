@@ -42260,7 +42260,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.restoreCacheProc = exports.saveCacheProc = void 0;
+exports.execRestoreCache = exports.execSaveCache = void 0;
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
 const p_limit_1 = __importDefault(__nccwpck_require__(7684));
@@ -42274,7 +42274,7 @@ const tar_1 = __nccwpck_require__(266);
 const fetch_1 = __nccwpck_require__(9531);
 const proto_1 = __nccwpck_require__(6188);
 const utils_1 = __nccwpck_require__(4977);
-async function saveCacheProc(client, config) {
+async function execSaveCache(client, config) {
     return new Promise(async (resolve, reject) => {
         const { paths, key, uploadChunkSize } = config;
         // 問題があればthrow
@@ -42362,8 +42362,8 @@ async function saveCacheProc(client, config) {
         });
     });
 }
-exports.saveCacheProc = saveCacheProc;
-async function restoreCacheProc(client, config) {
+exports.execSaveCache = execSaveCache;
+async function execRestoreCache(client, config) {
     return new Promise(async (resolve, reject) => {
         const { paths, key, restoreKeys } = config;
         // 問題があればthrow
@@ -42415,7 +42415,7 @@ async function restoreCacheProc(client, config) {
         }
     });
 }
-exports.restoreCacheProc = restoreCacheProc;
+exports.execRestoreCache = execRestoreCache;
 
 
 /***/ }),
@@ -43754,7 +43754,7 @@ async function run() {
         (0, core_1.saveState)('CACHE_KEY', inputs.key);
         const clientConfig = (0, inputs_1.getClientConfigByInputs)(inputs);
         try {
-            const cacheKey = await (0, cache_1.restoreCacheProc)(gatewayClient, clientConfig);
+            const cacheKey = await (0, cache_1.execRestoreCache)(gatewayClient, clientConfig);
             if (!cacheKey) {
                 (0, core_1.logInfo)(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);
                 return;

@@ -1,4 +1,4 @@
-import { saveCacheProc } from '@/lib/actions/cache';
+import { execSaveCache } from '@/lib/actions/cache';
 import { isExactKeyMatch, isValidEvent } from '@/lib/actions/cacheUtils';
 import { getState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { ValidationError, ReserveCacheError } from '@/lib/actions/error';
@@ -39,7 +39,7 @@ export async function run(): Promise<void> {
     }
     const clientConfig = getClientConfigByInputs(inputs);
     try {
-      await saveCacheProc(gatewayClient, clientConfig);
+      await execSaveCache(gatewayClient, clientConfig);
       logInfo(`Cache saved with key: ${primaryKey}`);
     } catch (e: unknown) {
       if (e instanceof Error) {

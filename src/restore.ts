@@ -1,4 +1,4 @@
-import { restoreCacheProc } from '@/lib/actions/cache';
+import { execRestoreCache } from '@/lib/actions/cache';
 import { isExactKeyMatch, isValidEvent } from '@/lib/actions/cacheUtils';
 import { setCacheHitOutput, saveState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { ValidationError } from '@/lib/actions/error';
@@ -24,7 +24,7 @@ export async function run(): Promise<void> {
 
     const clientConfig = getClientConfigByInputs(inputs);
     try {
-      const cacheKey = await restoreCacheProc(gatewayClient, clientConfig);
+      const cacheKey = await execRestoreCache(gatewayClient, clientConfig);
       if (!cacheKey) {
         logInfo(`Cache not found for input keys: ${[inputs.key, ...(inputs.restoreKeys ?? [])].join(', ')}`);
         return;

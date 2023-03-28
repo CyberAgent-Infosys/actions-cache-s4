@@ -37,7 +37,7 @@ import {
 } from '@/lib/proto';
 import { isAnnoy } from '@/lib/utils';
 
-export async function saveCacheProc(client: GatewayClient, config: GatewayClientConfig): Promise<void> {
+export async function execSaveCache(client: GatewayClient, config: GatewayClientConfig): Promise<void> {
   return new Promise(async (resolve, reject) => {
     const { paths, key, uploadChunkSize } = config;
 
@@ -145,7 +145,7 @@ export async function saveCacheProc(client: GatewayClient, config: GatewayClient
   });
 }
 
-export async function restoreCacheProc(
+export async function execRestoreCache(
   client: GatewayClient,
   config: GatewayClientConfig,
 ): Promise<string | undefined> {

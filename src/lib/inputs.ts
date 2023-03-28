@@ -23,7 +23,7 @@ export function getInputs(argv: string[]): Inputs {
   };
 }
 
-export function getClientConfigByInputs(inputs: Inputs): GatewayClientConfig {
+export function getClientConfig(inputs: Inputs): GatewayClientConfig {
   return {
     paths: inputs.path,
     key: inputs.key,

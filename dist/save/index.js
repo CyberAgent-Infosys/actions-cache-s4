@@ -43201,7 +43201,7 @@ exports.fetchRetry = fetchRetry;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getClientConfigByInputs = exports.getInputs = void 0;
+exports.getClientConfig = exports.getInputs = void 0;
 const constants_1 = __nccwpck_require__(7151);
 const core_1 = __nccwpck_require__(8816);
 const argv_1 = __nccwpck_require__(6955);
@@ -43222,7 +43222,7 @@ function getInputs(argv) {
     };
 }
 exports.getInputs = getInputs;
-function getClientConfigByInputs(inputs) {
+function getClientConfig(inputs) {
     return {
         paths: inputs.path,
         key: inputs.key,
@@ -43232,7 +43232,7 @@ function getClientConfigByInputs(inputs) {
         uploadChunkSize: inputs.uploadChunkSize,
     };
 }
-exports.getClientConfigByInputs = getClientConfigByInputs;
+exports.getClientConfig = getClientConfig;
 
 
 /***/ }),
@@ -43765,7 +43765,7 @@ async function run() {
             (0, core_1.logInfo)(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
             return;
         }
-        const clientConfig = (0, inputs_1.getClientConfigByInputs)(inputs);
+        const clientConfig = (0, inputs_1.getClientConfig)(inputs);
         try {
             await (0, cache_1.execSaveCache)(gatewayClient, clientConfig);
             (0, core_1.logInfo)(`Cache saved with key: ${primaryKey}`);

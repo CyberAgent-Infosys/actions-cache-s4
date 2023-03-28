@@ -43268,6 +43268,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.uploadProc = exports.completeMultipartUploadCache = exports.abortMultipartUploadCache = exports.startMultipartUploadCache = exports.restoreCache = exports.createRestoreCacheRequest = exports.abortMultipartUploadCacheRequest = exports.completeMultipartUploadCacheRequest = exports.startMultipartUploadCacheRequest = exports.createUploadedParts = exports.createMeta = exports.createGatewayClient = void 0;
 const node_querystring_1 = __importDefault(__nccwpck_require__(9630));
+const tls_1 = __nccwpck_require__(4404);
 const grpc_js_1 = __nccwpck_require__(7025);
 const actions_cache_gateway_grpc_pb_js_1 = __nccwpck_require__(2844);
 const actions_cache_gateway_pb_js_1 = __nccwpck_require__(4738);
@@ -43276,7 +43277,17 @@ const env_1 = __nccwpck_require__(2479);
 // TODO: gatewayのエンドポイントわかったら書換
 const endpoint = (0, env_1.getEnv)('GATEWAY_END_POINT') ?? '';
 function createGatewayClient() {
-    return endpoint ? new actions_cache_gateway_grpc_pb_js_1.GatewayClient(endpoint, grpc_js_1.credentials.createInsecure()) : undefined;
+    if (!endpoint)
+        return undefined;
+    let _credentials;
+    if (endpoint.includes(':443')) {
+        const caBuffer = Buffer.concat(tls_1.rootCertificates.map(cert => Buffer.from(cert)));
+        _credentials = grpc_js_1.credentials.createSsl(caBuffer);
+    }
+    else {
+        _credentials = grpc_js_1.credentials.createInsecure();
+    }
+    return new actions_cache_gateway_grpc_pb_js_1.GatewayClient(endpoint, _credentials);
 }
 exports.createGatewayClient = createGatewayClient;
 function createMeta(config) {

@@ -1,4 +1,5 @@
 import querystring from 'node:querystring';
+import { rootCertificates } from 'tls';
 import { credentials } from '@grpc/grpc-js';
 import { Response } from 'node-fetch';
 import { GatewayClientConfig } from '@/@types/proto';
@@ -20,7 +21,17 @@ import { getEnv } from '@/lib/env';
 const endpoint = getEnv('GATEWAY_END_POINT') ?? '';
 
 export function createGatewayClient(): GatewayClient | undefined {
-  return endpoint ? new GatewayClient(endpoint, credentials.createInsecure()) : undefined;
+  if (!endpoint) return undefined;
+
+  let _credentials;
+  if (endpoint.includes(':443')) {
+    const caBuffer = Buffer.concat(rootCertificates.map(cert => Buffer.from(cert)));
+    _credentials = credentials.createSsl(caBuffer);
+  } else {
+    _credentials = credentials.createInsecure();
+  }
+
+  return new GatewayClient(endpoint, _credentials);
 }
 
 export function createMeta(config: GatewayClientConfig): ObjectInfo {

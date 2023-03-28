@@ -1,4 +1,5 @@
-./dist
-./.cache
+.cache/
+dist/
 node_modules/
+src/gen/
 jest.config.js

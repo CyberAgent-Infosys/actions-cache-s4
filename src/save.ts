@@ -1,20 +1,30 @@
+import { execSaveCache } from '@/lib/actions/cache';
+import { isExactKeyMatch, isValidEvent } from '@/lib/actions/cacheUtils';
 import { getState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
-import { saveCache, ValidationError, ReserveCacheError } from '@/lib/actions/cache';
-import { isExactKeyMatch, isValidEvent, isDebug } from '@/lib/utils';
-import { getInputs, getS3ClientConfigByInputs } from '@/lib/inputs';
+import { ValidationError, ReserveCacheError } from '@/lib/actions/error';
+import { getInputs, getClientConfigByInputs } from '@/lib/inputs';
+import { createGatewayClient } from '@/lib/proto';
+import { isDebug } from '@/lib/utils';
 
 export async function run(): Promise<void> {
   try {
     if (!isValidEvent()) return;
+
     const inputs = getInputs(process.argv);
-    if (!inputs.path || !inputs.key || !inputs.awsS3Bucket || !inputs.awsAccessKeyId || !inputs.awsSecretAccessKey) {
+    if (!inputs.path || !inputs.key) {
       logInfo('Please input required key.');
       return;
     }
-    const s3ClientConfig = getS3ClientConfigByInputs(inputs);
+    const gatewayClient = createGatewayClient();
+    if (!gatewayClient) {
+      logInfo('failed to init gatewayClient.');
+      return;
+    }
 
     // キャッシュの検証
     const state = getState('CACHE_RESULT');
+
+    // デバッグの時はgetStateを迂回
     const primaryKey = isDebug ? inputs.key : getState('CACHE_KEY');
 
     // Inputs are re-evaluted before the post action, so we want the original key used for restore
@@ -27,15 +37,9 @@ export async function run(): Promise<void> {
       logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
       return;
     }
-
+    const clientConfig = getClientConfigByInputs(inputs);
     try {
-      await saveCache(
-        inputs.path,
-        primaryKey,
-        { uploadChunkSize: inputs.uploadChunkSize },
-        s3ClientConfig,
-        inputs.awsS3Bucket,
-      );
+      await execSaveCache(gatewayClient, clientConfig);
       logInfo(`Cache saved with key: ${primaryKey}`);
     } catch (e: unknown) {
       if (e instanceof Error) {
@@ -50,7 +54,6 @@ export async function run(): Promise<void> {
     }
   } catch (error) {
     if (error instanceof Error) {
-      logWarning(error.message);
       setFailed(error.message);
     } else {
       console.error(error);

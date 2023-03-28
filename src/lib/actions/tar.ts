@@ -1,7 +1,7 @@
-import { exec } from '@actions/exec';
-import * as io from '@actions/io';
 import { existsSync, writeFileSync } from 'fs';
 import * as path from 'path';
+import { exec } from '@actions/exec';
+import * as io from '@actions/io';
 import * as utils from '@/lib/actions/cacheUtils';
 import { CompressionMethod } from '@/lib/actions/constants';
 import { getEnv } from '@/lib/env';
@@ -33,7 +33,8 @@ async function getTarPath(args: string[], compressionMethod: CompressionMethod):
     default:
       break;
   }
-  return await io.which('tar', true);
+  const tarPath = await io.which('tar', true);
+  return tarPath;
 }
 
 async function execTar(args: string[], compressionMethod: CompressionMethod, cwd?: string): Promise<void> {

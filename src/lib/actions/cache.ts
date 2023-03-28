@@ -1,7 +1,10 @@
+import * as fs from 'fs';
 import * as path from 'path';
-import { S3ClientConfig } from '@aws-sdk/client-s3';
-import { isDebug, isSilent } from '@/lib/utils';
-import { logDebug, logInfo } from '@/lib/actions/core';
+import { Response } from 'node-fetch';
+import pLimit from 'p-limit';
+import { GatewayClientConfig } from '@/@types/proto';
+import { GatewayClient } from '@/gen/proto/actions_cache_gateway_grpc_pb.js';
+import { UploadedParts } from '@/gen/proto/actions_cache_gateway_pb.js';
 import {
   getCompressionMethod,
   resolvePaths,
@@ -10,192 +13,197 @@ import {
   createTempDirectory,
   isGhes,
   unlinkFile,
+  checkPaths,
+  checkKey,
 } from '@/lib/actions/cacheUtils';
+import { ConcurrentUploads, FileSizeLimit } from '@/lib/actions/constants';
+import { logDebug, logInfo, setSecret } from '@/lib/actions/core';
+import { downloadCacheHttpClient } from '@/lib/actions/downloadUtils';
+import { ValidationError, ApiRequestError, FileStreamError, ArchiveFileError } from '@/lib/actions/error';
+import { isErrorStatusCode } from '@/lib/actions/requestUtils';
 import { listTar, createTar, extractTar } from '@/lib/actions/tar';
-import { downloadS3Cache, getCacheEntry, reserveCache, saveS3Cache } from '@/lib/actions/cacheHttpClient';
-import { UploadOptions } from '@/lib/options';
+import { fetchRetry as fetch } from '@/lib/fetch';
+import {
+  startMultipartUploadCacheRequest,
+  completeMultipartUploadCacheRequest,
+  createRestoreCacheRequest,
+  createUploadedParts,
+  abortMultipartUploadCacheRequest,
+  restoreCache,
+  startMultipartUploadCache,
+  abortMultipartUploadCache,
+  completeMultipartUploadCache,
+  uploadProc,
+} from '@/lib/proto';
+import { isAnnoy } from '@/lib/utils';
 
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-    Object.setPrototypeOf(this, ValidationError.prototype);
-  }
-}
+export async function execSaveCache(client: GatewayClient, config: GatewayClientConfig): Promise<void> {
+  return new Promise(async (resolve, reject) => {
+    const { paths, key, uploadChunkSize } = config;
 
-export class ReserveCacheError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ReserveCacheError';
-    Object.setPrototypeOf(this, ReserveCacheError.prototype);
-  }
-}
+    // 問題があればthrow
+    checkPaths(paths);
+    checkKey(key);
 
-function checkPaths(paths: string[]): void {
-  if (!paths || paths.length === 0) {
-    throw new ValidationError('Path Validation Error: At least one directory or file path is required');
-  }
-}
+    const compressionMethod = await getCompressionMethod();
+    const cachePaths = await resolvePaths(paths);
+    logDebug('Cache Paths:');
+    logDebug(`${JSON.stringify(cachePaths)}`);
 
-function checkKey(key: string): void {
-  if (key.length > 512) {
-    throw new ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
-  }
-  const regex = /^[^,]*$/;
-  if (!regex.test(key)) {
-    throw new ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
-  }
-}
+    const archiveFolder = await createTempDirectory();
+    const archivePath = path.join(archiveFolder, getCacheFileName(compressionMethod));
+    logDebug(`Archive Path: ${archivePath}`);
 
-export async function saveCache(
-  paths: string[],
-  key: string,
-  options?: UploadOptions,
-  s3Options?: S3ClientConfig,
-  s3BucketName?: string,
-): Promise<number> {
-  // 問題があればthrow
-  checkPaths(paths);
-  checkKey(key);
-
-  const compressionMethod = await getCompressionMethod();
-  let cacheId = 0;
-
-  const cachePaths = await resolvePaths(paths);
-  logDebug('Cache Paths:');
-  logDebug(`${JSON.stringify(cachePaths)}`);
-
-  const archiveFolder = await createTempDirectory();
-  const archivePath = path.join(archiveFolder, getCacheFileName(compressionMethod));
-
-  logDebug(`Archive Path: ${archivePath}`);
-
-  try {
     await createTar(archiveFolder, cachePaths, compressionMethod);
-    if (isDebug && !isSilent) {
-      await listTar(archivePath, compressionMethod);
-    }
-    const fileSizeLimit = 10 * 1024 * 1024 * 1024; // 10GB per repo limit
+    if (isAnnoy) await listTar(archivePath, compressionMethod);
     const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
+    const totalPart = Math.ceil(archiveFileSize / uploadChunkSize);
     logDebug(`File Size: ${archiveFileSize}`);
+    logDebug(`Total Part: ${totalPart}`);
 
     // For GHES, this check will take place in ReserveCache API with enterprise file size limit
-    if (archiveFileSize > fileSizeLimit && !isGhes()) {
-      throw new Error(
-        `Cache size of ~${Math.round(
-          archiveFileSize / (1024 * 1024),
-        )} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`,
+    if (archiveFileSize > FileSizeLimit && !isGhes()) {
+      return reject(
+        new ArchiveFileError(
+          `Cache size of ~${Math.round(
+            archiveFileSize / (1024 * 1024),
+          )} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`,
+        ),
       );
     }
 
-    // S3の設定がない場合
-    if (!(s3Options && s3BucketName)) {
-      logDebug('Reserving Cache');
-      const reserveCacheResponse = await reserveCache(
-        key,
-        paths,
-        {
-          compressionMethod,
-          cacheSize: archiveFileSize,
-        },
-        s3Options,
-        s3BucketName,
-      );
+    // Upload Request
+    const uploadRequest = startMultipartUploadCacheRequest(config, totalPart);
+    const multipartUploadResponse = await startMultipartUploadCache(client, uploadRequest);
+    if (!multipartUploadResponse) return reject(new ApiRequestError('Failed multipartUpload Request.'));
 
-      if (reserveCacheResponse?.result?.cacheId) {
-        cacheId = reserveCacheResponse?.result?.cacheId;
-      } else if (reserveCacheResponse?.statusCode === 400) {
-        throw new Error(
-          reserveCacheResponse?.error?.message ??
-            `Cache size of ~${Math.round(
-              archiveFileSize / (1024 * 1024),
-            )} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`,
+    const uploadId = multipartUploadResponse.uploadId;
+    const uploadKey = multipartUploadResponse.uploadKey;
+    const presignedUrls: string[] = multipartUploadResponse.preSignedUrlsList;
+
+    let i = 0;
+    const uploadPromises: Promise<Response>[] = [];
+    const readFileStream = fs.createReadStream(archivePath, { highWaterMark: uploadChunkSize });
+    readFileStream
+      .on('data', data => {
+        // chunkSize読み出す毎に呼ばれる
+        const start = i * uploadChunkSize;
+        const end = Math.min(start + uploadChunkSize, archiveFileSize) - 1;
+        const partSize = end - start + 1;
+
+        uploadPromises.push(
+          fetch(presignedUrls[i], {
+            method: 'PUT',
+            headers: { 'Content-Length': `${partSize}` },
+            body: data,
+          }),
         );
-      } else {
-        throw new ReserveCacheError(
-          `Unable to reserve cache with key ${key}, another job may be creating this cache. More details: ${reserveCacheResponse?.error?.message}`,
-        );
+
+        i++;
+      })
+      .on('error', () => {
+        return reject(new FileStreamError('failed to read file.'));
+      });
+
+    readFileStream.on('end', async () => {
+      logDebug('File load completed.');
+      logDebug(`Concurrenct uploads: ${ConcurrentUploads}`);
+
+      const plimit = pLimit(ConcurrentUploads);
+      const uploadedPartPromises = uploadPromises.map(async req => plimit(async () => uploadProc(req)));
+
+      let etags;
+      try {
+        const uploadedInfos = await Promise.all(uploadedPartPromises);
+        etags = uploadedInfos.filter((v): v is UploadedParts.AsObject => v !== null);
+        if (!etags) throw new Error('No ETags.');
+      } catch (error) {
+        if (error instanceof Error) {
+          // Abort Request
+          const abortRequest = abortMultipartUploadCacheRequest(config, uploadId, uploadKey);
+          await abortMultipartUploadCache(client, abortRequest);
+        }
+        // abort後rejectをなげる
+        return reject(error);
       }
-    }
 
-    logDebug(`Saving Cache (ID: ${cacheId})`);
-    await saveS3Cache(cacheId, archivePath, key, options, s3Options, s3BucketName);
-  } finally {
-    // Try to delete the archive to save space
-    try {
-      await unlinkFile(archivePath);
-    } catch (error) {
-      logDebug(`Failed to delete archive: ${error}`);
-    }
-  }
+      // Complete Request
+      const partsList = createUploadedParts(etags);
+      const completeUploadRequest = completeMultipartUploadCacheRequest(config, uploadId, uploadKey, partsList);
+      await completeMultipartUploadCache(client, completeUploadRequest);
 
-  return cacheId;
+      // Try to delete the archive to save space
+      try {
+        logDebug('Removed archive file.');
+        await unlinkFile(archivePath);
+      } catch (error) {
+        logDebug(`Failed to delete archive: ${error} `);
+      }
+
+      return resolve();
+    });
+  });
 }
 
-export async function restoreCache(
-  paths: string[],
-  primaryKey: string,
-  restoreKeys?: string[],
-  s3Options?: S3ClientConfig,
-  s3BucketName?: string,
+export async function execRestoreCache(
+  client: GatewayClient,
+  config: GatewayClientConfig,
 ): Promise<string | undefined> {
-  // 問題があればthrowされる
-  checkPaths(paths);
+  return new Promise(async (resolve, reject) => {
+    const { paths, key, restoreKeys } = config;
 
-  restoreKeys = restoreKeys || [];
-  const keys = [primaryKey, ...restoreKeys];
+    // 問題があればthrow
+    checkPaths(paths);
 
-  logDebug('Resolved Keys:');
-  logDebug(JSON.stringify(keys));
+    const keys = [key, ...(restoreKeys ?? [])];
 
-  if (keys.length > 10) {
-    throw new ValidationError('Key Validation Error: Keys are limited to a maximum of 10.');
-  }
-  for (const key of keys) {
-    checkKey(key);
-  }
+    logDebug('Resolved Keys:');
+    logDebug(JSON.stringify(keys));
 
-  const compressionMethod = await getCompressionMethod();
+    if (keys.length > 10) {
+      reject(new ValidationError('Key Validation Error: Keys are limited to a maximum of 10.'));
+    }
+    for (const k of keys) checkKey(k);
 
-  // path are needed to compute version
-  const cacheEntry = await getCacheEntry(
-    keys,
-    paths,
-    {
-      compressionMethod,
-    },
-    s3Options,
-    s3BucketName,
-  );
-  if (!cacheEntry?.archiveLocation && !cacheEntry?.cacheKey) {
-    // Cache not found
-    return undefined;
-  }
+    const compressionMethod = await getCompressionMethod();
 
-  const archivePath = path.join(await createTempDirectory(), getCacheFileName(compressionMethod));
-  logDebug(`Archive Path: ${archivePath}`);
+    // fetch Restore Cache API
+    const restoreCacheRequest = createRestoreCacheRequest(config, keys);
+    const response = await restoreCache(client, restoreCacheRequest);
+    if (!response) reject(new ApiRequestError('Failed Restore Cache Request.'));
 
-  try {
-    // Download the cache from the cache entry
-    await downloadS3Cache(cacheEntry, archivePath, s3Options, s3BucketName);
+    const presignedUrl = response?.preSignedUrl;
+    const cacheKey = response?.cacheKey;
 
-    if (isDebug && !isSilent) {
-      await listTar(archivePath, compressionMethod);
+    if (!presignedUrl || !cacheKey) return reject(new ApiRequestError('データ取得エラー'));
+    if (presignedUrl) setSecret(presignedUrl);
+
+    const cacheData = await fetch(presignedUrl);
+    if (cacheData.status === 204 || isErrorStatusCode(cacheData.status)) {
+      return reject(new ApiRequestError('No Contents.'));
     }
 
-    const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
-    logInfo(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+    const archivePath = path.join(await createTempDirectory(), getCacheFileName(compressionMethod));
+    logDebug(`Archive Path: ${archivePath} `);
 
-    await extractTar(archivePath, compressionMethod);
-    logInfo('Cache restored successfully');
-  } finally {
-    // Try to delete the archive to save space
     try {
-      await unlinkFile(archivePath);
-    } catch (error) {
-      logDebug(`Failed to delete archive: ${error}`);
-    }
-  }
+      await downloadCacheHttpClient(presignedUrl, archivePath);
 
-  return cacheEntry.cacheKey;
+      if (isAnnoy) await listTar(archivePath, compressionMethod);
+      const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
+      logInfo(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB(${archiveFileSize} B)`);
+
+      await extractTar(archivePath, compressionMethod);
+      logInfo('Cache restored successfully');
+
+      return resolve(cacheKey);
+    } finally {
+      // Try to delete the archive to save space
+      try {
+        await unlinkFile(archivePath);
+      } catch (error) {
+        reject(new FileStreamError(`Failed to delete archive: ${error} `));
+      }
+    }
+  });
 }

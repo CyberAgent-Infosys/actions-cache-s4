@@ -1,9 +1,8 @@
 import * as process from 'process';
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import * as utils from '@/lib/utils';
+import * as cache from '@/lib/actions/cache';
 import * as cacheUtils from '@/lib/actions/cacheUtils';
 import * as actions from '@/lib/actions/core';
-import * as cache from '@/lib/actions/cache';
 import * as inputs from '@/lib/inputs';
 import { run } from '@/restore';
 
@@ -15,19 +14,16 @@ beforeEach(() => {
   process.env['GITHUB_REF'] = 'refs/heads/feature-branch';
   process.env['DEBUG_MODE'] = 'true';
 
-  jest.spyOn(utils, 'isValidEvent').mockImplementation(() => true);
+  jest.spyOn(cacheUtils, 'isValidEvent').mockImplementation(() => true);
   jest.spyOn(cacheUtils, 'isGhes').mockImplementation(() => false);
-  jest.spyOn(utils, 'isExactKeyMatch').mockImplementation(() => false);
+  jest.spyOn(cacheUtils, 'isExactKeyMatch').mockImplementation(() => false);
   jest.spyOn(actions, 'getInput').mockImplementation(() => 'XXX');
   jest.spyOn(actions, 'getInputAsInt').mockImplementation(() => 9999);
   jest.spyOn(actions, 'getBooleanInput').mockImplementation(() => true);
   jest.spyOn(actions, 'getInputAsArray').mockImplementation(() => ['XXX']);
   jest.spyOn(actions, 'setCacheHitOutput');
-  jest.spyOn(cache, 'restoreCache').mockImplementation(async () => '');
+  jest.spyOn(cache, 'execRestoreCache').mockImplementation(async () => '');
   jest.spyOn(inputs, 'getInputs').mockImplementation(() => ({
-    awsAccessKeyId: 'ABRACADABRA',
-    awsS3Bucket: 'mybucket',
-    awsSecretAccessKey: 'ABRACADABRA',
     key: 'LINUX-nodejs-ABRACADABRA',
     path: ['./node_modules', './package-lock.json'],
     restoreKeys: ['LINUX-nodejs-', 'LINUX-'],

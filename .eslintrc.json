@@ -2,7 +2,7 @@
   "globals": {
     "NodeJS": true
   },
-  "plugins": ["jest", "@typescript-eslint"],
+  "plugins": ["jest", "@typescript-eslint", "import"],
   "extends": ["plugin:github/recommended"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -14,10 +14,30 @@
     "i18n-text/no-en": "off",
     "eslint-comments/no-use": "off",
     "import/no-namespace": "off",
+    "import/order": [
+      "error",
+      {
+        "groups": ["builtin", "external", "parent", "sibling", "index", "object", "type"],
+        "pathGroups": [
+          {
+            "pattern": "@src/**",
+            "group": "parent",
+            "position": "before"
+          }
+        ],
+        "pathGroupsExcludedImportTypes": ["builtin"],
+        "alphabetize": {
+          "order": "asc"
+        }
+      }
+    ],
     "no-unused-vars": "off",
     "filenames/match-regex": ["error", "^[a-zA-Z]+(.test|.mock|.config|.d)?$"],
     "filenames/match-exported": "error",
     "no-console": "off",
+    "no-shadow": "off",
+    "no-return-await": "error",
+    "@typescript-eslint/no-shadow": "warn",
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/explicit-member-accessibility": [
       "error",

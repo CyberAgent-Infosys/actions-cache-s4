@@ -10,8 +10,8 @@ import {
   setSecret as _setSecret,
   InputOptions,
 } from '@actions/core';
-import { InputParamsKey } from '@/@types/input';
 import { StateKey, OutputKey } from '@/@types/action';
+import { InputParamsKey } from '@/@types/input';
 import { isNumber } from '@/lib/isNumber';
 import { strToArray } from '@/lib/strToArray';
 

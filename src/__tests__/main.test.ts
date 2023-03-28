@@ -19,7 +19,7 @@ describe('test runs', () => {
   // パラメータ不足のエラーが出れば成功
   const np = process.execPath;
   const options: cp.ExecFileSyncOptions = { env: process.env };
-  const argv: string[] = ['--path=node_modules', '--key=XXXX', '--aws-s3-bucket=XXXX'];
+  const argv: string[] = ['--path=node_modules', '--key=XXXX', '--restore-keys=XXXX'];
 
   test('save.js', () => {
     const ip = path.join(__dirname, '../..', 'dist', 'save', 'index.js');

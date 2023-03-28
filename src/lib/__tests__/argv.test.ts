@@ -7,18 +7,12 @@ const input = [
   '--path=./node_modules\\n./package-lock.json',
   '--key=LINUX-nodejs-ABRACADABRA',
   '--restore-keys=LINUX-nodejs-\\nLINUX-',
-  '--aws-s3-bucket=mybucket',
-  '--aws-access-key-id=ABRACADABRA',
-  '--aws-secret-access-key=ABRACADABRA',
   '--upload-chunk-size=9999',
 ];
 
 describe('parseArgv', () => {
   test('inputを配列で受け取り、パースしてオブジェクト返す', () => {
     expect(parseArgv(input)).toEqual({
-      'aws-access-key-id': 'ABRACADABRA',
-      'aws-s3-bucket': 'mybucket',
-      'aws-secret-access-key': 'ABRACADABRA',
       key: 'LINUX-nodejs-ABRACADABRA',
       path: './node_modules\\n./package-lock.json',
       'restore-keys': 'LINUX-nodejs-\\nLINUX-',
@@ -28,9 +22,6 @@ describe('parseArgv', () => {
 
   test('parseArgvの値を受け取り、型変換されたオブジェクト返す', () => {
     expect(getArgv(input)).toEqual({
-      awsAccessKeyId: 'ABRACADABRA',
-      awsS3Bucket: 'mybucket',
-      awsSecretAccessKey: 'ABRACADABRA',
       key: 'LINUX-nodejs-ABRACADABRA',
       path: ['./node_modules', './package-lock.json'],
       restoreKeys: ['LINUX-nodejs-', 'LINUX-'],

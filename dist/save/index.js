@@ -42274,26 +42274,12 @@ const tar_1 = __nccwpck_require__(266);
 const fetch_1 = __nccwpck_require__(9531);
 const proto_1 = __nccwpck_require__(6188);
 const utils_1 = __nccwpck_require__(4977);
-function checkPaths(paths) {
-    if (!paths || paths.length === 0) {
-        throw new error_1.ValidationError('Path Validation Error: At least one directory or file path is required');
-    }
-}
-function checkKey(key) {
-    if (key.length > 512) {
-        throw new error_1.ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
-    }
-    const regex = /^[^,]*$/;
-    if (!regex.test(key)) {
-        throw new error_1.ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
-    }
-}
 async function saveCacheProc(client, config) {
     return new Promise(async (resolve, reject) => {
         const { paths, key, uploadChunkSize } = config;
         // 問題があればthrow
-        checkPaths(paths);
-        checkKey(key);
+        (0, cacheUtils_1.checkPaths)(paths);
+        (0, cacheUtils_1.checkKey)(key);
         const compressionMethod = await (0, cacheUtils_1.getCompressionMethod)();
         const cachePaths = await (0, cacheUtils_1.resolvePaths)(paths);
         (0, core_1.logDebug)('Cache Paths:');
@@ -42381,7 +42367,7 @@ async function restoreCacheProc(client, config) {
     return new Promise(async (resolve, reject) => {
         const { paths, key, restoreKeys } = config;
         // 問題があればthrow
-        checkPaths(paths);
+        (0, cacheUtils_1.checkPaths)(paths);
         const keys = [key, ...(restoreKeys ?? [])];
         (0, core_1.logDebug)('Resolved Keys:');
         (0, core_1.logDebug)(JSON.stringify(keys));
@@ -42389,7 +42375,7 @@ async function restoreCacheProc(client, config) {
             reject(new error_1.ValidationError('Key Validation Error: Keys are limited to a maximum of 10.'));
         }
         for (const k of keys)
-            checkKey(k);
+            (0, cacheUtils_1.checkKey)(k);
         const compressionMethod = await (0, cacheUtils_1.getCompressionMethod)();
         // fetch Restore Cache API
         const restoreCacheRequest = (0, proto_1.createRestoreCacheRequest)(config, keys);
@@ -42463,7 +42449,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isGhes = exports.assertDefined = exports.isZstdInstalled = exports.isGnuTarInstalled = exports.getCacheFileName = exports.getCompressionMethod = exports.unlinkFile = exports.resolvePaths = exports.getArchiveFileSizeInBytes = exports.createTempDirectory = void 0;
+exports.isExactKeyMatch = exports.checkKey = exports.checkPaths = exports.isValidEvent = exports.isGhes = exports.isZstdInstalled = exports.isGnuTarInstalled = exports.getCacheFileName = exports.getCompressionMethod = exports.unlinkFile = exports.resolvePaths = exports.getArchiveFileSizeInBytes = exports.createTempDirectory = void 0;
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
 const util = __importStar(__nccwpck_require__(3837));
@@ -42474,7 +42460,9 @@ const semver = __importStar(__nccwpck_require__(1383));
 const uuid_1 = __nccwpck_require__(5840);
 const constants_1 = __nccwpck_require__(7151);
 const core_1 = __nccwpck_require__(8816);
+const error_1 = __nccwpck_require__(6798);
 const env_1 = __nccwpck_require__(2479);
+const utils_1 = __nccwpck_require__(4977);
 const IS_WINDOWS = process.platform === 'win32';
 const IS_MAC = process.platform === 'darwin';
 // From https://github.com/actions/toolkit/blob/main/packages/tool-cache/src/tool-cache.ts#L23
@@ -42582,18 +42570,49 @@ async function isZstdInstalled() {
     }
 }
 exports.isZstdInstalled = isZstdInstalled;
-function assertDefined(name, value) {
-    if (value === undefined) {
-        throw Error(`Expected ${name} but value was undefiend`);
-    }
-    return value;
-}
-exports.assertDefined = assertDefined;
 function isGhes() {
     const ghUrl = new URL((0, env_1.getEnv)('GITHUB_SERVER_URL') || 'https://github.com');
     return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
 }
 exports.isGhes = isGhes;
+function isValidEvent() {
+    // jest経由の実行だったら落とす
+    if (utils_1.nodeEnv === 'test')
+        return false;
+    // CLI実行だったらスキップ
+    if (utils_1.isDebug)
+        return true;
+    const isValid = Boolean((0, env_1.getEnv)('GITHUB_REF') ?? false);
+    const eventName = (0, env_1.getEnv)('GITHUB_EVENT_NAME') ?? 'undefined';
+    if (!isValid) {
+        (0, core_1.logWarning)(`Event Validation Error: The event type ${eventName} is not supported because it's not tied to a branch or tag ref.`);
+    }
+    return isValid;
+}
+exports.isValidEvent = isValidEvent;
+function checkPaths(paths) {
+    if (!paths || paths.length === 0) {
+        throw new error_1.ValidationError('Path Validation Error: At least one directory or file path is required');
+    }
+}
+exports.checkPaths = checkPaths;
+function checkKey(key) {
+    if (key.length > 512) {
+        throw new error_1.ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
+    }
+    const regex = /^[^,]*$/;
+    if (!regex.test(key)) {
+        throw new error_1.ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
+    }
+}
+exports.checkKey = checkKey;
+function isExactKeyMatch(key, cacheKey) {
+    return !!(cacheKey &&
+        cacheKey.localeCompare(key, undefined, {
+            sensitivity: 'accent',
+        }) === 0);
+}
+exports.isExactKeyMatch = isExactKeyMatch;
 
 
 /***/ }),
@@ -43432,35 +43451,12 @@ exports.strToBool = strToBool;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isExactKeyMatch = exports.isValidEvent = exports.nodeEnv = exports.isAnnoy = exports.isDebug = void 0;
-const core_1 = __nccwpck_require__(8816);
+exports.nodeEnv = exports.isAnnoy = exports.isDebug = void 0;
 const env_1 = __nccwpck_require__(2479);
 const strToBool_1 = __nccwpck_require__(6278);
 exports.isDebug = (0, strToBool_1.strToBool)((0, env_1.getEnv)('DEBUG_MODE')) ?? false;
 exports.isAnnoy = exports.isDebug && ((0, strToBool_1.strToBool)((0, env_1.getEnv)('IS_ANNOY')) ?? false);
 exports.nodeEnv = (0, env_1.getEnv)('NODE_ENV');
-function isValidEvent() {
-    // jest経由の実行だったら落とす
-    if (exports.nodeEnv === 'test')
-        return false;
-    // CLI実行だったらスキップ
-    if (exports.isDebug)
-        return true;
-    const isValid = Boolean((0, env_1.getEnv)('GITHUB_REF') ?? false);
-    const eventName = (0, env_1.getEnv)('GITHUB_EVENT_NAME') ?? 'undefined';
-    if (!isValid) {
-        (0, core_1.logWarning)(`Event Validation Error: The event type ${eventName} is not supported because it's not tied to a branch or tag ref.`);
-    }
-    return isValid;
-}
-exports.isValidEvent = isValidEvent;
-function isExactKeyMatch(key, cacheKey) {
-    return !!(cacheKey &&
-        cacheKey.localeCompare(key, undefined, {
-            sensitivity: 'accent',
-        }) === 0);
-}
-exports.isExactKeyMatch = isExactKeyMatch;
 
 
 /***/ }),
@@ -43736,6 +43732,7 @@ var exports = __webpack_exports__;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = void 0;
 const cache_1 = __nccwpck_require__(8207);
+const cacheUtils_1 = __nccwpck_require__(2534);
 const core_1 = __nccwpck_require__(8816);
 const error_1 = __nccwpck_require__(6798);
 const inputs_1 = __nccwpck_require__(8163);
@@ -43743,7 +43740,7 @@ const proto_1 = __nccwpck_require__(6188);
 const utils_1 = __nccwpck_require__(4977);
 async function run() {
     try {
-        if (!(0, utils_1.isValidEvent)())
+        if (!(0, cacheUtils_1.isValidEvent)())
             return;
         const inputs = (0, inputs_1.getInputs)(process.argv);
         if (!inputs.path || !inputs.key) {
@@ -43764,7 +43761,7 @@ async function run() {
             (0, core_1.logWarning)('Error retrieving key from state.');
             return;
         }
-        if ((0, utils_1.isExactKeyMatch)(primaryKey, state)) {
+        if ((0, cacheUtils_1.isExactKeyMatch)(primaryKey, state)) {
             (0, core_1.logInfo)(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
             return;
         }

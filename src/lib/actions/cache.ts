@@ -13,6 +13,8 @@ import {
   createTempDirectory,
   isGhes,
   unlinkFile,
+  checkPaths,
+  checkKey,
 } from '@/lib/actions/cacheUtils';
 import { ConcurrentUploads, FileSizeLimit } from '@/lib/actions/constants';
 import { logDebug, logInfo, setSecret } from '@/lib/actions/core';
@@ -34,22 +36,6 @@ import {
   uploadProc,
 } from '@/lib/proto';
 import { isAnnoy } from '@/lib/utils';
-
-function checkPaths(paths: string[]): void {
-  if (!paths || paths.length === 0) {
-    throw new ValidationError('Path Validation Error: At least one directory or file path is required');
-  }
-}
-
-function checkKey(key: string): void {
-  if (key.length > 512) {
-    throw new ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
-  }
-  const regex = /^[^,]*$/;
-  if (!regex.test(key)) {
-    throw new ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
-  }
-}
 
 export async function saveCacheProc(client: GatewayClient, config: GatewayClientConfig): Promise<void> {
   return new Promise(async (resolve, reject) => {

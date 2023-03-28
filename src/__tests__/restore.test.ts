@@ -4,7 +4,6 @@ import * as cache from '@/lib/actions/cache';
 import * as cacheUtils from '@/lib/actions/cacheUtils';
 import * as actions from '@/lib/actions/core';
 import * as inputs from '@/lib/inputs';
-import * as utils from '@/lib/utils';
 import { run } from '@/restore';
 
 jest.mock('@/lib/utils');
@@ -15,9 +14,9 @@ beforeEach(() => {
   process.env['GITHUB_REF'] = 'refs/heads/feature-branch';
   process.env['DEBUG_MODE'] = 'true';
 
-  jest.spyOn(utils, 'isValidEvent').mockImplementation(() => true);
+  jest.spyOn(cacheUtils, 'isValidEvent').mockImplementation(() => true);
   jest.spyOn(cacheUtils, 'isGhes').mockImplementation(() => false);
-  jest.spyOn(utils, 'isExactKeyMatch').mockImplementation(() => false);
+  jest.spyOn(cacheUtils, 'isExactKeyMatch').mockImplementation(() => false);
   jest.spyOn(actions, 'getInput').mockImplementation(() => 'XXX');
   jest.spyOn(actions, 'getInputAsInt').mockImplementation(() => 9999);
   jest.spyOn(actions, 'getBooleanInput').mockImplementation(() => true);

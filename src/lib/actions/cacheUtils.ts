@@ -7,8 +7,10 @@ import * as io from '@actions/io';
 import * as semver from 'semver';
 import { v4 as uuidV4 } from 'uuid';
 import { CacheFilename, CompressionMethod } from '@/lib/actions/constants';
-import { logInfo, logDebug } from '@/lib/actions/core';
+import { logInfo, logDebug, logWarning } from '@/lib/actions/core';
+import { ValidationError } from '@/lib/actions/error';
 import { getEnv } from '@/lib/env';
+import { nodeEnv, isDebug } from '@/lib/utils';
 
 const IS_WINDOWS = process.platform === 'win32';
 const IS_MAC = process.platform === 'darwin';
@@ -121,15 +123,51 @@ export async function isZstdInstalled(): Promise<boolean> {
   }
 }
 
-export function assertDefined<T>(name: string, value?: T): T {
-  if (value === undefined) {
-    throw Error(`Expected ${name} but value was undefiend`);
-  }
-
-  return value;
-}
-
 export function isGhes(): boolean {
   const ghUrl = new URL(getEnv('GITHUB_SERVER_URL') || 'https://github.com');
   return ghUrl.hostname.toUpperCase() !== 'GITHUB.COM';
+}
+
+export function isValidEvent(): boolean {
+  // jest経由の実行だったら落とす
+  if (nodeEnv === 'test') return false;
+
+  // CLI実行だったらスキップ
+  if (isDebug) return true;
+
+  const isValid = Boolean(getEnv('GITHUB_REF') ?? false);
+  const eventName = getEnv('GITHUB_EVENT_NAME') ?? 'undefined';
+
+  if (!isValid) {
+    logWarning(
+      `Event Validation Error: The event type ${eventName} is not supported because it's not tied to a branch or tag ref.`,
+    );
+  }
+
+  return isValid;
+}
+
+export function checkPaths(paths: string[]): void {
+  if (!paths || paths.length === 0) {
+    throw new ValidationError('Path Validation Error: At least one directory or file path is required');
+  }
+}
+
+export function checkKey(key: string): void {
+  if (key.length > 512) {
+    throw new ValidationError(`Key Validation Error: ${key} cannot be larger than 512 characters.`);
+  }
+  const regex = /^[^,]*$/;
+  if (!regex.test(key)) {
+    throw new ValidationError(`Key Validation Error: ${key} cannot contain commas.`);
+  }
+}
+
+export function isExactKeyMatch(key: string, cacheKey?: string): boolean {
+  return !!(
+    cacheKey &&
+    cacheKey.localeCompare(key, undefined, {
+      sensitivity: 'accent',
+    }) === 0
+  );
 }

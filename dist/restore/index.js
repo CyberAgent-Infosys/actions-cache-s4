@@ -42618,12 +42618,14 @@ exports.isExactKeyMatch = isExactKeyMatch;
 /***/ }),
 
 /***/ 7151:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.FileSizeLimit = exports.ConcurrentUploads = exports.DefaultUploadChunkSize = exports.SocketTimeout = exports.DefaultRetryDelay = exports.DefaultRetryAttempts = exports.CompressionMethod = exports.CacheFilename = void 0;
+exports.FileSizeLimit = exports.ConcurrentUploads = exports.DefaultUploadChunkSize = exports.SocketTimeout = exports.DefaultRetryDelay = exports.DefaultRetryAttempts = exports.CompressionMethod = exports.CacheFilename = exports.GatewayEndpoint = void 0;
+const env_1 = __nccwpck_require__(2479);
+exports.GatewayEndpoint = (0, env_1.getEnv)('GATEWAY_END_POINT') ?? 'cache-gateway.myshoes.cycloud.io:443';
 var CacheFilename;
 (function (CacheFilename) {
     CacheFilename["Gzip"] = "cache.tgz";
@@ -43201,7 +43203,7 @@ exports.fetchRetry = fetchRetry;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getClientConfigByInputs = exports.getInputs = void 0;
+exports.getClientConfig = exports.getInputs = void 0;
 const constants_1 = __nccwpck_require__(7151);
 const core_1 = __nccwpck_require__(8816);
 const argv_1 = __nccwpck_require__(6955);
@@ -43222,7 +43224,7 @@ function getInputs(argv) {
     };
 }
 exports.getInputs = getInputs;
-function getClientConfigByInputs(inputs) {
+function getClientConfig(inputs) {
     return {
         paths: inputs.path,
         key: inputs.key,
@@ -43232,7 +43234,7 @@ function getClientConfigByInputs(inputs) {
         uploadChunkSize: inputs.uploadChunkSize,
     };
 }
-exports.getClientConfigByInputs = getClientConfigByInputs;
+exports.getClientConfig = getClientConfig;
 
 
 /***/ }),
@@ -43271,12 +43273,12 @@ const node_querystring_1 = __importDefault(__nccwpck_require__(9630));
 const grpc_js_1 = __nccwpck_require__(7025);
 const actions_cache_gateway_grpc_pb_js_1 = __nccwpck_require__(2844);
 const actions_cache_gateway_pb_js_1 = __nccwpck_require__(4738);
+const constants_1 = __nccwpck_require__(7151);
 const error_1 = __nccwpck_require__(6798);
-const env_1 = __nccwpck_require__(2479);
-// TODO: gatewayのエンドポイントわかったら書換
-const endpoint = (0, env_1.getEnv)('GATEWAY_END_POINT') ?? '';
 function createGatewayClient() {
-    return endpoint ? new actions_cache_gateway_grpc_pb_js_1.GatewayClient(endpoint, grpc_js_1.credentials.createInsecure()) : undefined;
+    if (!constants_1.GatewayEndpoint)
+        return undefined;
+    return new actions_cache_gateway_grpc_pb_js_1.GatewayClient(constants_1.GatewayEndpoint, constants_1.GatewayEndpoint.includes(':443') ? grpc_js_1.credentials.createSsl() : grpc_js_1.credentials.createInsecure());
 }
 exports.createGatewayClient = createGatewayClient;
 function createMeta(config) {
@@ -43752,7 +43754,7 @@ async function run() {
             return;
         }
         (0, core_1.saveState)('CACHE_KEY', inputs.key);
-        const clientConfig = (0, inputs_1.getClientConfigByInputs)(inputs);
+        const clientConfig = (0, inputs_1.getClientConfig)(inputs);
         try {
             const cacheKey = await (0, cache_1.execRestoreCache)(gatewayClient, clientConfig);
             if (!cacheKey) {

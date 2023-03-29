@@ -2,7 +2,7 @@ import { execRestoreCache } from '@/lib/actions/cache';
 import { isExactKeyMatch, isValidEvent } from '@/lib/actions/cacheUtils';
 import { setCacheHitOutput, saveState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
 import { ValidationError } from '@/lib/actions/error';
-import { getInputs, getClientConfigByInputs } from '@/lib/inputs';
+import { getInputs, getClientConfig } from '@/lib/inputs';
 import { createGatewayClient } from '@/lib/proto';
 
 export async function run(): Promise<void> {
@@ -22,7 +22,7 @@ export async function run(): Promise<void> {
 
     saveState('CACHE_KEY', inputs.key);
 
-    const clientConfig = getClientConfigByInputs(inputs);
+    const clientConfig = getClientConfig(inputs);
     try {
       const cacheKey = await execRestoreCache(gatewayClient, clientConfig);
       if (!cacheKey) {

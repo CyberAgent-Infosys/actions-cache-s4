@@ -1,3 +1,7 @@
+import { getEnv } from '@/lib/env';
+
+export const GatewayEndpoint = getEnv('GATEWAY_END_POINT') ?? 'cache-gateway.myshoes.cycloud.io:443';
+
 export enum CacheFilename {
   Gzip = 'cache.tgz',
   Zstd = 'cache.tzst',

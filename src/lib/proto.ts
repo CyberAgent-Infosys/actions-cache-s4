@@ -13,14 +13,16 @@ import {
   UploadedParts,
   RestoreCacheResponse,
 } from '@/gen/proto/actions_cache_gateway_pb.js';
+import { GatewayEndpoint } from '@/lib/actions/constants';
 import { ApiRequestError } from '@/lib/actions/error';
-import { getEnv } from '@/lib/env';
-
-// TODO: gatewayのエンドポイントわかったら書換
-const endpoint = getEnv('GATEWAY_END_POINT') ?? '';
 
 export function createGatewayClient(): GatewayClient | undefined {
-  return endpoint ? new GatewayClient(endpoint, credentials.createInsecure()) : undefined;
+  if (!GatewayEndpoint) return undefined;
+
+  return new GatewayClient(
+    GatewayEndpoint,
+    GatewayEndpoint.includes(':443') ? credentials.createSsl() : credentials.createInsecure(),
+  );
 }
 
 export function createMeta(config: GatewayClientConfig): ObjectInfo {

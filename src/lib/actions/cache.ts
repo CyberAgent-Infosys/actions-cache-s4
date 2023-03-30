@@ -192,7 +192,7 @@ export async function execRestoreCache(client: GatewayClient, config: GatewayCli
       logInfo(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB(${archiveFileSize} B)`);
 
       await extractTar(archivePath, compressionMethod);
-      logInfo('Cache restored successfully');
+      logInfo('Cache restored successfully.');
 
       return resolve(cacheKey);
     } finally {
@@ -200,7 +200,7 @@ export async function execRestoreCache(client: GatewayClient, config: GatewayCli
       try {
         await unlinkFile(archivePath);
       } catch (error) {
-        reject(new FileStreamError(`Failed to delete archive: ${error} `));
+        reject(new FileStreamError(`Failed to delete archive: ${error}`));
       }
     }
   });

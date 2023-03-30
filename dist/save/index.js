@@ -18569,6 +18569,9 @@ function range(a, b, str) {
   var i = ai;
 
   if (ai >= 0 && bi > 0) {
+    if(a===b) {
+      return [ai, bi];
+    }
     begs = [];
     left = str.length;
 
@@ -29179,6 +29182,16 @@ function parse(source, root, options) {
         if (type === "group") {
             parseGroup(parent, rule);
             return;
+        }
+        // Type names can consume multiple tokens, in multiple variants:
+        //    package.subpackage   field       tokens: "package.subpackage" [TYPE NAME ENDS HERE] "field"
+        //    package . subpackage field       tokens: "package" "." "subpackage" [TYPE NAME ENDS HERE] "field"
+        //    package.  subpackage field       tokens: "package." "subpackage" [TYPE NAME ENDS HERE] "field"
+        //    package  .subpackage field       tokens: "package" ".subpackage" [TYPE NAME ENDS HERE] "field"
+        // Keep reading tokens until we get a type name with no period at the end,
+        // and the next token does not start with a period.
+        while (type.endsWith(".") || peek().startsWith(".")) {
+            type += next();
         }
 
         /* istanbul ignore if */
@@ -42402,7 +42415,7 @@ async function execRestoreCache(client, config) {
             const archiveFileSize = (0, cacheUtils_1.getArchiveFileSizeInBytes)(archivePath);
             (0, core_1.logInfo)(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB(${archiveFileSize} B)`);
             await (0, tar_1.extractTar)(archivePath, compressionMethod);
-            (0, core_1.logInfo)('Cache restored successfully');
+            (0, core_1.logInfo)('Cache restored successfully.');
             return resolve(cacheKey);
         }
         finally {
@@ -42411,7 +42424,7 @@ async function execRestoreCache(client, config) {
                 await (0, cacheUtils_1.unlinkFile)(archivePath);
             }
             catch (error) {
-                reject(new error_1.FileStreamError(`Failed to delete archive: ${error} `));
+                reject(new error_1.FileStreamError(`Failed to delete archive: ${error}`));
             }
         }
     });
@@ -43230,8 +43243,8 @@ function getClientConfig(inputs) {
         paths: inputs.path,
         key: inputs.key,
         restoreKeys: inputs.restoreKeys,
-        githubUrl: (0, env_1.getEnv)('GITHUB_ACTION_SERVER_URL'),
-        githubRepository: (0, env_1.getEnv)('GITHUB_ACTION_REPOSITORY'),
+        githubUrl: (0, env_1.getEnv)('GITHUB_SERVER_URL'),
+        githubRepository: (0, env_1.getEnv)('GITHUB_REPOSITORY'),
         uploadChunkSize: inputs.uploadChunkSize,
     };
 }

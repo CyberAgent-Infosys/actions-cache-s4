@@ -23,6 +23,11 @@ export async function run(): Promise<void> {
     saveState('CACHE_KEY', inputs.key);
 
     const clientConfig = getClientConfig(inputs);
+
+    logInfo(`githubRepository: ${clientConfig.githubRepository}`);
+    logInfo(`githubUrl: ${clientConfig.githubUrl}`);
+    logInfo(`key: ${clientConfig.key}`);
+
     try {
       const cacheKey = await execRestoreCache(gatewayClient, clientConfig);
       if (!cacheKey) {

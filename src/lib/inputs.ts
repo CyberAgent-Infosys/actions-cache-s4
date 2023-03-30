@@ -28,8 +28,8 @@ export function getClientConfig(inputs: Inputs): GatewayClientConfig {
     paths: inputs.path,
     key: inputs.key,
     restoreKeys: inputs.restoreKeys,
-    githubUrl: getEnv('GITHUB_ACTION_SERVER_URL'),
-    githubRepository: getEnv('GITHUB_ACTION_REPOSITORY'),
+    githubUrl: getEnv('GITHUB_SERVER_URL'),
+    githubRepository: getEnv('GITHUB_REPOSITORY'),
     uploadChunkSize: inputs.uploadChunkSize,
   } as GatewayClientConfig;
 }

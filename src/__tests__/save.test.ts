@@ -48,7 +48,7 @@ describe('test runs', () => {
 
     expect(getStateMock).toHaveBeenCalled();
     expect(saveStateMock).toHaveBeenCalledTimes(0);
-    expect(logInfoMock).toHaveBeenCalledTimes(1);
+    expect(logInfoMock).toHaveBeenCalledTimes(3);
     expect(logWarningMock).toHaveBeenCalledTimes(0);
   });
 });

@@ -33,6 +33,9 @@ export async function run(): Promise<void> {
       return;
     }
 
+    logInfo(`primary: ${primaryKey}`);
+    logInfo(`state: ${state}`);
+
     if (isExactKeyMatch(primaryKey, state)) {
       logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
       return;

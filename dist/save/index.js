@@ -42384,6 +42384,7 @@ async function execRestoreCache(client, config) {
             return resolve();
         const presignedUrl = response?.preSignedUrl;
         const cacheKey = response?.cacheKey;
+        (0, core_1.logInfo)(`Found Cache: ${cacheKey}`);
         if (!presignedUrl || !cacheKey)
             return reject(new error_1.ApiRequestError('データ取得エラー'));
         if (presignedUrl)
@@ -43767,6 +43768,8 @@ async function run() {
             (0, core_1.logWarning)('Error retrieving key from state.');
             return;
         }
+        (0, core_1.logInfo)(`primary: ${primaryKey}`);
+        (0, core_1.logInfo)(`state: ${state}`);
         if ((0, cacheUtils_1.isExactKeyMatch)(primaryKey, state)) {
             (0, core_1.logInfo)(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
             return;

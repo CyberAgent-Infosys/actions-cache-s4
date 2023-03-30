@@ -171,6 +171,7 @@ export async function execRestoreCache(client: GatewayClient, config: GatewayCli
 
     const presignedUrl = response?.preSignedUrl;
     const cacheKey = response?.cacheKey;
+    logInfo(`Found Cache: ${cacheKey}`);
 
     if (!presignedUrl || !cacheKey) return reject(new ApiRequestError('データ取得エラー'));
     if (presignedUrl) setSecret(presignedUrl);

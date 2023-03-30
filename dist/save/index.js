@@ -42397,7 +42397,6 @@ async function execRestoreCache(client, config) {
             return resolve();
         const presignedUrl = response?.preSignedUrl;
         const cacheKey = response?.cacheKey;
-        (0, core_1.logInfo)(`Found Cache: ${cacheKey}`);
         if (!presignedUrl || !cacheKey)
             return reject(new error_1.ApiRequestError('データ取得エラー'));
         if (presignedUrl)

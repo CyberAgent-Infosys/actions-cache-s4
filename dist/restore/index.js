@@ -42397,7 +42397,6 @@ async function execRestoreCache(client, config) {
             return resolve();
         const presignedUrl = response?.preSignedUrl;
         const cacheKey = response?.cacheKey;
-        (0, core_1.logInfo)(`Found Cache: ${cacheKey}`);
         if (!presignedUrl || !cacheKey)
             return reject(new error_1.ApiRequestError('データ取得エラー'));
         if (presignedUrl)
@@ -43773,9 +43772,9 @@ async function run() {
         }
         (0, core_1.saveState)('CACHE_KEY', inputs.key);
         const clientConfig = (0, inputs_1.getClientConfig)(inputs);
-        (0, core_1.logInfo)(`githubRepository: ${clientConfig.githubRepository}`);
-        (0, core_1.logInfo)(`githubUrl: ${clientConfig.githubUrl}`);
-        (0, core_1.logInfo)(`key: ${clientConfig.key}`);
+        (0, core_1.logDebug)(`githubRepository: ${clientConfig.githubRepository}`);
+        (0, core_1.logDebug)(`githubUrl: ${clientConfig.githubUrl}`);
+        (0, core_1.logDebug)(`key: ${clientConfig.key}`);
         try {
             const cacheKey = await (0, cache_1.execRestoreCache)(gatewayClient, clientConfig);
             if (!cacheKey) {
@@ -43784,7 +43783,7 @@ async function run() {
             }
             (0, core_1.saveState)('CACHE_RESULT', cacheKey);
             (0, core_1.setCacheHitOutput)((0, cacheUtils_1.isExactKeyMatch)(inputs.key, cacheKey));
-            (0, core_1.logInfo)(`Cache restored from key: ${cacheKey}`);
+            (0, core_1.logDebug)(`Cache restored from key: ${cacheKey}`);
         }
         catch (e) {
             if (e instanceof Error) {

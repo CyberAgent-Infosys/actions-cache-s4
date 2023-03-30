@@ -99,7 +99,8 @@ export async function restoreCache(
     client.restoreCache(request, (err, res) => {
       if (err) {
         // キャッシュがなければ正常系として返す
-        if (err.code === 5) resolve(undefined);
+        const ERROR_CODE_CACHE_IS_NOT_FOUND = 5;
+        if (err.code === ERROR_CODE_CACHE_IS_NOT_FOUND) resolve(undefined);
 
         reject(
           err instanceof Error

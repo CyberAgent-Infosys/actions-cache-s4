@@ -42379,9 +42379,7 @@ async function execRestoreCache(client, config) {
         const compressionMethod = await (0, cacheUtils_1.getCompressionMethod)();
         // fetch Restore Cache API
         const restoreCacheRequest = (0, proto_1.createRestoreCacheRequest)(config, keys);
-        // TODO: restore失敗しても許す
         const response = await (0, proto_1.restoreCache)(client, restoreCacheRequest);
-        // if (!response) reject(new ApiRequestError('Failed Restore Cache Request.'));
         if (!response)
             return resolve();
         const presignedUrl = response?.preSignedUrl;
@@ -43341,7 +43339,8 @@ async function restoreCache(client, request) {
     return new Promise((resolve, reject) => client.restoreCache(request, (err, res) => {
         if (err) {
             // キャッシュがなければ正常系として返す
-            if (err.code === 5)
+            const ERROR_CODE_CACHE_IS_NOT_FOUND = 5;
+            if (err.code === ERROR_CODE_CACHE_IS_NOT_FOUND)
                 resolve(undefined);
             reject(err instanceof Error
                 ? new error_1.ApiRequestError(`Restore Cache Request Error: ${err?.details ?? err.message}.`)

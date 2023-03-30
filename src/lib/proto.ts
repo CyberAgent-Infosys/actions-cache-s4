@@ -98,9 +98,13 @@ export async function restoreCache(
   return new Promise((resolve, reject) =>
     client.restoreCache(request, (err, res) => {
       if (err) {
+        // キャッシュがなければ正常系として返す
+        const ERROR_CODE_CACHE_IS_NOT_FOUND = 5;
+        if (err.code === ERROR_CODE_CACHE_IS_NOT_FOUND) resolve(undefined);
+
         reject(
           err instanceof Error
-            ? new ApiRequestError(`Resotre Cache Request Error: ${err?.details ?? err.message}.`)
+            ? new ApiRequestError(`Restore Cache Request Error: ${err?.details ?? err.message}.`)
             : err,
         );
       }

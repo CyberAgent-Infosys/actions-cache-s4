@@ -145,10 +145,7 @@ export async function execSaveCache(client: GatewayClient, config: GatewayClient
   });
 }
 
-export async function execRestoreCache(
-  client: GatewayClient,
-  config: GatewayClientConfig,
-): Promise<string | undefined> {
+export async function execRestoreCache(client: GatewayClient, config: GatewayClientConfig): Promise<string | void> {
   return new Promise(async (resolve, reject) => {
     const { paths, key, restoreKeys } = config;
 
@@ -170,7 +167,7 @@ export async function execRestoreCache(
     // fetch Restore Cache API
     const restoreCacheRequest = createRestoreCacheRequest(config, keys);
     const response = await restoreCache(client, restoreCacheRequest);
-    if (!response) reject(new ApiRequestError('Failed Restore Cache Request.'));
+    if (!response) return resolve();
 
     const presignedUrl = response?.preSignedUrl;
     const cacheKey = response?.cacheKey;

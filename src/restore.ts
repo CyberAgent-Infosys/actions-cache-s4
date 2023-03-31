@@ -1,7 +1,7 @@
 import { execRestoreCache } from '@/lib/actions/cache';
 import { isExactKeyMatch, isValidEvent } from '@/lib/actions/cacheUtils';
 import { setCacheHitOutput, saveState, logInfo, logWarning, setFailed, logDebug } from '@/lib/actions/core';
-import { ValidationError } from '@/lib/actions/error';
+import { ApiRequestError, ArchiveFileError, FileStreamError, ValidationError } from '@/lib/actions/error';
 import { getInputs, getClientConfig } from '@/lib/inputs';
 import { createGatewayClient } from '@/lib/proto';
 
@@ -23,9 +23,8 @@ export async function run(): Promise<void> {
     saveState('CACHE_KEY', inputs.key);
 
     const clientConfig = getClientConfig(inputs);
-
-    logDebug(`githubRepository: ${clientConfig.githubRepository}`);
     logDebug(`githubUrl: ${clientConfig.githubUrl}`);
+    logDebug(`githubRepository: ${clientConfig.githubRepository}`);
     logDebug(`key: ${clientConfig.key}`);
 
     try {
@@ -40,7 +39,9 @@ export async function run(): Promise<void> {
       logDebug(`Cache restored from key: ${cacheKey}`);
     } catch (e: unknown) {
       if (e instanceof Error) {
-        if (e.name === ValidationError.name) {
+        if (
+          [ValidationError.name, ApiRequestError.name, ArchiveFileError.name, FileStreamError.name].includes(e.name)
+        ) {
           throw e;
         } else {
           logWarning(e.message);

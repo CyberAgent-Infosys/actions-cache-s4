@@ -22,7 +22,7 @@
     "format": "npm run lint:fix && npm run prettier",
     "jest": "jest",
     "jest:watch": "jest --watchAll",
-    "test": "npm-run-all -p lint prettier:check jest",
+    "test": "npm-run-all -p lint prettier:check jest depcruise",
     "build:all": "npm-run-all -s proto:gen build package",
     "all": "npm-run-all -s proto:gen build format package test"
   },

@@ -14,7 +14,7 @@ export function parseArgv(argv: string[]): Record<InputParamsKey, string | undef
   return Object.assign({}, ...optionArray);
 }
 
-export function getArgv(argv: string[]): Partial<Inputs> {
+export function getArgv(argv: string[]): Inputs {
   const inputs = parseArgv(argv);
   return {
     path: inputs.path ? strToArray(inputs?.path ?? '') : undefined,

@@ -1,7 +1,7 @@
 import { execSaveCache } from '@/lib/actions/cache';
 import { isExactKeyMatch, isValidEvent } from '@/lib/actions/cacheUtils';
 import { getState, logInfo, logWarning, setFailed } from '@/lib/actions/core';
-import { ValidationError, ReserveCacheError } from '@/lib/actions/error';
+import { ValidationError } from '@/lib/actions/error';
 import { getInputs, getClientConfig } from '@/lib/inputs';
 import { createGatewayClient } from '@/lib/proto';
 import { isDebug } from '@/lib/utils';
@@ -33,13 +33,11 @@ export async function run(): Promise<void> {
       return;
     }
 
-    logInfo(`primary: ${primaryKey}`);
-    logInfo(`state: ${state}`);
-
     if (isExactKeyMatch(primaryKey, state)) {
       logInfo(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
       return;
     }
+
     const clientConfig = getClientConfig(inputs);
     try {
       await execSaveCache(gatewayClient, clientConfig);
@@ -48,8 +46,6 @@ export async function run(): Promise<void> {
       if (e instanceof Error) {
         if (e.name === ValidationError.name) {
           throw e;
-        } else if (e.name === ReserveCacheError.name) {
-          logInfo(e.message);
         } else {
           throw e;
         }

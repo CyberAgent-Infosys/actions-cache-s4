@@ -43772,8 +43772,8 @@ async function run() {
         }
         (0, core_1.saveState)('CACHE_KEY', inputs.key);
         const clientConfig = (0, inputs_1.getClientConfig)(inputs);
-        (0, core_1.logDebug)(`githubRepository: ${clientConfig.githubRepository}`);
         (0, core_1.logDebug)(`githubUrl: ${clientConfig.githubUrl}`);
+        (0, core_1.logDebug)(`githubRepository: ${clientConfig.githubRepository}`);
         (0, core_1.logDebug)(`key: ${clientConfig.key}`);
         try {
             const cacheKey = await (0, cache_1.execRestoreCache)(gatewayClient, clientConfig);
@@ -43787,7 +43787,7 @@ async function run() {
         }
         catch (e) {
             if (e instanceof Error) {
-                if (e.name === error_1.ValidationError.name) {
+                if ([error_1.ValidationError.name, error_1.ApiRequestError.name, error_1.ArchiveFileError.name, error_1.FileStreamError.name].includes(e.name)) {
                     throw e;
                 }
                 else {

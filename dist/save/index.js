@@ -42401,7 +42401,7 @@ async function execRestoreCache(client, config) {
             const archiveFileSize = (0, cacheUtils_1.getArchiveFileSizeInBytes)(archivePath);
             (0, core_1.logInfo)(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB(${archiveFileSize} B)`);
             await (0, tar_1.extractTar)(archivePath, compressionMethod);
-            (0, core_1.logInfo)('Cache restored successfully');
+            (0, core_1.logInfo)('Cache restored successfully.');
             return resolve(cacheKey);
         }
         finally {
@@ -42410,7 +42410,7 @@ async function execRestoreCache(client, config) {
                 await (0, cacheUtils_1.unlinkFile)(archivePath);
             }
             catch (error) {
-                reject(new error_1.FileStreamError(`Failed to delete archive: ${error} `));
+                reject(new error_1.FileStreamError(`Failed to delete archive: ${error}`));
             }
         }
     });
@@ -42820,7 +42820,7 @@ exports.downloadCacheHttpClient = downloadCacheHttpClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ReserveCacheError = exports.ValidationError = void 0;
+exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ValidationError = void 0;
 class ValidationError extends Error {
     constructor(message) {
         super(message);
@@ -42829,14 +42829,6 @@ class ValidationError extends Error {
     }
 }
 exports.ValidationError = ValidationError;
-class ReserveCacheError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ReserveCacheError';
-        Object.setPrototypeOf(this, ReserveCacheError.prototype);
-    }
-}
-exports.ReserveCacheError = ReserveCacheError;
 class ApiRequestError extends Error {
     constructor(message) {
         super(message);
@@ -43229,8 +43221,8 @@ function getClientConfig(inputs) {
         paths: inputs.path,
         key: inputs.key,
         restoreKeys: inputs.restoreKeys,
-        githubUrl: (0, env_1.getEnv)('GITHUB_ACTION_SERVER_URL'),
-        githubRepository: (0, env_1.getEnv)('GITHUB_ACTION_REPOSITORY'),
+        githubUrl: (0, env_1.getEnv)('GITHUB_SERVER_URL'),
+        githubRepository: (0, env_1.getEnv)('GITHUB_REPOSITORY'),
         uploadChunkSize: inputs.uploadChunkSize,
     };
 }
@@ -43780,9 +43772,6 @@ async function run() {
             if (e instanceof Error) {
                 if (e.name === error_1.ValidationError.name) {
                     throw e;
-                }
-                else if (e.name === error_1.ReserveCacheError.name) {
-                    (0, core_1.logInfo)(e.message);
                 }
                 else {
                     throw e;

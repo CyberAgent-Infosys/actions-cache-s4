@@ -1,8 +1,7 @@
-export type GatewayClientConfig = {
+import { ObjectInfo } from '@/gen/proto/actions_cache_gateway_pb';
+
+export type GatewayClientConfig = ObjectInfo.AsObject & {
   paths: string[];
-  key: string;
   restoreKeys: string[] | undefined;
-  githubUrl: string;
-  githubRepository: string;
   uploadChunkSize: number;
 };

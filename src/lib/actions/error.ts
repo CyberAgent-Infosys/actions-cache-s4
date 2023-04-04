@@ -6,14 +6,6 @@ export class ValidationError extends Error {
   }
 }
 
-export class ReserveCacheError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ReserveCacheError';
-    Object.setPrototypeOf(this, ReserveCacheError.prototype);
-  }
-}
-
 export class ApiRequestError extends Error {
   constructor(message: string) {
     super(message);

@@ -42381,7 +42381,7 @@ async function execRestoreCache(client, config) {
         const restoreCacheRequest = (0, proto_1.createRestoreCacheRequest)(config, keys);
         const response = await (0, proto_1.restoreCache)(client, restoreCacheRequest);
         if (!response)
-            reject(new error_1.ApiRequestError('Failed Restore Cache Request.'));
+            return resolve();
         const presignedUrl = response?.preSignedUrl;
         const cacheKey = response?.cacheKey;
         if (!presignedUrl || !cacheKey)
@@ -43338,8 +43338,12 @@ exports.createRestoreCacheRequest = createRestoreCacheRequest;
 async function restoreCache(client, request) {
     return new Promise((resolve, reject) => client.restoreCache(request, (err, res) => {
         if (err) {
+            // キャッシュがなければ正常系として返す
+            const ERROR_CODE_CACHE_IS_NOT_FOUND = 5;
+            if (err.code === ERROR_CODE_CACHE_IS_NOT_FOUND)
+                resolve(undefined);
             reject(err instanceof Error
-                ? new error_1.ApiRequestError(`Resotre Cache Request Error: ${err?.details ?? err.message}.`)
+                ? new error_1.ApiRequestError(`Restore Cache Request Error: ${err?.details ?? err.message}.`)
                 : err);
         }
         resolve(res?.toObject());

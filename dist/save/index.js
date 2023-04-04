@@ -18569,9 +18569,6 @@ function range(a, b, str) {
   var i = ai;
 
   if (ai >= 0 && bi > 0) {
-    if(a===b) {
-      return [ai, bi];
-    }
     begs = [];
     left = str.length;
 
@@ -29182,16 +29179,6 @@ function parse(source, root, options) {
         if (type === "group") {
             parseGroup(parent, rule);
             return;
-        }
-        // Type names can consume multiple tokens, in multiple variants:
-        //    package.subpackage   field       tokens: "package.subpackage" [TYPE NAME ENDS HERE] "field"
-        //    package . subpackage field       tokens: "package" "." "subpackage" [TYPE NAME ENDS HERE] "field"
-        //    package.  subpackage field       tokens: "package." "subpackage" [TYPE NAME ENDS HERE] "field"
-        //    package  .subpackage field       tokens: "package" ".subpackage" [TYPE NAME ENDS HERE] "field"
-        // Keep reading tokens until we get a type name with no period at the end,
-        // and the next token does not start with a period.
-        while (type.endsWith(".") || peek().startsWith(".")) {
-            type += next();
         }
 
         /* istanbul ignore if */
@@ -42833,7 +42820,7 @@ exports.downloadCacheHttpClient = downloadCacheHttpClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ReserveCacheError = exports.ValidationError = void 0;
+exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ValidationError = void 0;
 class ValidationError extends Error {
     constructor(message) {
         super(message);
@@ -42842,14 +42829,6 @@ class ValidationError extends Error {
     }
 }
 exports.ValidationError = ValidationError;
-class ReserveCacheError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ReserveCacheError';
-        Object.setPrototypeOf(this, ReserveCacheError.prototype);
-    }
-}
-exports.ReserveCacheError = ReserveCacheError;
 class ApiRequestError extends Error {
     constructor(message) {
         super(message);
@@ -43780,8 +43759,6 @@ async function run() {
             (0, core_1.logWarning)('Error retrieving key from state.');
             return;
         }
-        (0, core_1.logInfo)(`primary: ${primaryKey}`);
-        (0, core_1.logInfo)(`state: ${state}`);
         if ((0, cacheUtils_1.isExactKeyMatch)(primaryKey, state)) {
             (0, core_1.logInfo)(`Cache hit occurred on the primary key ${primaryKey}, not saving cache.`);
             return;
@@ -43795,9 +43772,6 @@ async function run() {
             if (e instanceof Error) {
                 if (e.name === error_1.ValidationError.name) {
                     throw e;
-                }
-                else if (e.name === error_1.ReserveCacheError.name) {
-                    (0, core_1.logInfo)(e.message);
                 }
                 else {
                     throw e;

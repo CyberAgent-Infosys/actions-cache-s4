@@ -18569,9 +18569,6 @@ function range(a, b, str) {
   var i = ai;
 
   if (ai >= 0 && bi > 0) {
-    if(a===b) {
-      return [ai, bi];
-    }
     begs = [];
     left = str.length;
 
@@ -29182,16 +29179,6 @@ function parse(source, root, options) {
         if (type === "group") {
             parseGroup(parent, rule);
             return;
-        }
-        // Type names can consume multiple tokens, in multiple variants:
-        //    package.subpackage   field       tokens: "package.subpackage" [TYPE NAME ENDS HERE] "field"
-        //    package . subpackage field       tokens: "package" "." "subpackage" [TYPE NAME ENDS HERE] "field"
-        //    package.  subpackage field       tokens: "package." "subpackage" [TYPE NAME ENDS HERE] "field"
-        //    package  .subpackage field       tokens: "package" ".subpackage" [TYPE NAME ENDS HERE] "field"
-        // Keep reading tokens until we get a type name with no period at the end,
-        // and the next token does not start with a period.
-        while (type.endsWith(".") || peek().startsWith(".")) {
-            type += next();
         }
 
         /* istanbul ignore if */
@@ -42833,7 +42820,7 @@ exports.downloadCacheHttpClient = downloadCacheHttpClient;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ReserveCacheError = exports.ValidationError = void 0;
+exports.ArchiveFileError = exports.FileStreamError = exports.ApiRequestError = exports.ValidationError = void 0;
 class ValidationError extends Error {
     constructor(message) {
         super(message);
@@ -42842,14 +42829,6 @@ class ValidationError extends Error {
     }
 }
 exports.ValidationError = ValidationError;
-class ReserveCacheError extends Error {
-    constructor(message) {
-        super(message);
-        this.name = 'ReserveCacheError';
-        Object.setPrototypeOf(this, ReserveCacheError.prototype);
-    }
-}
-exports.ReserveCacheError = ReserveCacheError;
 class ApiRequestError extends Error {
     constructor(message) {
         super(message);
